@@ -1,0 +1,3 @@
+numpy>=1.9.2
+igraph>=0.1.8
+jp-svg-canvas==0.0.1
