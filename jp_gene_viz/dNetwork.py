@@ -523,7 +523,7 @@ class Network_display(object):
         svg.send_commands()
         self.zoom_button.disabled = True
 
-def display_network(filename, threshold=20.0, save_layout=True):
+def display_network(filename, threshhold=20.0, save_layout=True):
     import dLayout
     import getData
     assert os.path.exists(filename)
@@ -540,6 +540,8 @@ def display_network(filename, threshold=20.0, save_layout=True):
             print ("Saving layout", layoutpath)
             dLayout.dump(layout, layoutpath)
     N = Network_display()
+    if threshhold:
+        N.threshhold_slider.value = threshhold
     N.load_data(G, layout)
     N.show()
     return N
