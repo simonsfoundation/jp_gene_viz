@@ -1,7 +1,18 @@
 
-
 import numpy
 import dGraph
+
+def checked_names(subset, superset, strict=False):
+    ss = set(subset)
+    sp = set(superset)
+    proper = ss & sp
+    if strict and proper != ss:
+        raise ValueError("extra names not allowed: " + repr(ss-sp))
+    result = [name for name in subset if name in sp]
+    return result
+
+def index_dict(L):
+    return dict((e, i) for (i, e) in enumerate(L))
 
 class HeatMap(object):
 
@@ -9,25 +20,56 @@ class HeatMap(object):
     min_clr = dGraph.clr(0, 255, 255)
     zero_clr = dGraph.clr(0, 0, 0)
 
-    def __init__(self, row_names=None, column_names=None, data=None):
+    def __init__(self, row_names=None, col_names=None, data=None):
         if data is None:
             # dummy example data
             nrows = 20
             ncols = 10
             row_names = ["r%s" % i for i in xrange(nrows)]
-            column_names = ["c%s" % i for i in xrange(ncols)]
+            col_names = ["c%s" % i for i in xrange(ncols)]
             data = numpy.arange(nrows * ncols).reshape((nrows, ncols))
-        self.set_data(row_names, column_names, data)
+        self.set_data(row_names, col_names, data)
 
-    def set_data(self, row_names, column_names, data):
+    def projection(self, rows=None, cols=None, strict=False):
+        row_names = self.row_names
+        col_names = self.col_names
+        if rows is None:
+            rows = row_names[:]
+        else:
+            rows = checked_names(rows, row_names, strict)
+        if cols is None:
+            cols = col_names[:]
+        else:
+            cols = checked_names(cols, col_names, strict)
+        data = self.data
+        col_index = index_dict(col_names)
+        row_index = index_dict(row_names)
+        proj_data = []
+        for row_name in rows:
+            data_row = data[row_index[row_name]]
+            proj_row = [data_row[col_index[col_name]] for col_name in cols]
+            proj_data.append(proj_row)
+        return HeatMap(rows, cols, proj_data)
+
+    def column_weights(self, col_name):
+        rows = self.row_names
+        cols = self.col_names
+        data = self.data
+        col_index = cols.index(col_name)
+        result = {}
+        for (row_index, row) in enumerate(rows):
+            result[row] = data[row_index, col_index]
+        return result
+
+    def set_data(self, row_names, col_names, data):
         self.row_names = row_names
-        self.column_names = column_names
+        self.col_names = col_names
         A = self.data = numpy.array(data)
         self.dmax = numpy.max(A)
         self.dmin = numpy.min(A)
         (self.nrows, self.ncols) = A.shape
         assert self.nrows == len(self.row_names)
-        assert self.ncols == len(self.column_names)
+        assert self.ncols == len(self.col_names)
 
     def rectName(self, i, j):
         return "R_%s_%s" % (i, j)
@@ -45,7 +87,7 @@ class HeatMap(object):
             return None
         (i,j) = ij
         row = self.row_names[i]
-        col = self.column_names[j]
+        col = self.col_names[j]
         return (row, col)
 
     def color(self, value):
