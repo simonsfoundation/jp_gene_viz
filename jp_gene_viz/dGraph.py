@@ -139,8 +139,9 @@ class WGraph(object):
         pedge = clr(0,211,0)
         zedge = clr(230,230,230)
         nedge = clr(255,0,0)
-        znode = zedge
-        pnode = clr(255, 100, 0)
+        #znode = zedge
+        znode = clr(0, 0, 0)
+        pnode = clr(255, 100, 100)
         pcolor = color(pedge)
         ncolor = color(nedge)
         (Me, me, Mn, mn) = self.weights_extrema()

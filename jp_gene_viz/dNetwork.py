@@ -20,7 +20,7 @@ SELECTION = "SELECTION"
 from jp_svg_canvas.canvas import load_javascript_support
 
 
-class Network_display(object):
+class NetworkDisplay(object):
 
     """
     Create a widget which displays a network with controls for 
@@ -61,7 +61,7 @@ class Network_display(object):
                    self.labels_button,
                    self.redraw_button]
         self.inputs = widgets.VBox(children=buttons)
-        self.horizontal = widgets.HBox(children=[self.vertical, self.inputs])
+        self.assembly = widgets.HBox(children=[self.vertical, self.inputs])
         self.select_center = None
         self.select_radius = None
         self.selection_id = None
@@ -182,6 +182,7 @@ class Network_display(object):
             return
         self.info_area.value = "Drawing graph: " + repr((G.sizes(), len(P)))
         svg = self.svg
+        svg.empty()
         self.svg_origin = G.draw(svg, P)
         self.cancel_selection()
         self.info_area.value = "Done drawing: " + repr((G.sizes(), len(P)))
@@ -198,7 +199,7 @@ class Network_display(object):
 
     def show(self):
         "Show the network widget."
-        display(self.horizontal)
+        display(self.assembly)
 
     def match_click(self, b):
         "Restrict viewable graph to nodes matching text input."
@@ -523,7 +524,13 @@ class Network_display(object):
         svg.send_commands()
         self.zoom_button.disabled = True
 
-def display_network(filename, threshhold=20.0, save_layout=True):
+    def set_node_weights(self, weights):
+        nw = self.display_graph.node_weights
+        for node in list(nw):
+            nw[node] = weights.get(node, 0)
+
+
+def display_network(filename, N=None, threshhold=20.0, save_layout=True, show=True):
     import dLayout
     import getData
     assert os.path.exists(filename)
@@ -539,9 +546,11 @@ def display_network(filename, threshhold=20.0, save_layout=True):
         if save_layout:
             print ("Saving layout", layoutpath)
             dLayout.dump(layout, layoutpath)
-    N = Network_display()
+    if N is None:
+        N = NetworkDisplay()
     if threshhold:
         N.threshhold_slider.value = threshhold
     N.load_data(G, layout)
-    N.show()
+    if show:
+        N.show()
     return N
