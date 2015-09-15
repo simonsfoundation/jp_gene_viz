@@ -1,5 +1,3 @@
-print "loading dExpression"
-
 import HMap
 import pprint
 import ipywidgets as widgets
@@ -66,14 +64,20 @@ class ExpressionDisplay(object):
         heat_map = self.display_heat_map
         if heat_map is None:
             return
-        heat_map.unhighlight(svg)
-        if name.startswith("R_"):
-            (i,j) = heat_map.rectName2ij(name)
-            (r,c) = heat_map.rectName2RowCol(name)
+        dx = self.dx
+        dy = self.dy
+        x = info["svgX"]
+        y = info["svgY"]
+        i = int(y/dy)
+        j = int(x/dx)
+        if i >= 0 and j >= 0 and i < heat_map.nrows and j < heat_map.ncols:
+            r = heat_map.row_names[i]
+            c = heat_map.col_names[j]
             intensity = heat_map.data[i, j]
             self.info_area.value = "%s :: %s, %s -> %s" % (name, r, c, intensity)
             if typ == "click":
-                heat_map.highlight(svg, i, j, self.dx, self.dy)
+                heat_map.unhighlight(svg)
+                heat_map.highlight(svg, i, j, dx, dy)
                 self.row = r
                 self.col = c
                 self.row_text.value = r
