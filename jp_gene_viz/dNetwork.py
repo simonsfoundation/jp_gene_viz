@@ -186,14 +186,15 @@ class NetworkDisplay(object):
         self.svg_origin = G.draw(svg, P)
         self.cancel_selection()
         self.info_area.value = "Done drawing: " + repr((G.sizes(), len(P)))
+        style = {"font-size": 5, "text-anchor": "middle"}
+        color = "#5555FF"
         if self.labels_button.value:
             self.info_area.value = "Adding labels."
-            style = {"font-size": 5, "text-anchor": "middle"}
             nw = G.node_weights
             for node in nw:
                 if node in P:
                     (x, y) = P[node]
-                    svg.text(None, x, y, node, **style)
+                    svg.text(None, x, y-4, node, color, **style)
             svg.send_commands()
             self.info_area.value = "Labels added."
 

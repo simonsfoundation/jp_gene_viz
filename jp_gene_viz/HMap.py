@@ -65,9 +65,12 @@ class HeatMap(object):
         self.row_names = row_names
         self.col_names = col_names
         A = self.data = numpy.array(data)
-        self.dmax = numpy.max(A)
-        self.dmin = numpy.min(A)
-        (self.nrows, self.ncols) = A.shape
+        self.dmax = self.dmin = self.nrows = 0
+        self.ncols = len(self.col_names)
+        if len(A):
+            self.dmax = numpy.max(A)
+            self.dmin = numpy.min(A)
+            (self.nrows, self.ncols) = A.shape
         assert self.nrows == len(self.row_names)
         assert self.ncols == len(self.col_names)
 
@@ -106,6 +109,8 @@ class HeatMap(object):
                 canvas.rect(nameij, colj*dx, rowi*dy, dx, dy, colorij)
 
     def fit(self, canvas, dx, dy):
+        if self.ncols == 0 or self.nrows == 0:
+            return
         width = dx * self.ncols
         height = dy * self.nrows
         canvas.set_view_box(0, 0, width, height)
