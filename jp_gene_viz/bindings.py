@@ -98,7 +98,7 @@ class WigData(object):
             locationx = start_location + dlocation * svgx
             maxh = self.maximum(locationx, locationx + dlocation)
             svgy = maxh * yscale
-            print (map(int, (locationx, locationx + dlocation, svgx, maxh, svgy)))
+            #print (map(int, (locationx, locationx + dlocation, svgx, maxh, svgy)))
             svg.rect(repr((svgx, svgy)), svgx, svg_height - svgy, 1, svgy, color)
         svg.send_commands()
 

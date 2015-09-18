@@ -45,15 +45,19 @@ class TestMaximum(unittest.TestCase):
 
     def test_off_left(self):
         self.assertEqual(self.W.maximum(0, 1), 0)
-        
+
     def test_off_right(self):
         self.assertEqual(self.W.maximum(5000000, 5000001), 0)
+
+    def test_gap(self):
+        self.assertEqual(self.W.maximum(3000191, 3400091 ), 0)
 
     def test_over1(self):
         self.assertEqual(self.W.maximum(3000085, 3000095), 13)
 
     def test_over_many(self):
         self.assertEqual(self.W.maximum(0, 3000039), 2)
+
     def test_over_all(self):
         self.assertEqual(self.W.maximum(0, 999999999), 13)
 
