@@ -1,7 +1,14 @@
 
-class GenomeBar(object):
+import traitlets
 
-    def __init__(self, height=10, width=500):
+class GenomeBar(traitlets.HasTraits):
+
+    minLocation = traitlets.Float(500, sync=True)
+
+    maxLocation = traitlets.Float(1000, sync=True)
+
+    def __init__(self, height=10, width=500, *args, **kwargs):
+        super(GenomeBar, self).__init__(*args, **kwargs)
         self.height = height
         self.width = width
         self.minLocation = 500

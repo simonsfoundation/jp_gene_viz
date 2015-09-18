@@ -12,10 +12,17 @@ variableStep chrom=chrX span=10
 """
 import numpy
 import gzip
+import traitlets
 
-class WigData(object):
 
-    def __init__(self):
+class WigData(traitlets.HasTraits):
+
+    start_position = traitlets.Float(0, sync=True)
+
+    end_position = traitlets.Float(1000, sync=True)
+
+    def __init__(self, *args, **kwargs):
+        super(WigData, self).__init__(*args, **kwargs)
         self.locations = None
         self.heights = None
         self.maxheight = 0
@@ -86,7 +93,17 @@ class WigData(object):
         choices = heights[start_index: end_index]
         return numpy.max(choices)
 
-    def draw(self, svg, start_location, end_location, svg_width, svg_height):
+    def draw(self, svg, start_location=None, end_location=None, svg_width=None, svg_height=None):
+        if start_location is None:
+            start_location = self.start_position
+        else:
+            self.start_position = start_location
+        if end_location is None:
+            end_location = self.end_position
+        else:
+            self.end_position = end_location
+        svg_width = int(svg_width or svg.width)
+        svg_height = int(svg_height or svg.height)
         svg.empty()
         color = self.color
         maxheight = self.maximum(start_location, end_location)
