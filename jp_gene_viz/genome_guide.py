@@ -6,13 +6,20 @@ from ipywidgets import widgets
 from jp_svg_canvas import canvas
 from jp_gene_viz import gtf_format
 import types
+import traitlets
 
 # This must be called once:
 from jp_svg_canvas.canvas import load_javascript_support
 
-class ExonExplorer(object):
+
+class ExonExplorer(traitlets.HasTraits):
     
-    def __init__(self):
+    start_position = traitlets.Float(0, sync=True)
+    
+    end_position = traitlets.Float(1000, sync=True)
+    
+    def __init__(self, *args, **kwargs):
+        super(ExonExplorer, self).__init__(*args, **kwargs)
         self.genome_zoom = genome_bar.GenomeBar()
         z = self.zoom_svg = self.canvas()
         z.watch_event = "mousemove"
@@ -29,6 +36,8 @@ class ExonExplorer(object):
         self.name_to_feature = {}
         self.select_name = "SELECTION"
         self.selected_svg_x = None
+        traitlets.link((self, "start_position"), (self.genome_zoom, "minLocation"))
+        traitlets.link((self, "end_position"), (self.genome_zoom, "maxLocation"))
         
     def canvas(self):
         svg = canvas.SVGCanvasWidget()
