@@ -63,21 +63,26 @@ class WigData(object):
             f = gzip.GzipFile(filename)
         else:
             raise ValueError("filename must end with .wig or .wig.gz")
-        self.load_file(f)
+        self.load_file(f, filename)
 
     def maximum(self, start_location, end_location):
         locations = self.locations
         heights = self.heights
         ss = numpy.searchsorted
         start_index = ss(locations, start_location)
-        if start_location == end_location:
-            if start_location < self.numelts:
-                return heights[numelts]
-            else:
-                return 0
         end_index = ss(locations, end_location)
+        #print "indices", start_index, end_index
         if start_index >= end_index:
-            return 0
+            if start_index < self.numelts - 1:
+                next_location = locations[start_index]
+                if next_location < start_location:
+                    next_location = locations[start_index + 1]
+                #print "next", start_location, next_location, next_location-start_location
+                if (next_location - start_location) <= self.span * 1.5:
+                    # Close to a populated value.
+                    #print "returning at", start_index, heights[start_index]
+                    return heights[start_index]
+            return 0  # missing value means 0
         choices = heights[start_index: end_index]
         return numpy.max(choices)
 
@@ -97,6 +102,7 @@ class WigData(object):
             svg.rect(repr((svgx, svgy)), svgx, svg_height - svgy, 1, svgy, color)
         svg.send_commands()
 
+
 def test0(filename="example.wig"):
     f = open(filename)
     W = WigData()
@@ -105,6 +111,7 @@ def test0(filename="example.wig"):
     print ("loaded " + repr(W.numelts))
     print ("should be 2", W.maximum(61243301, 61243341))
     print ("should be 3", W.maximum(61243301, 61243541))
+
 
 def test1(filename="ex2.wig.gz"):
     W = WigData()
@@ -115,6 +122,7 @@ def test1(filename="ex2.wig.gz"):
     print ("???", W.maximum(61243301, 61243341))
     print ("???", W.maximum(61243301, 61243541))
     return W
+
 
 def canvas_test(filename="ex2.wig.gz", width=500, height=100):
     from jp_svg_canvas import canvas
@@ -128,7 +136,8 @@ def canvas_test(filename="ex2.wig.gz", width=500, height=100):
     print ("loading: " + repr(filename))
     W.load_filename(filename)
     print ("loaded " + repr(W.numelts) + " max " + repr(W.maxheight))
-    W.draw(svg, 3000011, 4074591, width, height)
+    #W.draw(svg, 3000011, 4074591, width, height)
+    W.draw(svg, 3010000, 3010200, width, height)
     return (svg, W)
 
 
