@@ -8,10 +8,10 @@ from ipywidgets import widgets
 from jp_svg_canvas.canvas import load_javascript_support
 import traitlets
 
+
 class GenomeWiggle(traitlets.HasTraits):
 
-    # XXXX refactor to allow multiple wiggles
-    # XXXX connect guide traitlet to local traitlet, connectable to outside.
+    genes = traitlets.Any()
 
     def __init__(self, width=500, height=100, *args, **kwargs):
         super(GenomeWiggle, self).__init__(*args, **kwargs)
@@ -20,6 +20,12 @@ class GenomeWiggle(traitlets.HasTraits):
         self.width = width
         self.height = height
         self.assembled = False
+        self.drawing = False
+        #self.on_trait_change(self.show_genes, "genes")
+
+    def show_genes(self, name, genes):
+        #print self, "show genes", genes
+        self.guide.view_genes(genes)
 
     def assemble(self):
         guide = self.guide
@@ -40,10 +46,15 @@ class GenomeWiggle(traitlets.HasTraits):
         self.assembled = True
 
     def draw(self):
+        if self.drawing:
+            raise ValueError("too many draws")
+        self.drawing = True
+        #print self, "draw"
         if not self.assembled:
             self.assemble()
         for wig in self.wigs:
             wig.draw(wig.svg)
+        self.drawing = False
 
     def show(self):
         if not self.assembled:

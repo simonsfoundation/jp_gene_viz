@@ -27,6 +27,14 @@ class ExpressionDisplay(traitlets.HasTraits):
         self.data_heat_map = None
         self.display_heat_map = None
         self.row = self.col = None
+        # Maybe not needed.
+        #self.on_trait_change(self.rows_changed, "rows")
+        self.drawing = False
+
+    #def rows_changed(self, name, rows):
+    #    print self, "rows_changed", rows
+    #    return # TEMP
+    #    self.select_rows()
 
     def load_data(self, heat_map, dx=10, dy=5):
         self.data_heat_map = heat_map
@@ -38,14 +46,17 @@ class ExpressionDisplay(traitlets.HasTraits):
         return self.display_data(rows, cols)
 
     def display_data(self, rows, cols):
-        self.rows = rows
+        if rows is not None:
+            self.rows = rows
+        else:
+            rows = self.rows
         heat_map = self.display_heat_map = self.data_heat_map.projection(rows, cols)
         heat_map.fit(self.svg, self.dx, self.dy)
         self.row = self.col = None
         self.svg.empty()
         return self.draw()
 
-    def select_rows(self, rows):
+    def select_rows(self, rows=None):
         return self.display_data(rows, self.data_heat_map.col_names[:200])
 
     def column_weights(self):
@@ -89,6 +100,9 @@ class ExpressionDisplay(traitlets.HasTraits):
                 self.col_text.value = c
 
     def draw(self):
+        if self.drawing:
+            raise ValueError, "too many draws"
+        self.drawing = True
         heat_map = self.display_heat_map
         if heat_map is None:
             return
@@ -96,6 +110,7 @@ class ExpressionDisplay(traitlets.HasTraits):
         svg.empty()
         heat_map.draw(svg, self.dx, self.dy)
         svg.send_commands()
+        self.drawing = False
 
     def show(self):
         display(self.assembly)

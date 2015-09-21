@@ -119,7 +119,7 @@ class ExonExplorer(traitlets.HasTraits):
         # save genes only if not a traitlets call
         if old_gene_ids is None:
             self.genes = gene_ids
-        assert type(gene_ids) == types.ListType, "gene_ids must be a list."
+        assert type(gene_ids) == types.ListType, "gene_ids must be a list. " + repr(gene_ids)[:100]
         n2f = self.name_to_feature = {}
         self.genome_zoom.empty()
         self.genome_guide.empty()
