@@ -3,10 +3,14 @@ import pprint
 import ipywidgets as widgets
 from IPython.display import display
 from jp_svg_canvas import canvas
+import traitlets
 
-class ExpressionDisplay(object):
+class ExpressionDisplay(traitlets.HasTraits):
 
-    def __init__(self):
+    rows = traitlets.Any()
+
+    def __init__(self, *args, **kwargs):
+        super(ExpressionDisplay, self).__init__(*args, **kwargs)
         svg = self.svg = canvas.SVGCanvasWidget()
         svg.add_style("background-color", "cornsilk")
         svg.watch_event = "click mousemove"
@@ -34,6 +38,7 @@ class ExpressionDisplay(object):
         return self.display_data(rows, cols)
 
     def display_data(self, rows, cols):
+        self.rows = rows
         heat_map = self.display_heat_map = self.data_heat_map.projection(rows, cols)
         heat_map.fit(self.svg, self.dx, self.dy)
         self.row = self.col = None
