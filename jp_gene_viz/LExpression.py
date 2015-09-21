@@ -11,8 +11,8 @@ from dNetwork import load_javascript_support
 
 class LinkedExpressionNetwork(traitlets.HasTraits):
 
-    def __init__(self):
-        super(LinkedExpression, self).__init__(*args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super(LinkedExpressionNetwork, self).__init__(*args, **kwargs)
         self.network = dNetwork.NetworkDisplay()
         self.expression = dExpression.ExpressionDisplay()
         self.gene_button = self.make_button("V Genes", self.gene_click)
