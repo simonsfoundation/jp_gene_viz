@@ -31,6 +31,8 @@ class WigData(traitlets.HasTraits):
         self.header1 = self.header2 = None
         self.span = None
         self.chrom = None
+        # SVG canvas for drawing, if provided.
+        svg = None
 
     def load_file(self, f, filename=None):
         self.filename = filename
@@ -93,7 +95,10 @@ class WigData(traitlets.HasTraits):
         choices = heights[start_index: end_index]
         return numpy.max(choices)
 
-    def draw(self, svg, start_location=None, end_location=None, svg_width=None, svg_height=None):
+    def draw(self, svg=None, start_location=None, end_location=None, svg_width=None, svg_height=None):
+        if svg is None:
+            svg = self.svg
+        assert svg is not None, "No canvas: cannot draw."
         if start_location is None:
             start_location = self.start_position
         else:

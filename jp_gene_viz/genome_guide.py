@@ -13,6 +13,8 @@ from jp_svg_canvas.canvas import load_javascript_support
 
 
 class ExonExplorer(traitlets.HasTraits):
+
+    genes = traitlets.Any()
     
     start_position = traitlets.Float(0, sync=True)
     
@@ -38,6 +40,7 @@ class ExonExplorer(traitlets.HasTraits):
         self.selected_svg_x = None
         traitlets.link((self, "start_position"), (self.genome_zoom, "minLocation"))
         traitlets.link((self, "end_position"), (self.genome_zoom, "maxLocation"))
+        #wig.on_trait_change(self.view_genes, "genes")
         
     def canvas(self):
         svg = canvas.SVGCanvasWidget()
@@ -111,8 +114,11 @@ class ExonExplorer(traitlets.HasTraits):
         self.data.load(f)
         self.info.value = "loaded " + repr(filename)
 
-    def view_genes(self, gene_ids):
+    def view_genes(self, gene_ids, old_gene_ids=None):
         self.info.value = "drawing genes " + repr(gene_ids)
+        # save genes only if not a traitlets call
+        if old_gene_ids is None:
+            self.genes = gene_ids
         assert type(gene_ids) == types.ListType, "gene_ids must be a list."
         n2f = self.name_to_feature = {}
         self.genome_zoom.empty()
