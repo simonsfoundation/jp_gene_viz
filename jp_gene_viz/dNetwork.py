@@ -62,8 +62,8 @@ class NetworkDisplay(object):
                    self.redraw_button]
         self.inputs = widgets.VBox(children=buttons)
         self.assembly = widgets.HBox(children=[self.vertical, self.inputs])
-        self.select_center = None
-        self.select_radius = None
+        self.select_start = None
+        self.select_end = None
         self.selection_id = None
         self.selecting = False
         self.data_graph = None
@@ -291,13 +291,24 @@ class NetworkDisplay(object):
         self.svg.empty()
         self.draw()
 
+    def selection_extrema(self):
+        start = self.select_start
+        end = self.select_end
+        if start is None or end is None:
+            return None
+        minx = min(start[0], end[0])
+        maxx = max(start[0], end[0])
+        miny = min(start[1], end[1])
+        maxy = max(start[1], end[1])
+        maxdiff = max([maxx - minx, maxy - miny, 10])
+        return (minx, miny, maxx, maxy, maxdiff)
+
     def focus_click(self, b):
         "View network restricted to nodes under the selection."
         self.info_area.value = "focus clicked"
-        center = self.select_center
-        radius = self.select_radius
-        if center is not None and radius is not None:
-            #Gfocus = dGraph.WGraph()
+        extrema = self.selection_extrema()
+        if extrema is not None:
+            (minx, miny, maxx, maxy, maxdiff) = extrema
             P = self.display_positions
             G = self.display_graph
             ew = G.edge_weights
@@ -306,8 +317,8 @@ class NetworkDisplay(object):
             for node in nw:
                 npos = P.get(node)
                 if npos is not None:
-                    d = dGraph.distance(npos, center)
-                    if d <= radius:
+                    (px, py) = npos
+                    if minx <= px and px <= maxx and miny <= py and py <= maxy:
                         selected.add(node)
             (Gfocus, Pfocus) = self.select_nodes(selected, G, P)
             self.display_graph = Gfocus
@@ -356,15 +367,12 @@ class NetworkDisplay(object):
         "Zoom button click: fit view to selection region."
         #print "zoom"
         self.info_area.value = "zoom clicked"
-        center = self.select_center
-        radius = self.select_radius
-        if center is not None and radius is not None:
+        extrema = self.selection_extrema()
+        if extrema:
+            (minx, miny, maxx, maxy, maxdiff) = extrema
             svg = self.svg
-            minx = center[0] - radius
-            miny = center[1] - radius
-            width = height = 2 * radius
-            svg.set_view_box(minx, miny, width, height)
-            self.info_area.value = "set_view_box" + repr((minx, miny, width, height))
+            svg.set_view_box(minx, miny, maxdiff, maxdiff)
+            self.info_area.value = "set_view_box" + repr((minx, miny, maxdiff, maxdiff))
             svg.send_commands()
         else:
             self.info_area.value = "no selection for zoom"
@@ -472,15 +480,16 @@ class NetworkDisplay(object):
                            )
         # if there is a shift start a selection
         if shift:
-            self.select_center = dGraph.pos(x,y)
-            self.select_radius = self.default_radius
+            self.select_start = dGraph.pos(x,y)
+            self.select_end = dGraph.pos(x+10, y+10)
             if self.selection_id is None:
-                # create a selection circle
-                svg.circle(SELECTION, x, y, self.default_radius, "black",
+                # create a selection rectangle
+                svg.rect(SELECTION, x, y, 10, 10, "black",
                            style_dict={"fill-opacity": 0.2})
                 self.selection_id = SELECTION
-            atts = {"cx": x, "cy": y, "r": self.select_radius}
-            svg.change_element(self.selection_id, atts)
+            else:
+                atts = {"x": x, "y": y, "width": 10, "height":10}
+                svg.change_element(self.selection_id, atts)
             svg.send_commands()
             self.selecting = True
 
@@ -489,7 +498,7 @@ class NetworkDisplay(object):
         info_area = self.info_area
         #info_area.value = pprint.pformat(info)
         #self.selecting = False
-        if self.select_radius is not None:
+        if self.select_end is not None:
             self.zoom_button.disabled = False
 
     def svg_mousemove(self, info):
@@ -499,10 +508,11 @@ class NetworkDisplay(object):
         shift = info.get("shiftKey")
         # adjust the selection if it is active.
         if self.selecting:
-            center = self.select_center
-            current = self.event_position(info)
-            self.select_radius = dGraph.distance(center, current) + self.default_radius
-            atts = {"r": self.select_radius}
+            self.select_end = self.event_position(info)
+            extrema = self.selection_extrema()
+            assert extrema is not None
+            (minx, miny, maxx, maxy, maxdiff) = extrema
+            atts = {"x": minx, "y": miny, "width": maxdiff, "height": maxdiff}
             svg.change_element(self.selection_id, atts)
             svg.send_commands()
 
@@ -521,7 +531,7 @@ class NetworkDisplay(object):
         svg = self.svg
         if self.selection_id:
             svg.delete_names([self.selection_id])
-        self.selection_id = self.select_center = self.select_radius = None
+        self.selection_id = self.select_start = self.select_end = None
         svg.send_commands()
         self.zoom_button.disabled = True
 
