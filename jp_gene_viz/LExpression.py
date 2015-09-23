@@ -3,13 +3,16 @@ import pprint
 from jp_gene_viz import dExpression
 from jp_gene_viz import dNetwork
 from ipywidgets import widgets
+import traitlets
 
 # Call this once.
 from dNetwork import load_javascript_support
 
-class LinkedExpressionNetwork(object):
 
-    def __init__(self):
+class LinkedExpressionNetwork(traitlets.HasTraits):
+
+    def __init__(self, *args, **kwargs):
+        super(LinkedExpressionNetwork, self).__init__(*args, **kwargs)
         self.network = dNetwork.NetworkDisplay()
         self.expression = dExpression.ExpressionDisplay()
         self.gene_button = self.make_button("V Genes", self.gene_click)
@@ -32,6 +35,7 @@ class LinkedExpressionNetwork(object):
 
     def gene_click(self, b):
         nodes = self.network.get_selection()
+        #print "nodes", nodes
         self.expression.select_rows(nodes)
         self.expression.info_area.value = "Genes\n" + pprint.pformat(nodes)
 
