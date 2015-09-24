@@ -80,6 +80,18 @@ def skeleton(Gin):
     return Gout
 
 
+def clr(r, g, b):
+    result = numpy.array([r*1.0, g*1.0, b*1.0])
+    clr_check(result)
+    return result
+
+
+    
+def clr_check(clr):
+    assert max(clr) < 256
+    assert min(clr) >= 0
+
+
 class WGraph(object):
     
     def __init__(self):
@@ -134,16 +146,27 @@ class WGraph(object):
             mn = min(nw)
             Mn = max(nw)
         return (Me, me, Mn, mn)
+
+    positive_edge_color = clr(0, 211, 0)
+    zero_edge_color = clr(230, 230, 230)
+    negative_edge_color = clr(255, 0, 0)
+
+    def edge_color(self, weight, min_weight, max_weight):
+        if weight >= 0:
+            return weighted_color(self.positive_edge_color, self.zero_edge_color,
+                max_weight, weight)
+        else:
+            return weighted_color(self.negative_edge_color, self.zero_edge_color,
+                abs(min_weight), abs(weight))
+
+    positive_node_color = clr(255, 100, 100)
+    zero_node_color = clr(230, 230, 230)
+
+    def node_color(self, weight, max_weight):
+        return weighted_color(self.positive_node_color, self.zero_node_color,
+            max_weight, weight)
     
     def draw(self, canvas, positions, edgewidth=1, nodesize=3):
-        pedge = clr(0,211,0)
-        zedge = clr(230,230,230)
-        nedge = clr(255,0,0)
-        #znode = zedge
-        znode = clr(0, 0, 0)
-        pnode = clr(255, 100, 100)
-        pcolor = color(pedge)
-        ncolor = color(nedge)
         (Me, me, Mn, mn) = self.weights_extrema()
         # layout edges
         ew = self.edge_weights
@@ -168,10 +191,7 @@ class WGraph(object):
             # don't modify arrays in place
             fp = fp + edgeshift
             tp = tp + edgeshift
-            if w>0:
-                ecolor = weighted_color(pedge, zedge, Me, w)
-            else:
-                ecolor = weighted_color(nedge, zedge, abs(me), abs(w))
+            ecolor = self.edge_color(w, me, Me)
             name = "EDGE_" + json.dumps([f,t])
             canvas.line(name, fp[0], fp[1], tp[0], tp[1], ecolor, edgewidth)
             # add a mark to indicate target
@@ -192,6 +212,7 @@ class WGraph(object):
         pos_n = [(nw[n], n) for n in self.node_weights if n in positions]
         pos_n.sort()
         example_pos = positions[pos_n[0][1]]
+        # keep track of min/max position in order to adjust view box later to include all nodes.
         minimum = maximum = example_pos
         for n in nw:
             if n in positions:
@@ -200,7 +221,8 @@ class WGraph(object):
                 minimum = numpy.minimum(minimum, p)
                 maximum = numpy.maximum(maximum, p)
                 w = nw[n]
-                ncol = weighted_color(pnode, znode, Mn, w)
+                ncol = self.node_color(w, Mn)
+                #ncol = weighted_color(pnode, znode, Mn, w)
                 name = "NODE_" + str(n)
                 degree = min(outdegree.get(n, 1) - 1, 4)
                 canvas.circle(name, x, y, nodesize + degree, ncol) 
@@ -212,7 +234,7 @@ class WGraph(object):
         height = maxy-miny+20
         #view_scale = 500.0/max(height, 1)
         dimension = max(width, height)
-        view_scale = 500.0/max(dimension, 1)
+        #view_scale = 500.0/max(dimension, 1)
         #canvas.width = int(width * view_scale)
         #canvas.height = int(height * view_scale)
         (originx, originy) = (minx-10, miny-10)
@@ -249,15 +271,6 @@ def weighted_color(maxclr, minclr, maxvalue, value):
         lm = value/float(maxvalue)
         clr = (lm * maxclr) + ((1 - lm) * minclr)
     return color(clr)
-
-def clr(r, g, b):
-    result = numpy.array([r*1.0, g*1.0, b*1.0])
-    clr_check(result)
-    return result
-    
-def clr_check(clr):
-    assert max(clr) < 256
-    assert min(clr) >= 0
 
 def color(clr):
     clr_check(clr)
