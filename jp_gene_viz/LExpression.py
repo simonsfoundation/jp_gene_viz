@@ -15,8 +15,8 @@ class LinkedExpressionNetwork(traitlets.HasTraits):
         super(LinkedExpressionNetwork, self).__init__(*args, **kwargs)
         self.network = dNetwork.NetworkDisplay()
         self.expression = dExpression.ExpressionDisplay()
-        self.gene_button = self.make_button("V Genes", self.gene_click)
-        self.condition_button = self.make_button("^ Condition", self.condition_click)
+        self.gene_button = self.make_button(u"\u21d3 Genes", self.gene_click)
+        self.condition_button = self.make_button(u"\u21d1 Condition", self.condition_click)
         buttons = [self.gene_button, self.condition_button]
         horizontal = widgets.HBox(children=buttons)
         self.assembly = widgets.VBox(children=[self.network.assembly, 
