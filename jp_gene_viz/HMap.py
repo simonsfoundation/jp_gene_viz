@@ -17,8 +17,9 @@ def index_dict(L):
 class HeatMap(object):
 
     max_clr = dGraph.clr(255, 0, 0)
-    min_clr = dGraph.clr(0, 255, 255)
-    zero_clr = dGraph.clr(0, 0, 0)
+    min_clr = dGraph.clr(0, 0, 255)
+    zero_clr = dGraph.clr(230, 230, 230)
+    highlight_color = "black"
 
     def __init__(self, row_names=None, col_names=None, data=None):
         if data is None:
@@ -121,8 +122,8 @@ class HeatMap(object):
         maxx = self.ncols * dx
         maxy = self.nrows * dy
         style = None
-        style = {"fill-opacity": 0.4}
-        clr = "white"
+        style = {"fill-opacity": 0.2}
+        clr = self.highlight_color
         for (n, x0, y0, w, h) in [("ll", 0, 0, x, y),
                                   ("ul", x+dx, 0, maxx-x-dx, y),
                                   ("lr", x+dx, y+dy, maxx-x-dx, maxy-y-dy),

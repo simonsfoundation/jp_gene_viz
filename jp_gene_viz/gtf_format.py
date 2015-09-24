@@ -65,6 +65,7 @@ def gtf_dicts_by_gene_id(dicts, result=None):
         if atts:
             gene_id = atts.get("gene_id")
             if gene_id is not None:
+                gene_id = gene_id.lower()
                 gene_map = result.setdefault(gene_id, [])
                 gene_map.append(D)
     return result

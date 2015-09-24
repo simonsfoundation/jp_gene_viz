@@ -13,6 +13,7 @@ import fnmatch
 import igraph
 import json
 import os
+import traitlets
 
 SELECTION = "SELECTION"
 
@@ -43,6 +44,10 @@ class NetworkDisplay(object):
         self.pattern_assembly = self.make_pattern_assembly()
         self.info_area = widgets.Textarea(description="status")
         svg = self.svg = canvas.SVGCanvasWidget()
+        sslider = self.size_slider = widgets.FloatSlider(value=500, min=500, max=2000, step=10,
+            readout=False, width="150px")
+        traitlets.directional_link((sslider, "value"), (svg, "width"))
+        traitlets.directional_link((sslider, "value"), (svg, "height"))
         #self.svg = widgets.Button(description="dummy button")
         svg.add_style("background-color", "cornsilk")
         svg.watch_event = "click mousedown mouseup mousemove mouseover"
@@ -59,9 +64,10 @@ class NetworkDisplay(object):
                    self.layout_dropdown,
                    self.layout_button,
                    self.labels_button,
-                   self.redraw_button]
+                   self.redraw_button,
+                   self.size_slider]
         self.inputs = widgets.VBox(children=buttons)
-        self.assembly = widgets.HBox(children=[self.vertical, self.inputs])
+        self.assembly = widgets.HBox(children=[self.inputs, self.vertical])
         self.select_start = None
         self.select_end = None
         self.selection_id = None
@@ -134,13 +140,18 @@ class NetworkDisplay(object):
         # do nothing if no data is loaded
         if self.display_graph is None:
             return
+        dG = self.data_graph
         G = self.display_graph.clone()
-        ew = self.display_graph.edge_weights
-        ewG = G.edge_weights
+        ew = dG.edge_weights
+        nw = G.node_weights
+        # find edges between viewable nodes that satisfy threshhold.
+        ewG = {}
         for e in ew:
             w = ew[e]
-            if abs(w) < value:
-                del ewG[e]
+            (f, t) = e
+            if f in nw and t in nw and abs(w) >= value:
+                ewG[e] = w
+        G.edge_weights = ewG
         self.display_graph = G
 
     def load_data(self, graph, positions=None):

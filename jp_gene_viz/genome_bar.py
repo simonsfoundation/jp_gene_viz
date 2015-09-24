@@ -98,10 +98,10 @@ def test0():
     else:
         D = gtf_format.GTFData()
         D.load(f)
-        GF = D.get_gene_features(["Tmc6"])
+        GF = D.get_gene_features(["tmc6"])
         #pprint.pprint(sorted(D.gene_id_to_dicts.keys()))
         pprint.pprint(GF)
-        L = GF["Tmc6"]
+        L = GF["tmc6"]
     print "loading", len(L)
     for feature in L:
         atts = feature["attribute"]

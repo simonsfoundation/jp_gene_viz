@@ -42,5 +42,6 @@ def dump(layout, filename):
 def load(filename):
     with open(filename) as f:
         jlayout = json.load(f)
-    layout = {k: pos(*jlayout[k]) for k in jlayout}
+    # Lower case gene names and array positions.
+    layout = {k.lower(): pos(*jlayout[k]) for k in jlayout}
     return layout
