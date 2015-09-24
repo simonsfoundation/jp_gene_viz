@@ -16,7 +16,7 @@ def read_network(fn=network0, limit=None, threshhold=None):
         beta = float(beta_s)
         if abs(beta) < threshhold:
             continue
-        G.add_edge(regulator, target, beta)
+        G.add_edge(regulator.lower(), target.lower(), beta)
         count += 1
         if limit is not None and count>limit:
             break
@@ -32,7 +32,7 @@ def read_tsv(fn=expr1):
     f = open(fn)
     heading = f.readline()
     assert heading[0] == "\t", "expect tab first in headings " + repr(heading)
-    column_names = [x.strip() for x in heading[1:].split("\t")]
+    column_names = [x.strip().lower() for x in heading[1:].split("\t")]
     row_names = []
     all_data = []
     for dataline in f:      
@@ -42,6 +42,6 @@ def read_tsv(fn=expr1):
         values = map(float, valuestr)
         #print ((values, column_names))
         assert len(values)==len(column_names), repr((len(values), len(column_names)))
-        row_names.append(rowname)
+        row_names.append(rowname.lower())
         all_data.append(values)
     return (row_names, column_names, all_data)
