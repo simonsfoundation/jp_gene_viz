@@ -122,7 +122,7 @@ class HeatMap(object):
         maxx = self.ncols * dx
         maxy = self.nrows * dy
         style = None
-        style = {"fill-opacity": 0.4}
+        style = {"fill-opacity": 0.2}
         clr = self.highlight_color
         for (n, x0, y0, w, h) in [("ll", 0, 0, x, y),
                                   ("ul", x+dx, 0, maxx-x-dx, y),
