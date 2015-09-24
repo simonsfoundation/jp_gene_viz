@@ -140,13 +140,18 @@ class NetworkDisplay(object):
         # do nothing if no data is loaded
         if self.display_graph is None:
             return
+        dG = self.data_graph
         G = self.display_graph.clone()
-        ew = self.display_graph.edge_weights
-        ewG = G.edge_weights
+        ew = dG.edge_weights
+        nw = G.node_weights
+        # find edges between viewable nodes that satisfy threshhold.
+        ewG = {}
         for e in ew:
             w = ew[e]
-            if abs(w) < value:
-                del ewG[e]
+            (f, t) = e
+            if f in nw and t in nw and abs(w) >= value:
+                ewG[e] = w
+        G.edge_weights = ewG
         self.display_graph = G
 
     def load_data(self, graph, positions=None):
