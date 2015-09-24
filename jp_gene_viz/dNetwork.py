@@ -27,7 +27,7 @@ class NetworkDisplay(object):
     manipulating the network.
     """
 
-    default_radius = 10
+    default_side = 10
 
     def __init__(self):
         self.zoom_button = self.make_button("zoom", self.zoom_click, True)
@@ -300,7 +300,7 @@ class NetworkDisplay(object):
         maxx = max(start[0], end[0])
         miny = min(start[1], end[1])
         maxy = max(start[1], end[1])
-        maxdiff = max([maxx - minx, maxy - miny, 10])
+        maxdiff = max([maxx - minx, maxy - miny, self.default_side])
         return (minx, miny, maxx, maxy, maxdiff)
 
     def focus_click(self, b):
@@ -376,7 +376,8 @@ class NetworkDisplay(object):
             svg.send_commands()
         else:
             self.info_area.value = "no selection for zoom"
-        self.cancel_selection()
+        # Don't cancel the selection in case the user really wants to focus instead.
+        #self.cancel_selection()
 
     def redraw_click(self, b):
         "Redraw button click: restore data to loaded state."
@@ -405,7 +406,8 @@ class NetworkDisplay(object):
         if typ_callback is not None:
             return typ_callback(info)
         else:
-            self.info_area.value = "No callback for event: " + repr(typ)
+            #self.info_area.value = "No callback for event: " + repr(typ)
+            pass
 
     def event_position(self, info):
         "Get the position array for an event info descriptor."
@@ -468,30 +470,36 @@ class NetworkDisplay(object):
 
     def svg_mousedown(self, info):
         "Handle a mousedown over the canvas."
-        svg = self.svg
         info_area = self.info_area
         (x, y) = self.event_position(info)
         shift = info.get("shiftKey")
         #info_area.value = pprint.pformat(info)
-        info_area.value = ("vbox " + repr(svg.viewBox) + 
+        info_area.value = ("vbox " + repr(self.svg.viewBox) + 
                            "\nep " + repr((x,y)) +
                            "\noffset " + repr((info.get("offsetX"), info.get("offsetY"))) +
                            "\n" + pprint.pformat(info)
                            )
         # if there is a shift start a selection
         if shift:
-            self.select_start = dGraph.pos(x,y)
-            self.select_end = dGraph.pos(x+10, y+10)
-            if self.selection_id is None:
-                # create a selection rectangle
-                svg.rect(SELECTION, x, y, 10, 10, "black",
-                           style_dict={"fill-opacity": 0.2})
-                self.selection_id = SELECTION
-            else:
-                atts = {"x": x, "y": y, "width": 10, "height":10}
-                svg.change_element(self.selection_id, atts)
-            svg.send_commands()
-            self.selecting = True
+            #self.start_selecting(info)
+            pass
+
+    def start_selecting(self, info):
+        svg = self.svg
+        side = self.default_side
+        (x, y) = self.event_position(info)
+        self.select_start = dGraph.pos(x,y)
+        self.select_end = dGraph.pos(x+side, y+side)
+        if self.selection_id is None:
+            # create a selection rectangle
+            svg.rect(SELECTION, x, y, side, side, "black",
+                style_dict={"fill-opacity": 0.2})
+            self.selection_id = SELECTION
+        else:
+            atts = {"x": x, "y": y, "width": side, "height": side}
+            svg.change_element(self.selection_id, atts)
+        svg.send_commands()
+        self.selecting = True
 
     def svg_mouseup(self, info):
         "handle a mouseup over the canvas."
@@ -503,18 +511,21 @@ class NetworkDisplay(object):
 
     def svg_mousemove(self, info):
         "Handle a mousemove over the canvas."
-        svg = self.svg
         info_area = self.info_area
         shift = info.get("shiftKey")
         # adjust the selection if it is active.
         if self.selecting:
-            self.select_end = self.event_position(info)
-            extrema = self.selection_extrema()
-            assert extrema is not None
-            (minx, miny, maxx, maxy, maxdiff) = extrema
-            atts = {"x": minx, "y": miny, "width": maxdiff, "height": maxdiff}
-            svg.change_element(self.selection_id, atts)
-            svg.send_commands()
+            self.update_selection(info)
+
+    def update_selection(self, info):
+        svg = self.svg
+        self.select_end = self.event_position(info)
+        extrema = self.selection_extrema()
+        assert extrema is not None
+        (minx, miny, maxx, maxy, maxdiff) = extrema
+        atts = {"x": minx, "y": miny, "width": maxdiff, "height": maxdiff}
+        svg.change_element(self.selection_id, atts)
+        svg.send_commands()
 
     def svg_click(self, info):
         "Handle a click on the canvas."
@@ -522,9 +533,13 @@ class NetworkDisplay(object):
         info_area = self.info_area
         shift = info.get("shiftKey")
         #info_area.value = pprint.pformat(info)
-        if self.selection_id and not shift and not self.selecting:
+        if shift:
+            self.start_selecting(info)
+        elif self.selecting:
+            self.update_selection(info)
+            self.selecting = False
+        elif self.selection_id and not shift and not self.selecting:
             self.cancel_selection()
-        self.selecting = False
 
     def cancel_selection(self):
         "Remove the circular selection area, if present."
@@ -534,6 +549,7 @@ class NetworkDisplay(object):
         self.selection_id = self.select_start = self.select_end = None
         svg.send_commands()
         self.zoom_button.disabled = True
+        self.selecting = False
 
     def set_node_weights(self, weights):
         nw = self.display_graph.node_weights
