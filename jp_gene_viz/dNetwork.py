@@ -61,7 +61,7 @@ class NetworkDisplay(object):
                    self.labels_button,
                    self.redraw_button]
         self.inputs = widgets.VBox(children=buttons)
-        self.assembly = widgets.HBox(children=[self.vertical, self.inputs])
+        self.assembly = widgets.HBox(children=[self.inputs, self.vertical])
         self.select_start = None
         self.select_end = None
         self.selection_id = None
