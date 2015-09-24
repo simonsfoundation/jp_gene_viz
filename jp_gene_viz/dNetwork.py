@@ -13,6 +13,7 @@ import fnmatch
 import igraph
 import json
 import os
+import traitlets
 
 SELECTION = "SELECTION"
 
@@ -43,6 +44,10 @@ class NetworkDisplay(object):
         self.pattern_assembly = self.make_pattern_assembly()
         self.info_area = widgets.Textarea(description="status")
         svg = self.svg = canvas.SVGCanvasWidget()
+        sslider = self.size_slider = widgets.FloatSlider(value=500, min=500, max=2000, step=10,
+            readout=False, width="150px")
+        traitlets.directional_link((sslider, "value"), (svg, "width"))
+        traitlets.directional_link((sslider, "value"), (svg, "height"))
         #self.svg = widgets.Button(description="dummy button")
         svg.add_style("background-color", "cornsilk")
         svg.watch_event = "click mousedown mouseup mousemove mouseover"
@@ -59,7 +64,8 @@ class NetworkDisplay(object):
                    self.layout_dropdown,
                    self.layout_button,
                    self.labels_button,
-                   self.redraw_button]
+                   self.redraw_button,
+                   self.size_slider]
         self.inputs = widgets.VBox(children=buttons)
         self.assembly = widgets.HBox(children=[self.inputs, self.vertical])
         self.select_start = None
