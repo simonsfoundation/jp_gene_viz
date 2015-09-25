@@ -37,6 +37,9 @@ class NetworkDisplay(object):
         self.expand_button = self.make_button("expand", self.expand_click)
         self.focus_button = self.make_button("focus", self.focus_click)
         self.redraw_button = self.make_button("restore", self.redraw_click)
+        self.ignore_button = self.make_button("ignore", self.ignore_click)
+        self.nodes_button = self.make_button("list nodes", self.nodes_click)
+        self.edges_button = self.make_button("list edges", self.edges_click)
         self.layout_dropdown = self.make_layout_dropdown()
         self.labels_button = self.make_labels_button()
         # Assemble the layout
@@ -59,10 +62,13 @@ class NetworkDisplay(object):
         self.vertical = widgets.VBox(children=left_panel)
         buttons = [self.zoom_button,
                    self.focus_button,
+                   self.ignore_button,
                    self.trim_button,
                    self.expand_button,
                    self.layout_dropdown,
                    self.layout_button,
+                   self.nodes_button,
+                   self.edges_button,
                    self.labels_button,
                    self.redraw_button,
                    self.size_slider]
@@ -129,6 +135,21 @@ class NetworkDisplay(object):
         self.do_threshhold()
         self.svg.empty()
         self.draw()
+
+    def nodes_click(self, b):
+        "display nodes information in the info area."
+        nw = self.display_graph.node_weights
+        L = []
+        for (n,w) in sorted(nw.items()):
+            L.append("\t".join([n, str(w)]))
+        self.info_area.value = "NODES\n" + "\n".join(L)
+
+    def edges_click(self, b):
+        ew = self.display_graph.edge_weights
+        L = []
+        for ((f,t), w) in sorted(ew.items()):
+            L.append("\t".join([f,t,str(w)]))
+        self.info_area.value = "EDGES\n" + "\n".join(L)
 
     def do_threshhold(self, value=None):
         "Restrict viewable edges to have abs(weight) greater than value."
@@ -198,7 +219,7 @@ class NetworkDisplay(object):
         self.cancel_selection()
         self.info_area.value = "Done drawing: " + repr((G.sizes(), len(P)))
         style = {"font-size": 5, "text-anchor": "middle"}
-        color = "#5555FF"
+        color = "black"
         if self.labels_button.value:
             self.info_area.value = "Adding labels."
             nw = G.node_weights
@@ -314,29 +335,51 @@ class NetworkDisplay(object):
         maxdiff = max([maxx - minx, maxy - miny, self.default_side])
         return (minx, miny, maxx, maxy, maxdiff)
 
+    def nodes_in_selection(self):
+        "Determine the set of nodes in the selection region."
+        extrema = self.selection_extrema()
+        if extrema is None:
+            return None  # no selection
+        (minx, miny, maxx, maxy, maxdiff) = extrema
+        P = self.display_positions
+        G = self.display_graph
+        selected = set()
+        nw = G.node_weights
+        for node in nw:
+            npos = P.get(node)
+            if npos is not None:
+                (px, py) = npos
+                if minx <= px and px <= maxx and miny <= py and py <= maxy:
+                    selected.add(node)
+        return selected
+
     def focus_click(self, b):
         "View network restricted to nodes under the selection."
         self.info_area.value = "focus clicked"
-        extrema = self.selection_extrema()
-        if extrema is not None:
-            (minx, miny, maxx, maxy, maxdiff) = extrema
-            P = self.display_positions
-            G = self.display_graph
-            ew = G.edge_weights
-            nw = G.node_weights
-            selected = set()
-            for node in nw:
-                npos = P.get(node)
-                if npos is not None:
-                    (px, py) = npos
-                    if minx <= px and px <= maxx and miny <= py and py <= maxy:
-                        selected.add(node)
-            (Gfocus, Pfocus) = self.select_nodes(selected, G, P)
-            self.display_graph = Gfocus
-            self.svg.empty()
-            self.draw()
+        selected = self.nodes_in_selection()
+        if selected is not None:
+            self.select_and_draw(selected)
         else:
             self.info_area.value = "no selection for focus"
+
+    def ignore_click(self, b):
+        "Remove selected nodes from view."
+        self.info_area.value = "ignore clicked"
+        selected = self.nodes_in_selection()
+        if selected is not None:
+            G = self.display_graph
+            unselected = list(set(G.node_weights.keys()) - selected)
+            self.select_and_draw(unselected)
+        else:
+            self.info_area.value = "no selection to ignore."
+
+    def select_and_draw(self, nodes):
+        G = self.display_graph
+        P = self.display_positions
+        (Gfocus, Pfocus) = self.select_nodes(nodes, G, P)
+        self.display_graph = Gfocus
+        self.svg.empty()
+        self.draw()
 
     def get_selection(self):
         "Get nodes list for currently viewable nodes."
