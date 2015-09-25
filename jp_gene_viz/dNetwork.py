@@ -37,6 +37,7 @@ class NetworkDisplay(object):
         self.expand_button = self.make_button("expand", self.expand_click)
         self.focus_button = self.make_button("focus", self.focus_click)
         self.redraw_button = self.make_button("restore", self.redraw_click)
+        self.ignore_button = self.make_button("ignore", self.ignore_click)
         self.layout_dropdown = self.make_layout_dropdown()
         self.labels_button = self.make_labels_button()
         # Assemble the layout
@@ -59,6 +60,7 @@ class NetworkDisplay(object):
         self.vertical = widgets.VBox(children=left_panel)
         buttons = [self.zoom_button,
                    self.focus_button,
+                   self.ignore_button,
                    self.trim_button,
                    self.expand_button,
                    self.layout_dropdown,
@@ -314,6 +316,24 @@ class NetworkDisplay(object):
         maxdiff = max([maxx - minx, maxy - miny, self.default_side])
         return (minx, miny, maxx, maxy, maxdiff)
 
+    def nodes_in_selection(self):
+        "Determine the set of nodes in the selection region."
+        extrema = self.selection_extrema()
+        if extrema is None:
+            return None  # no selection
+        (minx, miny, maxx, maxy, maxdiff) = extrema
+        P = self.display_positions
+        G = self.display_graph
+        selected = set()
+        nw = G.node_weights
+        for node in nw:
+            npos = P.get(node)
+            if npos is not None:
+                (px, py) = npos
+                if minx <= px and px <= maxx and miny <= py and py <= maxy:
+                    selected.add(node)
+        return selected
+
     def focus_click(self, b):
         "View network restricted to nodes under the selection."
         self.info_area.value = "focus clicked"
@@ -337,6 +357,17 @@ class NetworkDisplay(object):
             self.draw()
         else:
             self.info_area.value = "no selection for focus"
+
+    def ignore_click(self, b):
+        "Remove selected nodes from view."
+        self.info_area.value = "ignore clicked"
+        extrema = self.selection_extrema()
+        if extrema is not None:
+            (minx, miny, maxx, maxy, maxdiff) = extrema
+            G = self.display_graph
+            pass
+        else:
+            self.info_area.value = "no selection to ignore."
 
     def get_selection(self):
         "Get nodes list for currently viewable nodes."
