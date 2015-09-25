@@ -160,7 +160,7 @@ class WGraph(object):
                 abs(min_weight), abs(weight))
 
     positive_node_color = clr(255, 100, 100)
-    zero_node_color = clr(230, 230, 230)
+    zero_node_color = clr(200, 200, 230)
 
     def node_color(self, weight, max_weight):
         return weighted_color(self.positive_node_color, self.zero_node_color,

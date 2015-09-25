@@ -200,7 +200,7 @@ class NetworkDisplay(object):
         self.cancel_selection()
         self.info_area.value = "Done drawing: " + repr((G.sizes(), len(P)))
         style = {"font-size": 5, "text-anchor": "middle"}
-        color = "#5555FF"
+        color = "black"
         if self.labels_button.value:
             self.info_area.value = "Adding labels."
             nw = G.node_weights
@@ -337,37 +337,30 @@ class NetworkDisplay(object):
     def focus_click(self, b):
         "View network restricted to nodes under the selection."
         self.info_area.value = "focus clicked"
-        extrema = self.selection_extrema()
-        if extrema is not None:
-            (minx, miny, maxx, maxy, maxdiff) = extrema
-            P = self.display_positions
-            G = self.display_graph
-            ew = G.edge_weights
-            nw = G.node_weights
-            selected = set()
-            for node in nw:
-                npos = P.get(node)
-                if npos is not None:
-                    (px, py) = npos
-                    if minx <= px and px <= maxx and miny <= py and py <= maxy:
-                        selected.add(node)
-            (Gfocus, Pfocus) = self.select_nodes(selected, G, P)
-            self.display_graph = Gfocus
-            self.svg.empty()
-            self.draw()
+        selected = self.nodes_in_selection()
+        if selected is not None:
+            self.select_and_draw(selected)
         else:
             self.info_area.value = "no selection for focus"
 
     def ignore_click(self, b):
         "Remove selected nodes from view."
         self.info_area.value = "ignore clicked"
-        extrema = self.selection_extrema()
-        if extrema is not None:
-            (minx, miny, maxx, maxy, maxdiff) = extrema
+        selected = self.nodes_in_selection()
+        if selected is not None:
             G = self.display_graph
-            pass
+            unselected = list(set(G.node_weights.keys()) - selected)
+            self.select_and_draw(unselected)
         else:
             self.info_area.value = "no selection to ignore."
+
+    def select_and_draw(self, nodes):
+        G = self.display_graph
+        P = self.display_positions
+        (Gfocus, Pfocus) = self.select_nodes(nodes, G, P)
+        self.display_graph = Gfocus
+        self.svg.empty()
+        self.draw()
 
     def get_selection(self):
         "Get nodes list for currently viewable nodes."
