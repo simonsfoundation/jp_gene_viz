@@ -38,6 +38,8 @@ class NetworkDisplay(object):
         self.focus_button = self.make_button("focus", self.focus_click)
         self.redraw_button = self.make_button("restore", self.redraw_click)
         self.ignore_button = self.make_button("ignore", self.ignore_click)
+        self.nodes_button = self.make_button("list nodes", self.nodes_click)
+        self.edges_button = self.make_button("list edges", self.edges_click)
         self.layout_dropdown = self.make_layout_dropdown()
         self.labels_button = self.make_labels_button()
         # Assemble the layout
@@ -65,6 +67,8 @@ class NetworkDisplay(object):
                    self.expand_button,
                    self.layout_dropdown,
                    self.layout_button,
+                   self.nodes_button,
+                   self.edges_button,
                    self.labels_button,
                    self.redraw_button,
                    self.size_slider]
@@ -131,6 +135,21 @@ class NetworkDisplay(object):
         self.do_threshhold()
         self.svg.empty()
         self.draw()
+
+    def nodes_click(self, b):
+        "display nodes information in the info area."
+        nw = self.display_graph.node_weights
+        L = []
+        for (n,w) in sorted(nw.items()):
+            L.append("\t".join([n, str(w)]))
+        self.info_area.value = "NODES\n" + "\n".join(L)
+
+    def edges_click(self, b):
+        ew = self.display_graph.edge_weights
+        L = []
+        for ((f,t), w) in sorted(ew.items()):
+            L.append("\t".join([f,t,str(w)]))
+        self.info_area.value = "EDGES\n" + "\n".join(L)
 
     def do_threshhold(self, value=None):
         "Restrict viewable edges to have abs(weight) greater than value."
