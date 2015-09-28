@@ -17,6 +17,10 @@ import traitlets
 
 class WigData(traitlets.HasTraits):
 
+    """
+    Encapsulate data from a Wig file.
+    """
+
     start_position = traitlets.Float(0, sync=True)
 
     end_position = traitlets.Float(1000, sync=True)
@@ -35,6 +39,9 @@ class WigData(traitlets.HasTraits):
         svg = None
 
     def load_file(self, f, filename=None):
+        """
+        Load data from a WIG file object.
+        """
         self.filename = filename
         # skip 2 lines
         self.header1 = f.readline()
@@ -42,14 +49,14 @@ class WigData(traitlets.HasTraits):
         hs = header2.split()
         # parse and validate header info
         try:
-            assert hs[0] == "variableStep", ("not in variableStep format: "
-                + repr((filename,header2)))
-            assert len(hs) == 3, ("unexpected header format: "
-                + repr((filename,header2)))
+            assert hs[0] == "variableStep", ("not in variableStep format: " +
+                                             repr((filename, header2)))
+            assert len(hs) == 3, ("unexpected header format: " +
+                                  repr((filename, header2)))
             for (attr, chunk) in [("chrom", hs[1]), ("span", hs[2])]:
                 [attr2, value] = chunk.split("=")
-                assert attr2 == attr, ("bad variableStep format: "
-                    + repr((filename,header2,chunk)))
+                assert attr2 == attr, ("bad variableStep format: " +
+                                       repr((filename, header2, chunk)))
                 setattr(self, attr, value)
             self.span = int(self.span)
         except Exception as e:
@@ -60,12 +67,15 @@ class WigData(traitlets.HasTraits):
         A = numpy.fromstring(array_text, numpy.float, sep=" ")
         (d,) = A.shape
         B = A.reshape((d/2, 2))
-        self.locations = B[:,0]
-        self.heights = B[:,1]
+        self.locations = B[:, 0]
+        self.heights = B[:, 1]
         self.maxheight = numpy.max(self.heights)
         self.numelts = len(self.heights)
 
     def load_filename(self, filename):
+        """
+        Load data using a file name.
+        """
         if filename.endswith(".wig"):
             f = open(filename)
         elif filename.endswith(".wig.gz"):
@@ -75,27 +85,30 @@ class WigData(traitlets.HasTraits):
         self.load_file(f, filename)
 
     def maximum(self, start_location, end_location):
+        """
+        Determine the maximum value within a start/end range in the data.
+        """
         locations = self.locations
         heights = self.heights
         ss = numpy.searchsorted
         start_index = ss(locations, start_location)
         end_index = ss(locations, end_location)
-        #print "indices", start_index, end_index
         if start_index >= end_index:
             if start_index < self.numelts - 1:
                 next_location = locations[start_index]
                 if next_location < start_location:
                     next_location = locations[start_index + 1]
-                #print "next", start_location, next_location, next_location-start_location
                 if (next_location - start_location) <= self.span * 1.5:
-                    # Close to a populated value.
-                    #print "returning at", start_index, heights[start_index]
                     return heights[start_index]
             return 0  # missing value means 0
         choices = heights[start_index: end_index]
         return numpy.max(choices)
 
-    def draw(self, svg=None, start_location=None, end_location=None, svg_width=None, svg_height=None):
+    def draw(self, svg=None, start_location=None, end_location=None,
+             svg_width=None, svg_height=None):
+        """
+        Draw the binding data to an SVG canvas.
+        """
         if svg is None:
             svg = self.svg
         assert svg is not None, "No canvas: cannot draw."
@@ -120,8 +133,8 @@ class WigData(traitlets.HasTraits):
             locationx = start_location + dlocation * svgx
             maxh = self.maximum(locationx, locationx + dlocation)
             svgy = maxh * yscale
-            #print (map(int, (locationx, locationx + dlocation, svgx, maxh, svgy)))
-            svg.rect(repr((svgx, svgy)), svgx, svg_height - svgy, 1, svgy, color)
+            svg.rect(repr((svgx, svgy)), svgx, svg_height - svgy,
+                     1, svgy, color)
         svg.send_commands()
 
 
@@ -158,7 +171,6 @@ def canvas_test(filename="ex2.wig.gz", width=500, height=100):
     print ("loading: " + repr(filename))
     W.load_filename(filename)
     print ("loaded " + repr(W.numelts) + " max " + repr(W.maxheight))
-    #W.draw(svg, 3000011, 4074591, width, height)
     W.draw(svg, 3010000, 3010200, width, height)
     return (svg, W)
 
@@ -169,4 +181,3 @@ if __name__ == "__main__":
     test1()
     elapsed = time.time() - start
     print ("elapsed", elapsed)
-

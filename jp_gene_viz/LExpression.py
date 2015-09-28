@@ -1,3 +1,7 @@
+"""
+Implementation of network display bound to expression heatmap.
+"""
+
 from IPython.display import display
 import pprint
 from jp_gene_viz import dExpression
@@ -11,22 +15,30 @@ from dNetwork import load_javascript_support
 
 class LinkedExpressionNetwork(traitlets.HasTraits):
 
+    """
+    Widget implementing a network display bound to an expression heatmap.
+    """
+
     def __init__(self, *args, **kwargs):
         super(LinkedExpressionNetwork, self).__init__(*args, **kwargs)
         self.network = dNetwork.NetworkDisplay()
         self.expression = dExpression.ExpressionDisplay()
         self.gene_button = self.make_button(u"\u21d3 Genes", self.gene_click)
-        self.condition_button = self.make_button(u"\u21d1 Condition", self.condition_click)
+        self.condition_button = self.make_button(u"\u21d1 Condition",
+                                                 self.condition_click)
         buttons = [self.gene_button, self.condition_button]
         horizontal = widgets.HBox(children=buttons)
-        self.assembly = widgets.VBox(children=[self.network.assembly, 
-                                               horizontal, 
+        self.assembly = widgets.VBox(children=[self.network.assembly,
+                                               horizontal,
                                                self.expression.assembly])
+
     def show(self):
         display(self.assembly)
 
-    def make_button(self, description, on_click, disabled=False, width="250px"):
+    def make_button(self, description, on_click,
+                    disabled=False, width="250px"):
         "Create a button."
+        # XXXX refactor to superclass.
         result = widgets.Button(description=description)
         result.on_click(on_click)
         result.disabled = disabled
@@ -34,24 +46,38 @@ class LinkedExpressionNetwork(traitlets.HasTraits):
         return result
 
     def gene_click(self, b):
+        """
+        Handle genes button click -- load genes selected in network
+        to the heatmap.
+        """
         nodes = self.network.get_selection()
-        #print "nodes", nodes
         self.expression.select_rows(nodes)
         self.expression.info_area.value = "Genes\n" + pprint.pformat(nodes)
 
     def condition_click(self, b):
+        """
+        Handle condition button click -- load weights in heatmap selected
+        condition to the gene nodes in the network.
+        """
         col_weights = self.expression.column_weights()
         if not col_weights:
             self.network.info_area.value = "No column weights selected!"
             return
         self.network.set_node_weights(col_weights)
         self.network.draw()
-        self.network.info_area.value = "weights\n" + pprint.pformat(col_weights)
+        self.network.info_area.value = ("weights\n" +
+                                        pprint.pformat(col_weights))
 
     def load_network(self, filename):
+        """
+        Load the network data from a data file.
+        """
         N = self.network
         dNetwork.display_network(filename, N, show=False)
 
     def load_heatmap(self, filename):
+        """
+        Load the expression data from a data file.
+        """
         dexpr = self.expression
         dExpression.display_heat_map(filename, dexpr)
