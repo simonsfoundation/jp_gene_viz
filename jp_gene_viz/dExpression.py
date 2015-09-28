@@ -4,8 +4,11 @@ import ipywidgets as widgets
 from IPython.display import display
 from jp_svg_canvas import canvas
 import traitlets
+import fnmatch
 
 class ExpressionDisplay(traitlets.HasTraits):
+
+    labels_space = traitlets.Any(100, sync=True)
 
     rows = traitlets.Any()
 
@@ -13,15 +16,20 @@ class ExpressionDisplay(traitlets.HasTraits):
         super(ExpressionDisplay, self).__init__(*args, **kwargs)
         svg = self.svg = canvas.SVGCanvasWidget()
         svg.add_style("background-color", "cornsilk")
+        svg.width = 550
+        svg.height = 550
         svg.watch_event = "click mousemove"
         #svg.watch_event = "click"
         svg.default_event_callback = self.svg_callback
         #self.feedback = widgets.Text(value="")
         #self.feedback.width = "300px"
         self.text_assembly = self.make_text_displays()
+        self.match_assembly = self.make_match_assembly()
         self.info_area = widgets.Textarea(description="status")
-        self.assembly = widgets.VBox(children=[self.svg, #self.feedback, 
-                                               self.text_assembly, self.info_area])
+        self.assembly = widgets.VBox(children=[self.text_assembly,
+                                               self.svg,
+                                               self.match_assembly,
+                                               self.info_area])
         self.dx = 10
         self.dy = 2
         self.data_heat_map = None
@@ -36,22 +44,23 @@ class ExpressionDisplay(traitlets.HasTraits):
     #    return # TEMP
     #    self.select_rows()
 
-    def load_data(self, heat_map, dx=10, dy=5):
+    def load_data(self, heat_map, side_length):
         self.data_heat_map = heat_map
         # project to at most 200 rows and columns
         rows = heat_map.row_names[:200]
         cols = heat_map.col_names[:200]
-        self.dx = dx
-        self.dy = dy
-        return self.display_data(rows, cols)
+        self.side_length = side_length
+        self.display_data(rows, cols, side_length)
 
-    def display_data(self, rows, cols):
+    def display_data(self, rows, cols, side_length=None):
+        if side_length is None:
+            side_length = self.side_length
         if rows is not None:
             self.rows = rows
         else:
             rows = self.rows
         heat_map = self.display_heat_map = self.data_heat_map.projection(rows, cols)
-        heat_map.fit(self.svg, self.dx, self.dy)
+        (self.dx, self.dy) = heat_map.fit(self.svg, side_length, self.labels_space)
         self.row = self.col = None
         self.svg.empty()
         return self.draw()
@@ -66,11 +75,36 @@ class ExpressionDisplay(traitlets.HasTraits):
 
     def make_text_displays(self):
         self.row_text = widgets.Text(description="row", value="")
-        self.row_text.width = "150px"
+        self.row_text.width = "100px"
         self.col_text = widgets.Text(description="col", value="")
-        self.col_text.width = "150px"
-        assembly = widgets.HBox(children=[self.row_text, self.col_text])
+        self.col_text.width = "100px"
+        sslider = self.size_slider = widgets.FloatSlider(value=550, min=550, max=3000,
+            step=10, readout=False, width="100px")
+        svg = self.svg
+        traitlets.directional_link((sslider, "value"), (svg, "width"))
+        traitlets.directional_link((sslider, "value"), (svg, "height"))
+        assembly = widgets.HBox(children=[self.row_text, self.col_text, sslider])
         return assembly
+
+    def make_match_assembly(self):
+        b = self.match_button = widgets.Button(description="match", width="150px")
+        b.on_click(self.match_click)
+        t = self.match_text = widgets.Text(width="300px")
+        assembly = widgets.HBox(children=[b, t])
+        return assembly
+
+    def match_click(self, b):
+        patterns = self.match_text.value.split()
+        column_set = set()
+        columns = self.data_heat_map.col_names
+        for pattern in patterns:
+            column_set.update(fnmatch.filter(columns, pattern))
+        if not column_set:
+            self.info_area.value = "No columns selected."
+        else:
+            columns = sorted(column_set)[:200]
+            rows = self.display_heat_map.row_names
+            self.display_data(rows, columns)
 
     def svg_callback(self, info):
         self.info_area.value = pprint.pformat(info)
@@ -108,7 +142,7 @@ class ExpressionDisplay(traitlets.HasTraits):
             return
         svg = self.svg
         svg.empty()
-        heat_map.draw(svg, self.dx, self.dy)
+        heat_map.draw(svg, self.dx, self.dy, self.labels_space)
         svg.send_commands()
         self.drawing = False
 
@@ -116,11 +150,11 @@ class ExpressionDisplay(traitlets.HasTraits):
         display(self.assembly)
 
 
-def display_heat_map(filename, dexpr=None):
+def display_heat_map(filename, dexpr=None, side_length=550):
     from jp_gene_viz import getData
     H = HMap.HeatMap()
     (r, c, d) = getData.read_tsv(filename)
     H.set_data(r, c, d)
     if dexpr is None:
         dexpr = ExpressionDisplay()
-    dexpr.load_data(H)
+    dexpr.load_data(H, side_length=side_length)

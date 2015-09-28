@@ -101,20 +101,43 @@ class HeatMap(object):
             result = dGraph.weighted_color(self.max_clr, self.zero_clr, self.dmax, value)
         return result
 
-    def draw(self, canvas, dx, dy):
+    def draw(self, canvas, dx, dy, labels_space=None):
+        canvas.empty()
         for rowi in xrange(self.nrows):
             for colj in xrange(self.ncols):
                 dataij = self.data[rowi,colj]
                 nameij = self.rectName(rowi, colj)
                 colorij = self.color(dataij)
                 canvas.rect(nameij, colj*dx, rowi*dy, dx, dy, colorij)
+        if labels_space is not None:
+            label_color = "black"
+            col_end = self.ncols * dx
+            style = {"font-size": min(dy,9), "text-anchor": "start"}
+            for rowi in xrange(self.nrows):
+                row_name = self.row_names[rowi]
+                canvas.text(None, col_end, rowi * dy, row_name, label_color, **style)
+            row_end = self.nrows * dy
+            for colj in xrange(self.ncols):
+                x = colj * dx
+                transform = "rotate(90,%s,%s)" % (x, row_end)
+                style = {"font-size": min(dx,10), "transform": transform, "text-anchor": "start"}
+                col_name = self.col_names[colj]
+                canvas.text(None, x, row_end, col_name, label_color, **style)
 
-    def fit(self, canvas, dx, dy):
+    def fit(self, canvas, side_length, label_space=None):
+        dx = side_length / self.ncols
+        dy = side_length / self.nrows
+        if label_space is None:
+            additional = 0
+        else:
+            additional = label_space
         if self.ncols == 0 or self.nrows == 0:
             return
-        width = dx * self.ncols
-        height = dy * self.nrows
-        canvas.set_view_box(0, 0, width, height)
+        width = dx * self.ncols + label_space
+        height = dy * self.nrows + label_space
+        side = max(width,height)
+        canvas.set_view_box(0, 0, side, side)
+        return (dx, dy)
 
     def highlight(self, canvas, rowi, colj, dx, dy):
         x = colj * dx
