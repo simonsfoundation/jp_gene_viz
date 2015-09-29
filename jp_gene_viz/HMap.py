@@ -159,7 +159,7 @@ class HeatMap(object):
             style = {"font-size": min(dy, 15), "text-anchor": "start"}
             for rowi in xrange(self.nrows):
                 row_name = self.row_names[rowi]
-                canvas.text(None, col_end, rowi * dy,
+                canvas.text(None, col_end, (rowi + 1) * dy,
                             row_name, label_color, **style)
             row_end = self.nrows * dy
             for colj in xrange(self.ncols):
