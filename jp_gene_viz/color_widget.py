@@ -51,8 +51,18 @@ class ColorChooser(traitlets.HasTraits):
                 self.add_circle(cname, x, y, dcolor)
                 svg.send_commands()
             else:
-                # TEMPORARAY
-                self.cancel_drag()
+                bary_start = self.palette_side
+                bary_end = bary_start + self.bar_region
+                if y > bary_start and y < bary_end:
+                    # click on the interpolation bar
+                    xvalue = self.interpolation_value(x)
+                    if drag_circle is not None:
+                        drag_clr = color_scale.color2clr(drag_color)
+                        self.scale.add_color(xvalue, drag_clr)
+                        self.cancel_drag()
+                        self.draw()
+                else:
+                    self.cancel_drag()
         elif typ == "mousemove":
             if drag_circle is not None:
                 atts = {"cx": x, "cy": y}
@@ -71,6 +81,10 @@ class ColorChooser(traitlets.HasTraits):
         display(self.svg)
         self.draw()
 
+    def interpolation_value(self, x):
+        normalized = float(x) / self.palette_side
+        return self.scale.denormalized_value(normalized)
+
     def draw(self):
         svg = self.svg
         svg.empty()
@@ -80,7 +94,8 @@ class ColorChooser(traitlets.HasTraits):
                 svg.rect("R" + color, i * self.dx, j * self.dy, self.dx, self.dy, color)
         bary = self.palette_side + self.bar_region / 2 - self.bar_height / 2
         for i in xrange(self.palette_side):
-            color = self.scale.interpolate_color(float(i)/self.palette_side)
+            color_value = self.interpolation_value(i)
+            color = self.scale.interpolate_color(color_value)
             svg.rect("V" + color, i, bary, 1, self.bar_height, color)
         circley = self.palette_side + self.bar_region / 2
         #circler = self.bar_height/2 + 2
