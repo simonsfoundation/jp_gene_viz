@@ -71,16 +71,20 @@ class ColorInterpolator(object):
         self.maxvalue = maxvalue
         self.breakpoints = [(minvalue, minclr), (maxvalue, maxclr)]
 
+    def remove_color(self, clr):
+        return self.add_color(None, clr)
+
     def add_color(self, value, clr):
         col = color(clr)
-        breakpoints = [(v, c) for (v, c) in self.breakpoints
-                       if v != value and color(c) != col]
-        breakpoints += [(value, clr)]
-        b = sorted(breakpoints)
-        if value == self.minvalue:
-            self.minclr = clr
-        if value == self.maxvalue:
-            self.maxclr = clr
+        b = [(v, c) for (v, c) in self.breakpoints
+             if v != value and color(c) != col]
+        if value is not None:
+            b += [(value, clr)]
+            b = sorted(b)
+            if value == self.minvalue:
+                self.minclr = clr
+            if value == self.maxvalue:
+                self.maxclr = clr
         if b[0][0] > self.minvalue:
             b.insert(0, (self.minvalue, self.minclr))
         if b[-1][0] < self.maxvalue:
@@ -90,7 +94,7 @@ class ColorInterpolator(object):
     def normalized_value(self, value):
         lowvalue = self.minvalue
         highvalue = self.maxvalue
-        result = (value - lowvalue) * 1.0 / (highvalue - value)
+        result = (value - lowvalue) * 1.0 / (highvalue - lowvalue)
         return max(0.0, min(1.0, result))
 
     def denormalized_value(self, nvalue):

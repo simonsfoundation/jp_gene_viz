@@ -34,6 +34,14 @@ class ColorChooser(traitlets.HasTraits):
         svg.default_event_callback = self.svg_callback
         self.drag_color = None
         self.drag_circle = None
+        self.histogram = None
+
+    def count_values(self, values):
+        h = self.histogram
+        if h is None:
+            h = self.histogram = {}
+        for v in values:
+            h[v] = h.get(v, 0) + 1
 
     def svg_callback(self, info):
         name = info.get("name", "")
@@ -44,9 +52,14 @@ class ColorChooser(traitlets.HasTraits):
         drag_color = self.drag_color
         svg = self.svg
         if typ == "click":
-            if name.startswith("R"):
+            if name.startswith("R_") or name.startswith("breakpoint_"):
                 self.cancel_drag()
-                dcolor = self.drag_color = name[1:]
+                (_, dcolor) = name.split("_")
+                # remove the color from the scale and redraw
+                dclr = color_scale.color2clr(dcolor)
+                self.scale.remove_color(dclr)
+                self.draw()
+                self.drag_color = dcolor
                 cname = self.drag_circle = "drag" + dcolor
                 self.add_circle(cname, x, y, dcolor)
                 svg.send_commands()
@@ -63,6 +76,7 @@ class ColorChooser(traitlets.HasTraits):
                         self.draw()
                 else:
                     self.cancel_drag()
+                    #self.draw()
         elif typ == "mousemove":
             if drag_circle is not None:
                 atts = {"cx": x, "cy": y}
@@ -85,26 +99,46 @@ class ColorChooser(traitlets.HasTraits):
         normalized = float(x) / self.palette_side
         return self.scale.denormalized_value(normalized)
 
+    def display_value(self, interpolation_x):
+        normalized = self.scale.normalized_value(interpolation_x)
+        return int(normalized * self.palette_side)
+
+    def display_histogram(self):
+        result = {}
+        h = self.histogram
+        if h is not None:
+            for value in h:
+                count = h[value]
+                dvalue = self.display_value(value)
+                result[dvalue] = result.get(dvalue, 0) + count
+        return result
+
     def draw(self):
         svg = self.svg
         svg.empty()
         for i in xrange(self.ncolors):
             for j in xrange(self.ncolors):
                 color = color_scale.color(color_scale.color64(i, j))
-                svg.rect("R" + color, i * self.dx, j * self.dy, self.dx, self.dy, color)
+                svg.rect("R_" + color, i * self.dx, j * self.dy, self.dx, self.dy, color)
         bary = self.palette_side + self.bar_region / 2 - self.bar_height / 2
+        dhistogram = self.display_histogram()
+        maxcount = 1
+        if dhistogram:
+            maxcount = float(max(dhistogram.values()))
         for i in xrange(self.palette_side):
             color_value = self.interpolation_value(i)
             color = self.scale.interpolate_color(color_value)
-            svg.rect("V" + color, i, bary, 1, self.bar_height, color)
+            adjustment = (dhistogram.get(i, 0) / maxcount) * self.histogram_region
+            #print i, adjustment
+            svg.rect("V" + color,
+                     i, bary,
+                     1, adjustment + self.bar_height, color)
         circley = self.palette_side + self.bar_region / 2
-        #circler = self.bar_height/2 + 2
         m = self.scale.minvalue
         M = self.scale.maxvalue
         for (value, clr) in self.scale.breakpoints:
             color = color_scale.color(clr)
             circlex = (value - m)/(M - m) * self.palette_side
-            #svg.circle("breakpoint_" + color, circlex, circley, circler, color)
             name = "breakpoint_" + color
             self.add_circle(name, circlex, circley, color)
         svg.send_commands()
