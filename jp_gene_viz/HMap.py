@@ -1,6 +1,7 @@
 
 import numpy
 import dGraph
+import color_scale
 
 
 def checked_names(subset, superset, strict=False):
@@ -34,7 +35,7 @@ class HeatMap(object):
     """
 
     max_clr = dGraph.clr(255, 0, 0)
-    min_clr = dGraph.clr(0, 0, 255)
+    min_clr = dGraph.clr(0, 255, 0)
     zero_clr = dGraph.clr(230, 230, 230)
     highlight_color = "black"
 
@@ -130,16 +131,20 @@ class HeatMap(object):
         col = self.col_names[j]
         return (row, col)
 
-    def color(self, value):
-        """
-        Assign a color for a value.
-        """
-        if value < 0:
-            result = dGraph.weighted_color(self.min_clr, self.zero_clr,
-                                           abs(self.dmin), abs(value))
-        else:
-            result = dGraph.weighted_color(self.max_clr, self.zero_clr,
-                                           self.dmax, value)
+    _color_interpolator = None
+
+    def get_color_interpolator(self):
+        result = self._color_interpolator
+        if result is None:
+            v = self.data.flatten()
+            M = numpy.max(v)
+            m = numpy.min(v)
+            mc = self.min_clr
+            Mc = self.max_clr
+            result = color_scale.ColorInterpolator(mc, Mc, m, M)
+            if m < 0 and M > 0:
+                result.add_color(0, self.zero_clr)
+            self._color_interpolator = result
         return result
 
     def draw(self, canvas, dx, dy, labels_space=None):
@@ -147,11 +152,12 @@ class HeatMap(object):
         Draw the heat map on an SVG canvas.
         """
         canvas.empty()
+        ci = self.get_color_interpolator()
         for rowi in xrange(self.nrows):
             for colj in xrange(self.ncols):
                 dataij = self.data[rowi, colj]
                 nameij = self.rectName(rowi, colj)
-                colorij = self.color(dataij)
+                colorij = ci.interpolate_color(dataij)
                 canvas.rect(nameij, colj*dx, rowi*dy, dx, dy, colorij)
         if labels_space is not None:
             label_color = "black"
