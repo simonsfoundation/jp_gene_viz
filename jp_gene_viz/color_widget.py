@@ -37,9 +37,9 @@ class ColorChooser(traitlets.HasTraits):
         self.drag_circle = None
         self.histogram = None
 
-    def count_values(self, values):
+    def count_values(self, values, reset=False):
         h = self.histogram
-        if h is None:
+        if reset or h is None:
             h = self.histogram = {}
         for v in values:
             h[v] = h.get(v, 0) + 1
@@ -102,7 +102,7 @@ class ColorChooser(traitlets.HasTraits):
 
     def display_value(self, interpolation_x):
         normalized = self.scale.normalized_value(interpolation_x)
-        return int(normalized * self.palette_side)
+        return int(normalized * (self.palette_side - 1))
 
     def display_histogram(self):
         result = {}

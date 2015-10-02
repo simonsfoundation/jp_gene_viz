@@ -152,6 +152,7 @@ class WGraph(object):
             Mc = self.positive_edge_color
             result = color_scale.ColorInterpolator(mc, Mc, mv, Mv)
             result.add_color(0, self.zero_edge_color)
+            #result.count_values(self.edge_weights.values(), True)
             self._edge_color_interpolator = result
         return result
 
@@ -167,8 +168,13 @@ class WGraph(object):
             Mc = self.positive_node_color
             mc = self.zero_node_color
             result = color_scale.ColorInterpolator(mc, Mc, mv, Mv)
+            #result.count_values(self.node_weights.values(), True)
             self._node_color_interpolator = result
         return result
+
+    def reset_colorization(self):
+        self._node_color_interpolator = None
+        self._edge_color_interpolator = None
     
     def draw(self, canvas, positions, edgewidth=1, nodesize=3):
         (Me, me, Mn, mn) = self.weights_extrema()

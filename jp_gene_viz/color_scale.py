@@ -66,6 +66,9 @@ class ColorInterpolator(object):
                 minvalue=0.0, maxvalue=1.0):
         assert minvalue <= maxvalue, (
             "bad extrema " + repr((minvalue, maxvalue)))
+        # avoid div by zero issues.
+        if minvalue == maxvalue:
+            maxvalue = minvalue + 1
         self.minclr = minclr
         self.maxclr = maxclr
         self.minvalue = minvalue
