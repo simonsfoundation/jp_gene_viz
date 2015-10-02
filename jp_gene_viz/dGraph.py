@@ -2,6 +2,9 @@ import numpy
 import heapq
 import json
 
+from color_scale import (clr, clr_check, weighted_color, color)
+import color_scale
+
 def trim_leaves(Gin):
     Gout = WGraph()
     ew = Gin.edge_weights
@@ -80,18 +83,6 @@ def skeleton(Gin):
     return Gout
 
 
-def clr(r, g, b):
-    result = numpy.array([r*1.0, g*1.0, b*1.0])
-    clr_check(result)
-    return result
-
-
-    
-def clr_check(clr):
-    assert max(clr) < 256
-    assert min(clr) >= 0
-
-
 class WGraph(object):
     
     def __init__(self):
@@ -151,20 +142,39 @@ class WGraph(object):
     zero_edge_color = clr(230, 230, 230)
     negative_edge_color = clr(255, 0, 0)
 
-    def edge_color(self, weight, min_weight, max_weight):
-        if weight >= 0:
-            return weighted_color(self.positive_edge_color, self.zero_edge_color,
-                max_weight, weight)
-        else:
-            return weighted_color(self.negative_edge_color, self.zero_edge_color,
-                abs(min_weight), abs(weight))
+    _edge_color_interpolator = None
+
+    def get_edge_color_interpolator(self):
+        result = self._edge_color_interpolator
+        if result is None:
+            (Mv, mv, _, _) = self.weights_extrema()
+            mc = self.negative_edge_color
+            Mc = self.positive_edge_color
+            result = color_scale.ColorInterpolator(mc, Mc, mv, Mv)
+            result.add_color(0, self.zero_edge_color)
+            #result.count_values(self.edge_weights.values(), True)
+            self._edge_color_interpolator = result
+        return result
 
     positive_node_color = clr(255, 100, 100)
     zero_node_color = clr(200, 200, 230)
 
-    def node_color(self, weight, max_weight):
-        return weighted_color(self.positive_node_color, self.zero_node_color,
-            max_weight, weight)
+    _node_color_interpolator = None
+
+    def get_node_color_interpolator(self):
+        result = self._node_color_interpolator
+        if result is None:
+            (_, _, Mv, mv) = self.weights_extrema()
+            Mc = self.positive_node_color
+            mc = self.zero_node_color
+            result = color_scale.ColorInterpolator(mc, Mc, mv, Mv)
+            #result.count_values(self.node_weights.values(), True)
+            self._node_color_interpolator = result
+        return result
+
+    def reset_colorization(self):
+        self._node_color_interpolator = None
+        self._edge_color_interpolator = None
     
     def draw(self, canvas, positions, edgewidth=1, nodesize=3):
         (Me, me, Mn, mn) = self.weights_extrema()
@@ -178,6 +188,7 @@ class WGraph(object):
         #print ("pos_e", pos_e)
         markradius = (edgewidth+1)/2
         outdegree = {}
+        eci = self.get_edge_color_interpolator()
         for (absw, e) in pos_e:
             w = ew[e]
             (f, t) = e
@@ -191,7 +202,8 @@ class WGraph(object):
             # don't modify arrays in place
             fp = fp + edgeshift
             tp = tp + edgeshift
-            ecolor = self.edge_color(w, me, Me)
+            #ecolor = self.edge_color(w, me, Me)
+            ecolor = eci.interpolate_color(w)
             name = "EDGE_" + json.dumps([f,t])
             canvas.line(name, fp[0], fp[1], tp[0], tp[1], ecolor, edgewidth)
             # add a mark to indicate target
@@ -214,6 +226,7 @@ class WGraph(object):
         example_pos = positions[pos_n[0][1]]
         # keep track of min/max position in order to adjust view box later to include all nodes.
         minimum = maximum = example_pos
+        nci = self.get_node_color_interpolator()
         for n in nw:
             if n in positions:
                 p = positions[n]
@@ -221,8 +234,9 @@ class WGraph(object):
                 minimum = numpy.minimum(minimum, p)
                 maximum = numpy.maximum(maximum, p)
                 w = nw[n]
-                ncol = self.node_color(w, Mn)
+                #ncol = self.node_color(w, Mn)
                 #ncol = weighted_color(pnode, znode, Mn, w)
+                ncol = nci.interpolate_color(w)
                 name = "NODE_" + str(n)
                 degree = min(outdegree.get(n, 1) - 1, 4)
                 canvas.circle(name, x, y, nodesize + degree, ncol) 
@@ -259,24 +273,10 @@ def draw_heat_map(canvas, a, dx, dy):
             canvas.rect(None, i*dx, j*dy, dx, dy, color(iclr))
     canvas.send_commands()
             
+
 def pos(x, y):
     return numpy.array([x*1.0, y*1.0])
 
-def weighted_color(maxclr, minclr, maxvalue, value):
-    assert value <= maxvalue
-    assert value >= 0
-    if maxvalue==0:
-        clr = minclr
-    else:
-        lm = value/float(maxvalue)
-        clr = (lm * maxclr) + ((1 - lm) * minclr)
-    return color(clr)
-
-def color(clr):
-    clr_check(clr)
-    ints = map(int, clr)
-    hexs = ["%02x" % x for x in ints]
-    return "#" + "".join(hexs)
 
 def towards(a, b, nonzero=True):
     diff = b - a
@@ -289,9 +289,11 @@ def towards(a, b, nonzero=True):
             return numpy.array([0,0])
     return diff/norm
 
+
 def orthogonal(v):
     [x,y] = v
     return pos(-y, x)
+
 
 def distance(a,b):
     return numpy.linalg.norm(b-a)

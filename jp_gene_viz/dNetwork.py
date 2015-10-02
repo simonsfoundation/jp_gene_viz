@@ -9,6 +9,8 @@ from IPython.display import display
 from jp_svg_canvas import canvas
 import dGraph
 import dLayout
+import color_scale
+import color_widget
 import fnmatch
 import igraph
 import json
@@ -36,23 +38,27 @@ class NetworkDisplay(object):
         self.layout_button = self.make_button("layout", self.layout_click)
         self.expand_button = self.make_button("expand", self.expand_click)
         self.focus_button = self.make_button("focus", self.focus_click)
-        self.redraw_button = self.make_button("restore", self.redraw_click)
+        self.restore_button = self.make_button("restore", self.restore_click)
         self.ignore_button = self.make_button("ignore", self.ignore_click)
         self.nodes_button = self.make_button("list nodes", self.nodes_click)
         self.edges_button = self.make_button("list edges", self.edges_click)
         self.layout_dropdown = self.make_layout_dropdown()
-        self.labels_button = self.make_labels_button()
+        self.labels_button = self.make_checkbox("labels", self.labels_click)
+        self.colors_button = self.make_checkbox("colors", self.colors_click)
+        self.draw_button = self.make_button("draw", self.draw_click)
         # Assemble the layout
         self.threshhold_assembly = self.make_threshhold_assembly()
         self.pattern_assembly = self.make_pattern_assembly()
         self.info_area = widgets.Textarea(description="status")
+        self.colors_assembly = self.make_colors_assembly()
+        self.colors_assembly.visible = False
         svg = self.svg = canvas.SVGCanvasWidget()
         sslider = self.size_slider = widgets.FloatSlider(value=500, min=500, max=2000, step=10,
             readout=False, width="150px")
         traitlets.directional_link((sslider, "value"), (svg, "width"))
         traitlets.directional_link((sslider, "value"), (svg, "height"))
         #self.svg = widgets.Button(description="dummy button")
-        svg.add_style("background-color", "cornsilk")
+        svg.add_style("background-color", "white")
         svg.watch_event = "click mousedown mouseup mousemove mouseover"
         svg.default_event_callback = self.svg_callback
         left_panel = [self.svg, 
@@ -70,8 +76,11 @@ class NetworkDisplay(object):
                    self.nodes_button,
                    self.edges_button,
                    self.labels_button,
-                   self.redraw_button,
-                   self.size_slider]
+                   self.restore_button,
+                   self.size_slider,
+                   self.draw_button,
+                   self.colors_button,
+                   self.colors_assembly]
         self.inputs = widgets.VBox(children=buttons)
         self.assembly = widgets.HBox(children=[self.inputs, self.vertical])
         self.select_start = None
@@ -92,12 +101,12 @@ class NetworkDisplay(object):
         assembly = widgets.HBox(children=[self.match_button, self.pattern_text])
         return assembly
 
-    def make_labels_button(self):
+    def make_checkbox(self, description, callback):
         "Make a labels toggle widget."
         #result = widgets.Button(description="labels", value=False)
-        result = widgets.Checkbox(description="labels", value=False)
+        result = widgets.Checkbox(description=description, value=False)
         #result.on_click(self.labels_click)
-        result.on_trait_change(self.labels_click, "value")
+        result.on_trait_change(callback, "value")
         return result
 
     def make_layout_dropdown(self):
@@ -129,6 +138,19 @@ class NetworkDisplay(object):
         self.apply_button = self.make_button("threshhold", self.apply_click)
         assembly = widgets.HBox(children=[self.apply_button, self.threshhold_slider])
         return assembly
+
+    def make_colors_assembly(self):
+        ncc = self.node_color_chooser = color_widget.ColorChooser()
+        ncc.title = "nodes"
+        ecc = self.edge_color_chooser = color_widget.ColorChooser()
+        ecc.title = "edges"
+        assembly = widgets.VBox(children=[ncc.svg, ecc.svg])
+        assembly.visible = False # default
+        return assembly
+
+    def draw_click(self, b):
+        self.svg.empty()
+        self.draw()
 
     def apply_click(self, b):
         "Apply threshhold value to the viewable network."
@@ -229,6 +251,17 @@ class NetworkDisplay(object):
                     svg.text(None, x, y-4, node, color, **style)
             svg.send_commands()
             self.info_area.value = "Labels added."
+        if self.colors_assembly.visible:
+            #G.reset_colorization()
+            self.info_area.value = "Displaying color choosers."
+            ecc = self.edge_color_chooser
+            ncc = self.node_color_chooser
+            ecc.scale = G.get_edge_color_interpolator()
+            ecc.count_values(G.edge_weights.values(), True)
+            ncc.scale = G.get_node_color_interpolator()
+            ncc.count_values(G.node_weights.values(), True)
+            ecc.draw()
+            ncc.draw()
 
     def show(self):
         "Show the network widget."
@@ -258,6 +291,12 @@ class NetworkDisplay(object):
     def labels_click(self, b):
         "Label button click: toggle drawing of labels."
         self.info_area.value = "labels click " + repr(self.labels_button.value)
+        self.svg.empty()
+        self.draw()
+
+    def colors_click(self, b):
+        self.info_area.value = "colors click " + repr(self.colors_button.value)
+        self.colors_assembly.visible = self.colors_button.value
         self.svg.empty()
         self.draw()
 
@@ -433,8 +472,8 @@ class NetworkDisplay(object):
         # Don't cancel the selection in case the user really wants to focus instead.
         #self.cancel_selection()
 
-    def redraw_click(self, b):
-        "Redraw button click: restore data to loaded state."
+    def restore_click(self, b):
+        "Restore button click: restore data to loaded state."
         self.display_graph = self.data_graph.clone()
         self.display_positions = self.data_positions.copy()
         self.do_threshhold()
