@@ -5,6 +5,9 @@ from IPython.display import display
 from jp_svg_canvas import canvas
 import traitlets
 import fnmatch
+import color_scale
+import color_widget
+
 
 class ExpressionDisplay(traitlets.HasTraits):
 
@@ -19,15 +22,16 @@ class ExpressionDisplay(traitlets.HasTraits):
         svg.width = 550
         svg.height = 550
         svg.watch_event = "click mousemove"
-        #svg.watch_event = "click"
         svg.default_event_callback = self.svg_callback
-        #self.feedback = widgets.Text(value="")
-        #self.feedback.width = "300px"
+        cc = self.color_chooser = color_widget.ColorChooser()
+        cc.svg.visible = False   # default
+
         self.text_assembly = self.make_text_displays()
         self.match_assembly = self.make_match_assembly()
         self.info_area = widgets.Textarea(description="status")
         self.assembly = widgets.VBox(children=[self.text_assembly,
                                                self.svg,
+                                               self.color_chooser.svg,
                                                self.match_assembly,
                                                self.info_area])
         self.dx = 10
@@ -35,14 +39,7 @@ class ExpressionDisplay(traitlets.HasTraits):
         self.data_heat_map = None
         self.display_heat_map = None
         self.row = self.col = None
-        # Maybe not needed.
-        #self.on_trait_change(self.rows_changed, "rows")
         self.drawing = False
-
-    #def rows_changed(self, name, rows):
-    #    print self, "rows_changed", rows
-    #    return # TEMP
-    #    self.select_rows()
 
     def load_data(self, heat_map, side_length):
         self.data_heat_map = heat_map
@@ -87,11 +84,22 @@ class ExpressionDisplay(traitlets.HasTraits):
         return assembly
 
     def make_match_assembly(self):
-        b = self.match_button = widgets.Button(description="match", width="150px")
+        b = self.match_button = widgets.Button(description="match", width="50px")
         b.on_click(self.match_click)
         t = self.match_text = widgets.Text(width="300px")
-        assembly = widgets.HBox(children=[b, t])
+        d = self.draw_button = widgets.Button(description="draw", width="50px")
+        d.on_click(self.draw_click)
+        c = self.color_checkbox = widgets.Checkbox(description="colors", value=False)
+        c.on_trait_change(self.colors_click, "value")
+        assembly = widgets.HBox(children=[b, t, d, c])
         return assembly
+
+    def colors_click(self, b):
+        self.color_chooser.svg.visible = self.color_checkbox.value
+        self.draw()
+
+    def draw_click(self, b):
+        self.draw()
 
     def match_click(self, b):
         patterns = self.match_text.value.split()
@@ -143,6 +151,12 @@ class ExpressionDisplay(traitlets.HasTraits):
         svg = self.svg
         svg.empty()
         heat_map.draw(svg, self.dx, self.dy, self.labels_space)
+        cc = self.color_chooser
+        if cc.svg.visible:
+            self.info_area.value = "displaying color chooser."
+            cc.scale = heat_map.get_color_interpolator()
+            cc.count_values(heat_map.data.flatten())
+            cc.draw()
         svg.send_commands()
         self.drawing = False
 

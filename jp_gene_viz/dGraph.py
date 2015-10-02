@@ -151,7 +151,8 @@ class WGraph(object):
             mc = self.negative_edge_color
             Mc = self.positive_edge_color
             result = color_scale.ColorInterpolator(mc, Mc, mv, Mv)
-            result.add_color(0, self.zero_edge_color)
+            if mv < 0 and Mv > 0:
+                result.add_color(0, self.zero_edge_color)
             #result.count_values(self.edge_weights.values(), True)
             self._edge_color_interpolator = result
         return result
