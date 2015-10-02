@@ -155,21 +155,20 @@ class WGraph(object):
             self._edge_color_interpolator = result
         return result
 
-    #def edge_color(self, weight, min_weight, max_weight):
-    #    ci = self.get_edge_color_interpolator()
-    #    if weight >= 0:
-    #        return weighted_color(self.positive_edge_color, self.zero_edge_color,
-    #            max_weight, weight)
-    #    else:
-    #        return weighted_color(self.negative_edge_color, self.zero_edge_color,
-    #            abs(min_weight), abs(weight))
-
     positive_node_color = clr(255, 100, 100)
     zero_node_color = clr(200, 200, 230)
 
-    def node_color(self, weight, max_weight):
-        return weighted_color(self.positive_node_color, self.zero_node_color,
-            max_weight, weight)
+    _node_color_interpolator = None
+
+    def get_node_color_interpolator(self):
+        result = self._node_color_interpolator
+        if result is None:
+            (_, _, Mv, mv) = self.weights_extrema()
+            Mc = self.positive_node_color
+            mc = self.zero_node_color
+            result = color_scale.ColorInterpolator(mc, Mc, mv, Mv)
+            self._node_color_interpolator = result
+        return result
     
     def draw(self, canvas, positions, edgewidth=1, nodesize=3):
         (Me, me, Mn, mn) = self.weights_extrema()
@@ -221,6 +220,7 @@ class WGraph(object):
         example_pos = positions[pos_n[0][1]]
         # keep track of min/max position in order to adjust view box later to include all nodes.
         minimum = maximum = example_pos
+        nci = self.get_node_color_interpolator()
         for n in nw:
             if n in positions:
                 p = positions[n]
@@ -228,8 +228,9 @@ class WGraph(object):
                 minimum = numpy.minimum(minimum, p)
                 maximum = numpy.maximum(maximum, p)
                 w = nw[n]
-                ncol = self.node_color(w, Mn)
+                #ncol = self.node_color(w, Mn)
                 #ncol = weighted_color(pnode, znode, Mn, w)
+                ncol = nci.interpolate_color(w)
                 name = "NODE_" + str(n)
                 degree = min(outdegree.get(n, 1) - 1, 4)
                 canvas.circle(name, x, y, nodesize + degree, ncol) 
