@@ -12,12 +12,13 @@ from jp_svg_canvas.canvas import load_javascript_support
 class ColorChooser(traitlets.HasTraits):
 
     margin = 15
-    bar_region = 20
+    bar_region = 40
     histogram_region = 40
     dx = dy = 16
     ncolors = 8
     palette_side = dx * ncolors
     bar_height = 10
+    title = "Colors"
 
     def __init__(self, *args, **kwargs):
         super(ColorChooser, self).__init__(*args, **kwargs)
@@ -29,7 +30,7 @@ class ColorChooser(traitlets.HasTraits):
                          - self.margin,
                          self.palette_side + 2 * self.margin,
                          middle + 2 * self.margin)
-        self.scale = color_scale.ColorInterpolator()
+        self.scale = color_scale.ColorInterpolator(minvalue=-3.33323, maxvalue=1.3432)
         svg.watch_event = "click mousemove"
         svg.default_event_callback = self.svg_callback
         self.drag_color = None
@@ -141,6 +142,13 @@ class ColorChooser(traitlets.HasTraits):
             circlex = (value - m)/(M - m) * self.palette_side
             name = "breakpoint_" + color
             self.add_circle(name, circlex, circley, color)
+        svg.text(None, 0, 0, self.title, "black")
+        svg.text(None, 0, bary, "%3.1f" % m, "black")
+        atts = {"text-anchor": "end"}
+        svg.text(None, self.palette_side, bary, "%3.1f" % M, "black", **atts)
+        if m < 0 and M > 0:
+            zvalue = self.display_value(0)
+            svg.text(None, zvalue, bary, "0", "black")
         svg.send_commands()
 
     def add_circle(self, name, circlex, circley, color):

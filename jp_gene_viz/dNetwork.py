@@ -9,6 +9,7 @@ from IPython.display import display
 from jp_svg_canvas import canvas
 import dGraph
 import dLayout
+import color_scale
 import fnmatch
 import igraph
 import json
@@ -36,7 +37,7 @@ class NetworkDisplay(object):
         self.layout_button = self.make_button("layout", self.layout_click)
         self.expand_button = self.make_button("expand", self.expand_click)
         self.focus_button = self.make_button("focus", self.focus_click)
-        self.redraw_button = self.make_button("restore", self.redraw_click)
+        self.restore_button = self.make_button("restore", self.restore_click)
         self.ignore_button = self.make_button("ignore", self.ignore_click)
         self.nodes_button = self.make_button("list nodes", self.nodes_click)
         self.edges_button = self.make_button("list edges", self.edges_click)
@@ -52,7 +53,7 @@ class NetworkDisplay(object):
         traitlets.directional_link((sslider, "value"), (svg, "width"))
         traitlets.directional_link((sslider, "value"), (svg, "height"))
         #self.svg = widgets.Button(description="dummy button")
-        svg.add_style("background-color", "cornsilk")
+        svg.add_style("background-color", "white")
         svg.watch_event = "click mousedown mouseup mousemove mouseover"
         svg.default_event_callback = self.svg_callback
         left_panel = [self.svg, 
@@ -70,7 +71,7 @@ class NetworkDisplay(object):
                    self.nodes_button,
                    self.edges_button,
                    self.labels_button,
-                   self.redraw_button,
+                   self.restore_button,
                    self.size_slider]
         self.inputs = widgets.VBox(children=buttons)
         self.assembly = widgets.HBox(children=[self.inputs, self.vertical])
@@ -433,8 +434,8 @@ class NetworkDisplay(object):
         # Don't cancel the selection in case the user really wants to focus instead.
         #self.cancel_selection()
 
-    def redraw_click(self, b):
-        "Redraw button click: restore data to loaded state."
+    def restore_click(self, b):
+        "Restore button click: restore data to loaded state."
         self.display_graph = self.data_graph.clone()
         self.display_positions = self.data_positions.copy()
         self.do_threshhold()

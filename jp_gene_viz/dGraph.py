@@ -3,6 +3,7 @@ import heapq
 import json
 
 from color_scale import (clr, clr_check, weighted_color, color)
+import color_scale
 
 def trim_leaves(Gin):
     Gout = WGraph()
@@ -141,13 +142,27 @@ class WGraph(object):
     zero_edge_color = clr(230, 230, 230)
     negative_edge_color = clr(255, 0, 0)
 
-    def edge_color(self, weight, min_weight, max_weight):
-        if weight >= 0:
-            return weighted_color(self.positive_edge_color, self.zero_edge_color,
-                max_weight, weight)
-        else:
-            return weighted_color(self.negative_edge_color, self.zero_edge_color,
-                abs(min_weight), abs(weight))
+    _edge_color_interpolator = None
+
+    def get_edge_color_interpolator(self):
+        result = self._edge_color_interpolator
+        if result is None:
+            (Mv, mv, _, _) = self.weights_extrema()
+            mc = self.negative_edge_color
+            Mc = self.positive_edge_color
+            result = color_scale.ColorInterpolator(mc, Mc, mv, Mv)
+            result.add_color(0, self.zero_edge_color)
+            self._edge_color_interpolator = result
+        return result
+
+    #def edge_color(self, weight, min_weight, max_weight):
+    #    ci = self.get_edge_color_interpolator()
+    #    if weight >= 0:
+    #        return weighted_color(self.positive_edge_color, self.zero_edge_color,
+    #            max_weight, weight)
+    #    else:
+    #        return weighted_color(self.negative_edge_color, self.zero_edge_color,
+    #            abs(min_weight), abs(weight))
 
     positive_node_color = clr(255, 100, 100)
     zero_node_color = clr(200, 200, 230)
@@ -168,6 +183,7 @@ class WGraph(object):
         #print ("pos_e", pos_e)
         markradius = (edgewidth+1)/2
         outdegree = {}
+        eci = self.get_edge_color_interpolator()
         for (absw, e) in pos_e:
             w = ew[e]
             (f, t) = e
@@ -181,7 +197,8 @@ class WGraph(object):
             # don't modify arrays in place
             fp = fp + edgeshift
             tp = tp + edgeshift
-            ecolor = self.edge_color(w, me, Me)
+            #ecolor = self.edge_color(w, me, Me)
+            ecolor = eci.interpolate_color(w)
             name = "EDGE_" + json.dumps([f,t])
             canvas.line(name, fp[0], fp[1], tp[0], tp[1], ecolor, edgewidth)
             # add a mark to indicate target
