@@ -648,6 +648,7 @@ class NetworkDisplay(object):
         nw = self.display_graph.node_weights
         for node in list(nw):
             nw[node] = weights.get(node, 0)
+        self.display_graph.reset_colorization()
 
 
 def display_network(filename, N=None, threshhold=20.0, save_layout=True, show=True):
