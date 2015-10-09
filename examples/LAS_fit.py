@@ -41,7 +41,7 @@ def slope_intercept(u, v):
     result["intercept"] = x[n+1]
     return result
 
-def l1_fit(U, v, penalty=0.0, expected_error=0.0):
+def l1_fit(U, v, penalty=None, expected_error=0.0):
     """
     Find a least absolute error solution (m, k) to U * m + k =approx= v 
     """
@@ -55,7 +55,7 @@ def l1_fit(U, v, penalty=0.0, expected_error=0.0):
     # d is the number of dimensions
     d = s[1]
     I = numpy.identity(n)
-    n1 = numpy.ones(n).reshape((n,1))
+    n1 = numpy.ones((n,1))
     A = numpy.vstack([
             numpy.hstack([-I, U, n1]),
             numpy.hstack([-I, -U, -n1])
@@ -65,6 +65,23 @@ def l1_fit(U, v, penalty=0.0, expected_error=0.0):
     # allow optimizer to disregard errors within the expected.
     ee = max(0, expected_error)
     bounds = [(ee, None)] * n + [(None, None)] * (d+1)
+    if penalty is not None and penalty>0:
+        (old_c, old_A, old_b, old_bounds) = (c, A, b, bounds)
+        zdn =numpy.zeros((d,n))
+        Id = numpy.identity(d)
+        zd = numpy.zeros((d, 1))
+        pos_constraints = numpy.hstack([zdn, Id, zd, -Id])
+        neg_constraints = numpy.hstack([zdn, -Id, zd, -Id])
+        A = numpy.vstack([
+                numpy.hstack([old_A, numpy.zeros((2*n, d))]),
+                numpy.vstack([
+                    pos_constraints,
+                    neg_constraints
+                    ])
+            ])
+        c = numpy.hstack([old_c, numpy.ones(d) * penalty])
+        b = numpy.hstack([old_b, numpy.zeros(2*d)])
+        bounds = old_bounds + [ (0,None) ] * d
     r = scipy.optimize.linprog(c, A, b, bounds=bounds)
     x = r.x
     m = x[n:n+d]
@@ -92,14 +109,18 @@ def testl1():
     p3 = numpy.array([5.0, 0, 1.0])
     U = [p1, p2, p3]
     v = numpy.array([-1.0, 2.0, 3.0])
-    fit = l1_fit(U, v)
-    pprint.pprint(fit)
-    m = fit["m"]
-    k = fit["k"]
-    print "v"
-    print v
-    print "U * m + k"
-    print numpy.dot(U, m) + k
+    for expected_error in (0.2, 0):
+        for penalty in (0, 0.001):
+            print
+            print "expected error", expected_error, "penalty", penalty
+            fit = l1_fit(U, v, expected_error=expected_error, penalty=penalty)
+            pprint.pprint(fit)
+            m = fit["m"]
+            k = fit["k"]
+            print "v"
+            print v
+            print "U * m + k"
+            print numpy.dot(U, m) + k
 
 def interpolate(u, v):
     r = slope_intercept(u, v)
