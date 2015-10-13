@@ -59,7 +59,7 @@ require(["widgets/js/widget", "widgets/js/manager", "cytoscape", "underscore", "
                     _.each(command_list, function(command, i) {
                         some_command = true;
                         var result = that.execute_command(command);
-                        results[i] = that.json_safe(result);
+                        results[i] = that.json_safe(result, 1);
                     });
                 });
             }
@@ -110,11 +110,33 @@ require(["widgets/js/widget", "widgets/js/manager", "cytoscape", "underscore", "
             return result;
         },
 
-        json_safe: function(val) {
+        json_safe: function(val, depth) {
             // maybe expand later as need arises
+            var that = this;
             var ty = (typeof val);
             if ((ty == "number") || (ty == "string") || (ty == "boolean")) {
                 return val;
+            }
+            if (depth) {
+                if ($.isArray(val)) {
+                    var result = [];
+                    _.each(val, function(elt, i) {
+                        var r = that.json_safe(elt, depth-1);
+                        if (r != null) {
+                            result[i] = r;
+                        }
+                    });
+                    return result;
+                } else {
+                    var result = {};
+                    for (var key in val) {
+                        var jv = that.json_safe(val[key], depth-1);
+                        if (jv != null) {
+                            result[key] = jv;
+                        }
+                    }
+                    return result;
+                }
             }
             return null;
         }
