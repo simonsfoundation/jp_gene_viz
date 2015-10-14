@@ -11,6 +11,9 @@ def lsqfit(x, y):
     return fity
 
 def slope_intercept(u, v):
+    """
+    1d version of l1_fit
+    """
     u = numpy.array(u)
     v = numpy.array(v)
     n = len(u)
@@ -38,6 +41,87 @@ def slope_intercept(u, v):
     result["intercept"] = x[n+1]
     return result
 
+def l1_fit(U, v, penalty=None, expected_error=0.0):
+    """
+    Find a least absolute error solution (m, k) to U * m + k =approx= v 
+    """
+    U = numpy.array(U)
+    v = numpy.array(v)
+    # n is the number of samples
+    n = len(v)
+    s = U.shape
+    assert len(s) == 2
+    assert s[0] == n
+    # d is the number of dimensions
+    d = s[1]
+    I = numpy.identity(n)
+    n1 = numpy.ones((n,1))
+    A = numpy.vstack([
+            numpy.hstack([-I, U, n1]),
+            numpy.hstack([-I, -U, -n1])
+        ])
+    c = numpy.hstack([numpy.ones(n), numpy.zeros(d+1)])
+    b = numpy.hstack([v, -v])
+    # allow optimizer to disregard errors within the expected.
+    ee = max(0, expected_error)
+    bounds = [(ee, None)] * n + [(None, None)] * (d+1)
+    if penalty is not None and penalty>0:
+        (old_c, old_A, old_b, old_bounds) = (c, A, b, bounds)
+        zdn =numpy.zeros((d,n))
+        Id = numpy.identity(d)
+        zd = numpy.zeros((d, 1))
+        pos_constraints = numpy.hstack([zdn, Id, zd, -Id])
+        neg_constraints = numpy.hstack([zdn, -Id, zd, -Id])
+        A = numpy.vstack([
+                numpy.hstack([old_A, numpy.zeros((2*n, d))]),
+                numpy.vstack([
+                    pos_constraints,
+                    neg_constraints
+                    ])
+            ])
+        c = numpy.hstack([old_c, numpy.ones(d) * penalty])
+        b = numpy.hstack([old_b, numpy.zeros(2*d)])
+        bounds = old_bounds + [ (0,None) ] * d
+    r = scipy.optimize.linprog(c, A, b, bounds=bounds)
+    x = r.x
+    m = x[n:n+d]
+    k = x[n+d]
+    residuals = v - (numpy.dot(U, m) + k)
+    result = {}
+    result["U"] = U
+    result["v"] = v
+    result["expected_error"] = expected_error
+    result["penalty"] = penalty
+    result["m"] = m
+    result["k"] = k
+    result["r"] = r
+    result["A"] = A
+    result["b"] = b
+    result["c"] = c
+    result["bounds"] = bounds
+    result["residuals"] = residuals
+    return result
+
+def testl1():
+    import pprint
+    p1 = numpy.array([1.0, 0, 2.0])
+    p2 = numpy.array([0, 1.0, 0])
+    p3 = numpy.array([5.0, 0, 1.0])
+    U = [p1, p2, p3]
+    v = numpy.array([-1.0, 2.0, 3.0])
+    for expected_error in (0.2, 0):
+        for penalty in (0, 0.001):
+            print
+            print "expected error", expected_error, "penalty", penalty
+            fit = l1_fit(U, v, expected_error=expected_error, penalty=penalty)
+            pprint.pprint(fit)
+            m = fit["m"]
+            k = fit["k"]
+            print "v"
+            print v
+            print "U * m + k"
+            print numpy.dot(U, m) + k
+
 def interpolate(u, v):
     r = slope_intercept(u, v)
     m = r["slope"]
@@ -53,4 +137,5 @@ def test0():
 
 if __name__ == "__main__":
     test0()
+    testl1()
 
