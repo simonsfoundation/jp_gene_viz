@@ -33,6 +33,8 @@ def validate_command(command, top=True):
     Simple sanity checks on commands to the javascript view
     as described in the send_commands docstring.
     """
+    if isinstance(command, CommandMaker):
+        command = command.cmd()
     if type(command) is types.ListType:
         indicator = command[0]
         remainder = command[1:]
@@ -49,8 +51,8 @@ def validate_command(command, top=True):
             args = remainder[2:]
             assert type(name) is types.StringType, (
                 "method name must be string " + repr(name))
-            validate_command(target)
-            validate_commands(args, top=False)
+            target = validate_command(target)
+            args = validate_commands(args, top=False)
             remainder = [target, name] + args
         elif indicator == "list":
             remainder = validate_commands(remainder, top=False)
@@ -96,6 +98,16 @@ class CytoscapeWidget(widgets.DOMWidget):
         self.commands_count = 0
         self.count_to_results_callback = {}
 
+    def js(self):
+        """Return a command maker convenience."""
+        return CommandMaker()
+
+    def send(self, command, results_callback=None):
+        """
+        Send one command using the send_commands protocol.
+        """
+        return self.send_commands([command], results_callback)
+
     def send_commands(self, commands_iter, results_callback=None):
         """
         Send a batch sequence of commands as json lists to the javascript view.
@@ -116,10 +128,73 @@ class CytoscapeWidget(widgets.DOMWidget):
         The results of the command sequence are passed from the javascript view
         except that results which are not json compatible are mapped to None.
         If provided results_callback(results) is called for results of a command.
+
+        Functions are found the cytoscape visualization instance, or if they
+        are not available there, they are found in the cytoscape namespace.
+        For example js.stylesheet(...) will be found in the cytoscape namespace.
         """
         count = self.commands_count
         self.commands_count = count + 1
         commands = validate_commands(list(commands_iter))
         # send commands to view by modifying the commands trait.
         self.commands = [count, commands]
+
+
+SPECIAL_NAMES = {"DOLLAR": "$"}
+
+def translate_name(name):
+    """
+    Translate from special name like DOLLAR to javascript
+    name which is not syntactically acceptible in python like $
+    """
+    return SPECIAL_NAMES.get(name, name)
+
+
+class CommandMaker(object):
+
+    def __getattr__(self, name):
+        return FunctionMaker(name)
+
+    def cmd(self):
+        raise ValueError("cmd not defined for " + repr(self))
+
+class FunctionMaker(CommandMaker):
+
+    def __init__(self, name):
+        self.name = translate_name(name)
+
+    def __call__(self, *args):
+        return CallMaker("fun", self.name, *args)
+
+class CallMaker(CommandMaker):
+    def __init__(self, kind, *args):
+        self.kind = kind
+        self.args = quoteLists(args)
+    def cmd(self):
+        return [self.kind] + list(self.args)
+    def __getattr__(self, name):
+        return MethodMaker(self, name)
+
+class MethodMaker(CommandMaker):
+
+    def __init__(self, target, name):
+        self.target = target
+        self.name = translate_name(name)
+
+    def __call__(self, *args):
+        return CallMaker("method", self.target, self.name, *args)
+
+class LiteralListMaker(CommandMaker):
+    def __init__(self, L):
+        self.L = list(L)
+    def cmd(self):
+        return ["list"] + self.L
+
+def quoteLists(args):
+    result = []
+    for x in args:
+        if type(x) is types.ListType:
+            x = LiteralListMaker(x)
+        result.append(x)
+    return result
 

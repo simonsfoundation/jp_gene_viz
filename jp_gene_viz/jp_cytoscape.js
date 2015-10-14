@@ -15,16 +15,11 @@ require(["widgets/js/widget", "widgets/js/manager", "cytoscape", "underscore", "
             var $target = $(target);
             $el.append(target);
             that.$target = $target;
-            //$el.text("Hello world!");
-            //return;
-            var style = {
-                "color": "red",
-                "background-color": "blue"
-            }
+            // cytoscape doesn't initialize properly with no elements?
 			var cy = cytoscape({
                 container: target,
                 elements: {
-                    nodes:[{ data: { id: "n", label: "cytoscape.js", style: style}} ]
+                    nodes:[{ data: { id: "n", label: "cytoscape.js" }} ]
                 },
                 style: 'node { content: data(label); }',
 				ready: function() { 
@@ -83,15 +78,30 @@ require(["widgets/js/widget", "widgets/js/manager", "cytoscape", "underscore", "
                 if (indicator == "fun") {
                     var name = remainder.shift();
                     var args = remainder.map(that.execute_command);
+                    // look for the function in the visualization instance.
                     var fn = cy[name];
-                    result = fn.apply(cy, args);
+                    var fnthis = cy;
+                    if (!fn) {
+                        // look in the cytoscape namespace if not found.
+                        fn = cytoscape[name];
+                        fnthis = cytoscape;
+                    }
+                    if (fn) {
+                        result = fn.apply(fnthis, args);
+                    } else {
+                        result = "No such function found " + name;  // ???
+                    }
                 } else if (indicator == "method") {
                     var target_desc = remainder.shift();
                     var target = that.execute_command(target_desc);
                     var name = remainder.shift();
                     var args = remainder.map(that.execute_command);
                     var method = target[name];
-                    result = method.apply(target, args);
+                    if (method) {
+                        result = method.apply(target, args);
+                    } else {
+                        result = "In " + target + " no such method " + name;
+                    }
                 } else if (indicator == "list") {
                     result = remainder.map(that.execute_command);
                 } else if (indicator == "dict") {
