@@ -87,7 +87,7 @@ class CytoscapeWidget(widgets.DOMWidget):
     # List of results from command execution
     results = List([], sync=True)
 
-    event_data = Dict({}, sync=True)
+    event_data = List([], sync=True)
 
     width = Unicode("100px", sync=True)
 
@@ -97,6 +97,12 @@ class CytoscapeWidget(widgets.DOMWidget):
         super(CytoscapeWidget, self).__init__(*pargs, **kwargs)
         self.commands_count = 0
         self.count_to_results_callback = {}
+        self.on_trait_change(self.handle_event_change, "event_data")
+
+    def handle_event_change(self, att_name, old, new):
+        import pprint
+        print ("event received")
+        pprint.pprint(new)
 
     def js(self):
         """Return a command maker convenience."""

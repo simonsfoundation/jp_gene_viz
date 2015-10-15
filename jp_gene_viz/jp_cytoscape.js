@@ -50,6 +50,8 @@ require(["widgets/js/widget", "widgets/js/manager", "cytoscape", "underscore", "
                 }
             };
             that.update();
+            // fix the scrolling when the widget is displayed.
+            that.on("displayed", function() { that.fix(true); });
             // for debugging only
             window.cy = cy;
 		},
@@ -98,7 +100,7 @@ require(["widgets/js/widget", "widgets/js/manager", "cytoscape", "underscore", "
                 remainder.shift();
                 if (indicator == "fun") {
                     var name = remainder.shift();
-                    var args = remainder.map(that.execute_command);
+                    var args = remainder.map(that.execute_command, that);
                     // look for the function in the visualization instance.
                     var fn = cy[name];
                     var fnthis = cy;
@@ -109,7 +111,12 @@ require(["widgets/js/widget", "widgets/js/manager", "cytoscape", "underscore", "
                     }
                     if (name == "fix") {
                         // special function: fix scrolling issues
-                        fn = this.fix;
+                        fn = that.fix;
+                    }
+                    if (name == "callback") {
+                        // event callback function factory
+                        fn = that.event_callback_factory;
+                        fnthis = that;
                     }
                     if (fn) {
                         result = fn.apply(fnthis, args);
@@ -145,12 +152,37 @@ require(["widgets/js/widget", "widgets/js/manager", "cytoscape", "underscore", "
             return result;
         },
 
+        event_callback_factory: function(data) {
+            var that = this;
+            var handler = function(e) {
+                // XXXX this may be sending too much?  too little?
+                //var info = that.json_safe(e, 2);   // 2 levels?
+                var info = {};
+                var send_attrs = ["cyPosition", "cyRenderedPosition", "timeStamp"];
+                _.each(send_attrs, function(attr, i){
+                    info[attr] = that.json_safe(e[attr], 3);
+                });
+                info.target_id = null;
+                if ((e.cyTarget && e.cyTarget.id)) {
+                    info.target_id = e.cyTarget.id();
+                };
+                var payload = [data, info];
+                that.model.set("event_data", payload);
+                that.touch();
+            };
+            return handler;
+        },
+
         json_safe: function(val, depth) {
             // maybe expand later as need arises
             var that = this;
             var ty = (typeof val);
             if ((ty == "number") || (ty == "string") || (ty == "boolean")) {
                 return val;
+            }
+            if (!val) {
+                // translate all other falsies to None
+                return null;
             }
             if (depth) {
                 if ($.isArray(val)) {
