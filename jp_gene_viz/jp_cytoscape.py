@@ -139,6 +139,13 @@ class CytoscapeWidget(widgets.DOMWidget):
         # send commands to view by modifying the commands trait.
         self.commands = [count, commands]
 
+    def fix(self, keep_elements=False):
+        """
+        Convenience function: make mouse events respond to scrolling properly.
+        and optionally delete all elements of the network.
+        """
+        self.send(self.js().fix())
+
 
 SPECIAL_NAMES = {"DOLLAR": "$"}
 
