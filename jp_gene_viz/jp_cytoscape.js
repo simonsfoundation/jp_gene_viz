@@ -16,6 +16,7 @@ require(["widgets/js/widget", "widgets/js/manager", "cytoscape", "underscore", "
             $el.append(target);
             that.$target = $target;
             // cytoscape doesn't initialize properly with no elements?
+            var style = cytoscape.stylesheet
 			var cy = cytoscape({
                 container: target,
                 elements: {
@@ -28,6 +29,26 @@ require(["widgets/js/widget", "widgets/js/manager", "cytoscape", "underscore", "
                 }
 			});
             that.cy = cy;
+            // Special function to fix scrolling issue (hack)
+            // This function must be called once after the network is visible
+            // to make mouse events respond correctly after notebook scroll.
+            // In the notebook: cy.send(jp.fix())
+            that.fix = function (keep_elements) {
+                var renderer = cy.renderer();
+                var invalidate = function (e) {
+                    renderer.invalidateContainerClientCoordsCache();
+                };
+                var node = $el[0];
+                while (node) {
+                    renderer.registerBinding(node, "scroll", invalidate);
+                    node = node.parentNode;
+                }
+                // also get rid of the test element(s)
+                if (!keep_elements) {
+                    cy.remove("node");
+                    cy.remove("edge");
+                }
+            };
             that.update();
             // for debugging only
             window.cy = cy;
@@ -85,6 +106,10 @@ require(["widgets/js/widget", "widgets/js/manager", "cytoscape", "underscore", "
                         // look in the cytoscape namespace if not found.
                         fn = cytoscape[name];
                         fnthis = cytoscape;
+                    }
+                    if (name == "fix") {
+                        // special function: fix scrolling issues
+                        fn = this.fix;
                     }
                     if (fn) {
                         result = fn.apply(fnthis, args);
