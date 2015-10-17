@@ -41,7 +41,7 @@ def slope_intercept(u, v):
     result["intercept"] = x[n+1]
     return result
 
-def l1_fit(U, v, penalty=None, expected_error=0.0):
+def l1_fit(U, v, penalty=None, tolerance=None, callback=None):
     """
     Find a least absolute error solution (m, k) to U * m + k =approx= v 
     """
@@ -62,9 +62,7 @@ def l1_fit(U, v, penalty=None, expected_error=0.0):
         ])
     c = numpy.hstack([numpy.ones(n), numpy.zeros(d+1)])
     b = numpy.hstack([v, -v])
-    # allow optimizer to disregard errors within the expected.
-    ee = max(0, expected_error)
-    bounds = [(ee, None)] * n + [(None, None)] * (d+1)
+    bounds = [(0, None)] * n + [(None, None)] * (d+1)
     if penalty is not None and penalty>0:
         (old_c, old_A, old_b, old_bounds) = (c, A, b, bounds)
         zdn =numpy.zeros((d,n))
@@ -82,7 +80,21 @@ def l1_fit(U, v, penalty=None, expected_error=0.0):
         c = numpy.hstack([old_c, numpy.ones(d) * penalty])
         b = numpy.hstack([old_b, numpy.zeros(2*d)])
         bounds = old_bounds + [ (0,None) ] * d
-    r = scipy.optimize.linprog(c, A, b, bounds=bounds)
+    if tolerance is not None and tolerance > 0:
+        (rows, cols) = A.shape
+        extrarows = rows - 2*n
+        extrazeros = numpy.zeros((extrarows, n))
+        old_A = A
+        old_bounds = bounds
+        old_c = c
+        #print "A, c, bounds", A.shape, len(c), len(bounds)
+        c = numpy.hstack([old_c, numpy.zeros(n)])
+        A = numpy.hstack([old_A, numpy.vstack([I, I, extrazeros])])
+        bounds = old_bounds + [(-tolerance, +tolerance)] * n
+        #print "A, c, bounds", A.shape, len(c), len(bounds)
+    options = {"maxiter": 10000}
+    r = scipy.optimize.linprog(c, A, b, bounds=bounds, callback=callback, options=options)
+    print r.message
     x = r.x
     m = x[n:n+d]
     k = x[n+d]
@@ -90,7 +102,7 @@ def l1_fit(U, v, penalty=None, expected_error=0.0):
     result = {}
     result["U"] = U
     result["v"] = v
-    result["expected_error"] = expected_error
+    result["tolerance"] = tolerance
     result["penalty"] = penalty
     result["m"] = m
     result["k"] = k
