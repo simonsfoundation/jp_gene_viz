@@ -176,6 +176,10 @@ class WGraph(object):
     def reset_colorization(self):
         self._node_color_interpolator = None
         self._edge_color_interpolator = None
+
+    def set_node_color_interpolator(self, color_interpolator):
+        # probably should clone XXXX
+        self._node_color_interpolator = color_interpolator
     
     def draw(self, canvas, positions, edgewidth=1, nodesize=3):
         (Me, me, Mn, mn) = self.weights_extrema()

@@ -644,12 +644,12 @@ class NetworkDisplay(object):
         self.zoom_button.disabled = True
         self.selecting = False
 
-    def set_node_weights(self, weights):
+    def set_node_weights(self, weights, colors):
         nw = self.display_graph.node_weights
         for node in list(nw):
             nw[node] = weights.get(node, 0)
         self.display_graph.reset_colorization()
-
+        self.display_graph.set_node_color_interpolator(colors)
 
 def display_network(filename, N=None, threshhold=20.0, save_layout=True, show=True):
     import dLayout

@@ -63,7 +63,8 @@ class LinkedExpressionNetwork(traitlets.HasTraits):
         if not col_weights:
             self.network.info_area.value = "No column weights selected!"
             return
-        self.network.set_node_weights(col_weights)
+        colors = self.expression.color_interpolator()
+        self.network.set_node_weights(col_weights, colors)
         self.network.draw()
         self.network.info_area.value = ("weights\n" +
                                         pprint.pformat(col_weights))

@@ -160,6 +160,9 @@ class ExpressionDisplay(traitlets.HasTraits):
         svg.send_commands()
         self.drawing = False
 
+    def color_interpolator(self):
+        return self.display_heat_map.get_color_interpolator()
+
     def show(self):
         display(self.assembly)
 
