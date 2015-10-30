@@ -33,10 +33,13 @@ class NetworkDisplay(object):
     default_side = 10
 
     def __init__(self):
+        self.title_html = widgets.HTML("Gene network")
         self.zoom_button = self.make_button("zoom", self.zoom_click, True)
         self.trim_button = self.make_button("trim", self.trim_click)
         self.layout_button = self.make_button("layout", self.layout_click)
         self.expand_button = self.make_button("expand", self.expand_click)
+        self.regulates_button = self.make_button("regulates", self.regulates_click)
+        self.targeted_button = self.make_button("targeted by", self.targeted_click)
         self.focus_button = self.make_button("focus", self.focus_click)
         self.restore_button = self.make_button("restore", self.restore_click)
         self.ignore_button = self.make_button("ignore", self.ignore_click)
@@ -61,7 +64,8 @@ class NetworkDisplay(object):
         svg.add_style("background-color", "white")
         svg.watch_event = "click mousedown mouseup mousemove mouseover"
         svg.default_event_callback = self.svg_callback
-        left_panel = [self.svg, 
+        left_panel = [self.title_html,
+                      self.svg, 
                       self.threshhold_assembly, 
                       self.pattern_assembly,
                       self.info_area]
@@ -71,6 +75,8 @@ class NetworkDisplay(object):
                    self.ignore_button,
                    self.trim_button,
                    self.expand_button,
+                   self.regulates_button,
+                   self.targeted_button,
                    self.layout_dropdown,
                    self.layout_button,
                    self.nodes_button,
@@ -94,10 +100,14 @@ class NetworkDisplay(object):
         self.selected_nodes = None
         self.svg_origin = dGraph.pos(0, 0)
 
+    def set_title(self, value):
+        self.title_html.value = value
+
     def make_pattern_assembly(self):
         "Make a pattern match widget area."
         self.pattern_text = widgets.Text(value="")
         self.match_button = self.make_button("match", self.match_click)
+        self.pattern_text.on_submit(self.match_click)
         assembly = widgets.HBox(children=[self.match_button, self.pattern_text])
         return assembly
 
@@ -319,7 +329,13 @@ class NetworkDisplay(object):
             self.svg.empty()
             self.draw()
 
-    def expand_click(self, b):
+    def regulates_click(self, b):
+        return self.expand_click(b, outgoing=True, crosslink=False)
+
+    def targeted_click(self, b):
+        return self.expand_click(b, incoming=True, crosslink=False)
+
+    def expand_click(self, b, incoming=True, outgoing=True, crosslink=True):
         "Add nodes for incoming or outgoing edges from current nodes."
         self.info_area.value = "expand clicked"
         if not self.loaded():
@@ -334,25 +350,32 @@ class NetworkDisplay(object):
         # find nodes for expansion
         for e in ew:
             # observe threshhold
+            w = ew[e]
             if threshhold > 0:
-                w = ew[e]
                 if abs(w) < threshhold:
                     continue
             if not e in dew:
                 (f, t) = e
-                if f in dnw or t in dnw:
+                addit = False
+                if incoming and t in dnw:
+                    addit = True
+                if outgoing and f in dnw:
+                    addit = True
+                if addit:
                     nodes.add(f)
                     nodes.add(t)
-        # add new edges for the nodes
-        for e in ew:
-            if not e in dew:
-                (f, t) = e
-                if f in nodes and t in nodes:
-                    w = ew[e]
-                    # observe threshhold
-                    if threshhold > 0 and abs(w) < threshhold:
-                        continue
                     dG.add_edge(f, t, w)
+        if crosslink:
+            # add new edges for the nodes
+            for e in ew:
+                if not e in dew:
+                    (f, t) = e
+                    if f in nodes and t in nodes:
+                        w = ew[e]
+                        # observe threshhold
+                        if threshhold > 0 and abs(w) < threshhold:
+                            continue
+                        dG.add_edge(f, t, w)
         # position new nodes
         P = self.data_positions
         dP = self.display_positions
