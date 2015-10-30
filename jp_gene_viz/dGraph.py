@@ -209,17 +209,18 @@ class WGraph(object):
             tp = tp + edgeshift
             #ecolor = self.edge_color(w, me, Me)
             ecolor = eci.interpolate_color(w)
-            name = "EDGE_" + json.dumps([f,t])
+            name = self.edge_name(f, t)  # "EDGE_" + json.dumps([f,t])
             canvas.line(name, fp[0], fp[1], tp[0], tp[1], ecolor, edgewidth)
             # add a mark to indicate target
             p = tp - (2 * nodesize) * n
+            markname = "mark" + name
             if w>0:
                 m = p - edgewidth * 5 * (n + no)
-                canvas.line(None, p[0], p[1], m[0], m[1], ecolor, edgewidth)
+                canvas.line(markname, p[0], p[1], m[0], m[1], ecolor, edgewidth)
                 #canvas.circle(None, m[0], m[1], markradius, pcolor)
             else:
                 m = p - edgewidth * 5 * no
-                canvas.line(None, p[0], p[1], m[0], m[1], ecolor, edgewidth)
+                canvas.line(markname, p[0], p[1], m[0], m[1], ecolor, edgewidth)
                 #canvas.rect(None, m[0]-markradius, m[1]-markradius, 
                 #            markradius*2, markradius*2, ncolor)
         # layout nodes (after edges)
@@ -242,7 +243,7 @@ class WGraph(object):
                 #ncol = self.node_color(w, Mn)
                 #ncol = weighted_color(pnode, znode, Mn, w)
                 ncol = nci.interpolate_color(w)
-                name = "NODE_" + str(n)
+                name = self.node_name(n)  # "NODE_" + str(n)
                 degree = min(outdegree.get(n, 1) - 1, 4)
                 canvas.circle(name, x, y, nodesize + degree, ncol) 
         canvas.send_commands()
@@ -260,6 +261,42 @@ class WGraph(object):
         canvas.set_view_box(originx, originy, dimension, dimension)
         #print ("canvas positioned at", (originx, originy))
         return pos(originx, originy)
+
+    def edge_name(self, f, t):
+        return "EDGE_" + json.dumps([f,t])
+
+    def node_name(self, n):
+        return "NODE_" + str(n)
+
+    def move_node(self, canvas, positions, n, x, y):
+        positions[n] = pos(x, y)
+        ew = self.edge_weights
+        for (f, t) in ew:
+            if f == n:
+                # move x1 y1 for edge
+                name = self.edge_name(f, t)
+                markname = "mark" + name
+                attributes = {}
+                attributes["x1"] = x
+                attributes["y1"] = y
+                canvas.change_element(name, attributes)
+                canvas.delete_names([markname])
+            elif t == n:
+                # move x2 y2 for edge
+                name = self.edge_name(f, t)
+                markname = "mark" + name
+                attributes = {}
+                attributes["x2"] = x
+                attributes["y2"] = y
+                canvas.change_element(name, attributes)
+                canvas.delete_names([markname])
+        name = self.node_name(n)
+        attributes = {}
+        attributes["cx"] = x
+        attributes["cy"] = y
+        canvas.change_element(name, attributes)
+        canvas.send_commands()
+
 
 def draw_heat_map(canvas, a, dx, dy):
     lowclr = clr(200, 255, 255)

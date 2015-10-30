@@ -181,8 +181,8 @@ class HeatMap(object):
         """
         Fit an svg canvas view box for the data in a heat map.
         """
-        dx = side_length / self.ncols
-        dy = side_length / self.nrows
+        dx = max(1, side_length / self.ncols)
+        dy = max(1, side_length / self.nrows)
         if label_space is None:
             additional = 0
         else:
