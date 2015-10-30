@@ -99,6 +99,7 @@ class NetworkDisplay(object):
         self.display_graph = None
         self.selected_nodes = None
         self.svg_origin = dGraph.pos(0, 0)
+        self.moving_node = None
 
     def set_title(self, value):
         self.title_html.value = value
@@ -632,6 +633,17 @@ class NetworkDisplay(object):
         # adjust the selection if it is active.
         if self.selecting:
             self.update_selection(info)
+        if self.moving_node:
+            self.update_moving_node(info)
+
+    def update_moving_node(self, info):
+        moving_node = self.moving_node
+        svgX = info["svgX"]
+        svgY = info["svgY"]
+        svg = self.svg
+        positions = self.display_positions
+        dG = self.display_graph
+        dG.move_node(svg, positions, moving_node, svgX, svgY)
 
     def update_selection(self, info):
         svg = self.svg
@@ -654,8 +666,19 @@ class NetworkDisplay(object):
         elif self.selecting:
             self.update_selection(info)
             self.selecting = False
-        elif self.selection_id and not shift and not self.selecting:
-            self.cancel_selection()
+        else:
+            if self.selection_id and not shift and not self.selecting:
+                self.cancel_selection()
+            # if we are moving a node, stop moving it.
+            name = info.get("name", "")
+            moving_node = self.moving_node
+            if self.moving_node:
+                self.moving_node = None
+                self.draw()
+            elif name.startswith("NODE_"):
+                # otherwords if it's a node, start moving it
+                nodename = name[5:]
+                self.moving_node = nodename
 
     def cancel_selection(self):
         "Remove the circular selection area, if present."
