@@ -33,6 +33,7 @@ class NetworkDisplay(object):
     default_side = 10
 
     def __init__(self):
+        self.title_html = widgets.HTML("Gene network")
         self.zoom_button = self.make_button("zoom", self.zoom_click, True)
         self.trim_button = self.make_button("trim", self.trim_click)
         self.layout_button = self.make_button("layout", self.layout_click)
@@ -63,7 +64,8 @@ class NetworkDisplay(object):
         svg.add_style("background-color", "white")
         svg.watch_event = "click mousedown mouseup mousemove mouseover"
         svg.default_event_callback = self.svg_callback
-        left_panel = [self.svg, 
+        left_panel = [self.title_html,
+                      self.svg, 
                       self.threshhold_assembly, 
                       self.pattern_assembly,
                       self.info_area]
@@ -97,6 +99,9 @@ class NetworkDisplay(object):
         self.display_graph = None
         self.selected_nodes = None
         self.svg_origin = dGraph.pos(0, 0)
+
+    def set_title(self, value):
+        self.title_html.value = value
 
     def make_pattern_assembly(self):
         "Make a pattern match widget area."
