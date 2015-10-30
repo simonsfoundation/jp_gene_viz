@@ -123,7 +123,11 @@ class ExpressionDisplay(traitlets.HasTraits):
         if heat_map is None:
             return
         dx = self.dx
+        if not dx:
+            dx = 1
         dy = self.dy
+        if not dy:
+            dy = 1
         x = info["svgX"]
         y = info["svgY"]
         i = int(y/dy)
