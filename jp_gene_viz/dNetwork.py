@@ -102,6 +102,7 @@ class NetworkDisplay(object):
         "Make a pattern match widget area."
         self.pattern_text = widgets.Text(value="")
         self.match_button = self.make_button("match", self.match_click)
+        self.pattern_text.on_submit(self.match_click)
         assembly = widgets.HBox(children=[self.match_button, self.pattern_text])
         return assembly
 
