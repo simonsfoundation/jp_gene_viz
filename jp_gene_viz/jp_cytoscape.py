@@ -93,16 +93,53 @@ class CytoscapeWidget(widgets.DOMWidget):
 
     height = Unicode("100px", sync=True)
 
+    verbose = False
+
     def __init__(self, *pargs, **kwargs):
         super(CytoscapeWidget, self).__init__(*pargs, **kwargs)
         self.commands_count = 0
         self.count_to_results_callback = {}
+        self.default_event_callback = None
+        self.identifier_to_callback = {}
         self.on_trait_change(self.handle_event_change, "event_data")
 
+    def listen(self, event_types, event_identifier=None, selector=None, callback=None):
+        js = self.js()
+        if selector is None:
+            # listen to all events of given types
+            cmd = js.on(event_types, js.callback(event_identifier))
+        else:
+            # listen to only for selected elements
+            cmd = js.on(event_types, selector, js.callback(event_identifier))
+        if callback:
+            i2c = self.identifier_to_callback
+            i2c[event_identifier] = callback
+        return self.send(cmd)
+
+    def unlisten(self, event_types, event_identifier=None, selector=None):
+        # XXXX BUG SOMEWHERE? WHEN I UNLISTEN TO NODE EDGES ALSO DON'T RESPOND?
+        js = self.js()
+        if selector is None:
+            cmd = js.off(event_types)
+        else:
+            cmd = js.off(event_types, selector)
+        i2c = self.identifier_to_callback
+        if event_identifier in i2c:
+            del i2c[event_identifier]
+        self.send(cmd)
+
     def handle_event_change(self, att_name, old, new):
-        import pprint
-        print ("event received")
-        pprint.pprint(new)
+        if self.verbose:
+            print ("event received")
+            pprint.pprint(new)
+        (identifier, info) = new
+        i2c = self.identifier_to_callback
+        cb = i2c.get(identifier)
+        if cb is not None:
+            return cb(identifier, info)
+        dec = self.default_event_callback
+        if dec is not None:
+            return dec(identifier, info)
 
     def js(self):
         """Return a command maker convenience."""

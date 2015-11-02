@@ -16,7 +16,6 @@ require(["widgets/js/widget", "widgets/js/manager", "cytoscape", "underscore", "
             $el.append(target);
             that.$target = $target;
             // cytoscape doesn't initialize properly with no elements?
-            var style = cytoscape.stylesheet
 			var cy = cytoscape({
                 container: target,
                 elements: {
@@ -158,7 +157,7 @@ require(["widgets/js/widget", "widgets/js/manager", "cytoscape", "underscore", "
                 // XXXX this may be sending too much?  too little?
                 //var info = that.json_safe(e, 2);   // 2 levels?
                 var info = {};
-                var send_attrs = ["cyPosition", "cyRenderedPosition", "timeStamp"];
+                var send_attrs = ["cyPosition", "cyRenderedPosition", "timeStamp", "type"];
                 _.each(send_attrs, function(attr, i){
                     info[attr] = that.json_safe(e[attr], 3);
                 });
