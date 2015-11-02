@@ -331,10 +331,10 @@ class NetworkDisplay(object):
             self.draw()
 
     def regulates_click(self, b):
-        return self.expand_click(b, outgoing=True, crosslink=False)
+        return self.expand_click(b, incoming=False, outgoing=True, crosslink=False)
 
     def targeted_click(self, b):
-        return self.expand_click(b, incoming=True, crosslink=False)
+        return self.expand_click(b, incoming=True, outgoing=False, crosslink=False)
 
     def expand_click(self, b, incoming=True, outgoing=True, crosslink=True):
         "Add nodes for incoming or outgoing edges from current nodes."
