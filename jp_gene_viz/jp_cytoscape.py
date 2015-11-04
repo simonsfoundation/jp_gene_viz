@@ -7,18 +7,14 @@ import json
 import os
 import pprint
 import types
+import js_context
+
 
 def load_javascript_support(verbose=False):
     """
     Install javascript support required for this module into the notebook.
     """
-    my_dir = os.path.dirname(__file__)
-    for filename in ["cytoscape.js", "jp_cytoscape.js"]:
-        js_filename = os.path.join(my_dir, filename)
-        assert os.path.exists(js_filename)
-        if verbose:
-            print("loading javascript from", repr(js_filename))
-        display(Javascript(js_filename))
+    js_context.load_if_not_loaded(["cytoscape.js", "jp_cytoscape.js"], verbose=verbose)
 
 
 def validate_commands(commands, top=True):
