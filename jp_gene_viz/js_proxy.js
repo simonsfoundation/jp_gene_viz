@@ -1,0 +1,132 @@
+
+// This is the javascript side to match js_proxy.py.
+// See js_proxy.py for an explanation of the command transfer
+// protocol.
+
+require(["widgets/js/widget", "widgets/js/manager", "underscore", "jquery"
+], function(widget, manager, _, $) {
+    debugger;
+
+    var JSProxyView = widget.DOMWidgetView.extend({
+
+        render: function() {
+            var that = this;
+            that.on("displayed", function() {
+                that.update();
+            });
+        },
+
+        update: function(options) {
+            var that = this;
+            var commands = that.model.get("commands");
+            if (commands.length == 2) {
+                var command_counter = commands[0];
+                var command_list = commands[1];
+                var results = [];
+                _.each(command_list, function(command,i) {
+                    var result = that.execute_command(command);
+                    results[i] = that.json_safe(result, 1);
+                });
+                that.model.set("commands", []);
+                that.model.set("results", [command_counter, results])
+                that.touch();
+            }
+        },
+
+        execute_command: function(command) {
+            var that = this;
+            var result = command;
+            if ($.isArray(command)) {
+                var indicator = command[0];
+                var remainder = command.slice();
+                remainder.shift();
+                if (indicator == "element") {
+                    result = that.$el;
+                } else if (indicator == "window") {
+                    result = window;
+                } else if (indicator == "method") {
+                    var target_desc = remainder.shift();
+                    var target = that.execute_command(target_desc);
+                    var name = remainder.shift();
+                    var args = remainder.map(that.execute_command);
+                    var method = target[name];
+                    if (method) {
+                        result = method.apply(target, args);
+                    } else {
+                        result = "In " + target + " no such method " + name;
+                    }
+                } else if (indicator == "id") {
+                    result = remainder[0];
+                } else if (indicator == "list") {
+                    result = remainder.map(that.execute_command);
+                } else if (indicator == "dict") {
+                    result = {}
+                    var desc = remainder[0];
+                    for (var key in desc) {
+                        var key_desc = desc[key];
+                        var val = that.execute_command(key_desc);
+                        result[key] = val;
+                    }
+                } else if (indicator == "callback") {
+                    var identifier = remainder.shift();
+                    var data = remainder.shift();
+                    result = that.callback_factory(identifier, data);
+                } else if (indicator == "get") {
+                    var target_desc = remainder.shift();
+                    var target = that.execute_command(target_desc);
+                    var name = remainder.shift();
+                    result = target[name];
+                } else if (indicator == "set") {
+                    var target_desc = remainder.shift();
+                    var target = that.execute_command(target_desc);
+                    var name = remainder.shift();
+                    var value_desc = remainder.shift()
+                    var value = that.execute_command(value_desc);
+                    target[name] = value;
+                    result = target;
+                } else {
+                    result = "Unknown indicator " + indicator;
+                }
+            }
+            return result;
+        },
+
+        json_safe: function(val, depth) {
+            // maybe expand later as need arises
+            var that = this;
+            var ty = (typeof val);
+            if ((ty == "number") || (ty == "string") || (ty == "boolean")) {
+                return val;
+            }
+            if (!val) {
+                // translate all other falsies to None
+                return null;
+            }
+            if (depth) {
+                if ($.isArray(val)) {
+                    var result = [];
+                    _.each(val, function(elt, i) {
+                        var r = that.json_safe(elt, depth-1);
+                        if (r != null) {
+                            result[i] = r;
+                        }
+                    });
+                    return result;
+                } else {
+                    var result = {};
+                    for (var key in val) {
+                        var jv = that.json_safe(val[key], depth-1);
+                        if (jv != null) {
+                            result[key] = jv;
+                        }
+                    }
+                    return result;
+                }
+            }
+            return null;
+        }
+
+    });
+
+    manager.WidgetManager.register_widget_view('JSProxyView', JSProxyView);
+});
