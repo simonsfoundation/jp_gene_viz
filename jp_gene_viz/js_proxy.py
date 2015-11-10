@@ -143,11 +143,11 @@ class ProxyWidget(widgets.DOMWidget):
     def handle_callback_results(self, att_name, old, new):
         if self.verbose:
             print ("got callback results", new)
-        [identifier, json_value] = new
+        [identifier, json_value, arguments] = new
         i2c = self.identifier_to_callback
         results_callback = i2c.get(identifier)
         if results_callback is not None:
-            results_callback(json_value)
+            results_callback(json_value, arguments)
 
     def send(self, command, results_callback=None):
         return self.send_commands([command], results_callback)
@@ -168,7 +168,8 @@ class ProxyWidget(widgets.DOMWidget):
         self.counter = count + 1
         # no need for a wrapper here -- this should never chain.
         command = ["callback", count, data]
-        return callback
+        self.identifier_to_callback[count] = callback_function
+        return command
 
     def element(self):
         return CommandMaker("element")

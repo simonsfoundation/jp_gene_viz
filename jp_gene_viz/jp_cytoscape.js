@@ -126,7 +126,7 @@ require(["widgets/js/widget", "widgets/js/manager", "cytoscape", "underscore", "
                     var target_desc = remainder.shift();
                     var target = that.execute_command(target_desc);
                     var name = remainder.shift();
-                    var args = remainder.map(that.execute_command);
+                    var args = remainder.map(that.execute_command, that);
                     var method = target[name];
                     if (method) {
                         result = method.apply(target, args);
@@ -134,7 +134,7 @@ require(["widgets/js/widget", "widgets/js/manager", "cytoscape", "underscore", "
                         result = "In " + target + " no such method " + name;
                     }
                 } else if (indicator == "list") {
-                    result = remainder.map(that.execute_command);
+                    result = remainder.map(that.execute_command, that);
                 } else if (indicator == "dict") {
                     result = {};
                     var desc = remainder[0];

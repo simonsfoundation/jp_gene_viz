@@ -48,7 +48,7 @@ require(["widgets/js/widget", "widgets/js/manager", "underscore", "jquery"
                     var target_desc = remainder.shift();
                     var target = that.execute_command(target_desc);
                     var name = remainder.shift();
-                    var args = remainder.map(that.execute_command);
+                    var args = remainder.map(that.execute_command, that);
                     var method = target[name];
                     if (method) {
                         result = method.apply(target, args);
@@ -58,7 +58,7 @@ require(["widgets/js/widget", "widgets/js/manager", "underscore", "jquery"
                 } else if (indicator == "id") {
                     result = remainder[0];
                 } else if (indicator == "list") {
-                    result = remainder.map(that.execute_command);
+                    result = remainder.map(that.execute_command, that);
                 } else if (indicator == "dict") {
                     result = {}
                     var desc = remainder[0];
@@ -89,6 +89,16 @@ require(["widgets/js/widget", "widgets/js/manager", "underscore", "jquery"
                 }
             }
             return result;
+        },
+
+        callback_factory: function(identifier, data) {
+            var that = this;
+            var handler = function () {
+                var payload = that.json_safe([identifier, data, arguments], 2);
+                that.model.set("callback_results", payload);
+                that.touch();
+            };
+            return handler;
         },
 
         json_safe: function(val, depth) {
