@@ -66,10 +66,14 @@ JSON ENCODING: ["dict", {k0: v0, ..., kn: vn}]
 JAVASCRIPT ACTION/RESULT: {k0: E(v0), ..., kn: E(vn)} -- recursively translated mapping.
 PASSED TO PYTHON: should never be returned.
 
-WIDGET INTERFACE: widget.callback(function, untranslated_data)
+WIDGET INTERFACE: widget.callback(function, untranslated_data, depth=1)
 JSON ENCODING: ["callback", numerical_identifier, untranslated_data]
 JAVASCRIPT ACTION: create a javascript callback function which triggers 
-   a python call to function(js_parameters, untranslated_data)
+   a python call to function(js_parameters, untranslated_data).
+   The depth parameter controls the recursion level for translating the
+   callback parameters to JSON when they are passed back to Python.
+   The callback function should have the signature
+       callback(untranslated_data, callback_arguments_json)
 PASSED TO PYTHON: should never be returned.
 
 WIDGET INTERFACE: target.attribute_name
@@ -88,6 +92,13 @@ WIDGET INTERFACE: not directly exposed.
 JSON ENCODING: not_a_list
 JAVASCRIPT ACTION: not_a_list -- other values are not translated
 PASSED TO PYTHON: This should not be the end of the chain.
+
+WIDGET INTERFACE: <target>._null.
+JSON ENCODING: ["null", target]
+JAVASCRIPT ACTION: execute E(target) and discard the final value to prevent 
+   large structures from propagating when not needed.  This is an 
+   optimization to prevent unneeded communication.
+PASSED TO PYTHON: None
 
 """
 
@@ -149,27 +160,35 @@ class ProxyWidget(widgets.DOMWidget):
         if results_callback is not None:
             results_callback(json_value, arguments)
 
-    def send(self, command, results_callback=None):
-        return self.send_commands([command], results_callback)
+    def send(self, command, results_callback=None, level=1):
+        return self.send_commands([command], results_callback, level)
 
-    def send_commands(self, commands_iter, results_callback=None):
+    def send_commands(self, commands_iter, results_callback=None, level=1):
         count = self.counter
         self.counter = count + 1
         commands = validate_commands(list(commands_iter))
-        payload = [count, commands]
+        payload = [count, commands, level]
         if results_callback is not None:
             self.identifier_to_callback[count] = results_callback
         # send the command using the commands traitlet which is mirrored to javascript.
         self.commands = payload
         return payload
 
-    def callback(self, callback_function, data):
+    def callback(self, callback_function, data, level=1):
+        assert level > 0, "level must be positive " + repr(level)
+        assert level <= 5, "level cannot exceed 5 " + repr(level)
         count = self.counter
-        self.counter = count + 1
+        self.counter = count
         # no need for a wrapper here -- this should never chain.
-        command = ["callback", count, data]
+        command = ["callback", count, data, level]
         self.identifier_to_callback[count] = callback_function
         return command
+
+    def forget_callback(self, callback_function):
+        i2c = self.identifier_to_callback
+        deletes = [i for i in i2c if i2c[i] == callback_function]
+        for i in deletes:
+            del i2c[i]
 
     def element(self):
         return CommandMaker("element")
@@ -211,9 +230,11 @@ def validate_command(command, top=True):
             [d] = remainder
             d = dict((k, validate_command(d[k], top=False)) for k in d)
         elif indicator == "callback":
-            [numerical_identifier, untranslated_data] = remainder
+            [numerical_identifier, untranslated_data, level] = remainder
             assert type(numerical_identifier) is types.IntType, \
                 "must be integer " + repr(numerical_identifier)
+            assert type(level) is types.IntType, \
+                "must be integer " + repr(level)
         elif indicator == "get":
             [target, name] = remainder
             target = validate_command(target, top=True)
@@ -225,6 +246,9 @@ def validate_command(command, top=True):
             name = validate_command(name, top=False)
             value = validate_command(value, top=False)
             remainder = [target, name, value]
+        elif indicator == "null":
+            [target] = remainder
+            remainder = [validate_command(target, top=False)]
         else:
             raise ValueError("bad indicator " + repr(indicator))
         command = [indicator] + remainder
@@ -258,6 +282,9 @@ class CommandMaker(object):
 
     def __call__(self, *args):
         raise ValueError("top level object cannot be called.")
+
+    def _null(self):
+        return ["null", self]
 
 
 class SetMaker(CommandMaker):

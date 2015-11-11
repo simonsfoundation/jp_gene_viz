@@ -19,13 +19,15 @@ require(["widgets/js/widget", "widgets/js/manager", "underscore", "jquery"
         update: function(options) {
             var that = this;
             var commands = that.model.get("commands");
-            if (commands.length == 2) {
+            if (commands.length >= 2) {
                 var command_counter = commands[0];
                 var command_list = commands[1];
+                var level = commands[2];
+                level = that.check_level(level);
                 var results = [];
                 _.each(command_list, function(command,i) {
                     var result = that.execute_command(command);
-                    results[i] = that.json_safe(result, 1);
+                    results[i] = that.json_safe(result, level);
                 });
                 that.model.set("commands", []);
                 that.model.set("results", [command_counter, results])
@@ -70,7 +72,10 @@ require(["widgets/js/widget", "widgets/js/manager", "underscore", "jquery"
                 } else if (indicator == "callback") {
                     var identifier = remainder.shift();
                     var data = remainder.shift();
-                    result = that.callback_factory(identifier, data);
+                    var level = remainder.shift();
+                    // sanity check
+                    level = that.check_level(level);
+                    result = that.callback_factory(identifier, data, level);
                 } else if (indicator == "get") {
                     var target_desc = remainder.shift();
                     var target = that.execute_command(target_desc);
@@ -84,6 +89,10 @@ require(["widgets/js/widget", "widgets/js/manager", "underscore", "jquery"
                     var value = that.execute_command(value_desc);
                     target[name] = value;
                     result = target;
+                } else if (indicator == "null") {
+                    target_desc = remainder.shift();
+                    that.execute_command(target_desc);
+                    result = null;
                 } else {
                     result = "Unknown indicator " + indicator;
                 }
@@ -91,10 +100,19 @@ require(["widgets/js/widget", "widgets/js/manager", "underscore", "jquery"
             return result;
         },
 
-        callback_factory: function(identifier, data) {
+        check_level: function(level) {
+            if ((typeof level) != "number" || (level < 0)) {
+                level = 0;
+            } else if (level > 5) {
+                level = 5;
+            }
+            return level;
+        },
+
+        callback_factory: function(identifier, data, level) {
             var that = this;
             var handler = function () {
-                var payload = that.json_safe([identifier, data, arguments], 2);
+                var payload = that.json_safe([identifier, data, arguments], level + 1);
                 that.model.set("callback_results", payload);
                 that.touch();
             };
@@ -112,7 +130,7 @@ require(["widgets/js/widget", "widgets/js/manager", "underscore", "jquery"
                 // translate all other falsies to None
                 return null;
             }
-            if (depth) {
+            if (((typeof depth) == "number") && (depth > 0)) {
                 if ($.isArray(val)) {
                     var result = [];
                     _.each(val, function(elt, i) {
