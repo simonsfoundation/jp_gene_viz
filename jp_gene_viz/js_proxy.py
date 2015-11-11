@@ -178,7 +178,7 @@ class ProxyWidget(widgets.DOMWidget):
         assert level > 0, "level must be positive " + repr(level)
         assert level <= 5, "level cannot exceed 5 " + repr(level)
         count = self.counter
-        self.counter = count
+        self.counter = count + 1
         # no need for a wrapper here -- this should never chain.
         command = ["callback", count, data, level]
         self.identifier_to_callback[count] = callback_function
