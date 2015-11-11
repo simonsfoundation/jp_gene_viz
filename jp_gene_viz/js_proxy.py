@@ -93,6 +93,11 @@ JSON ENCODING: not_a_list
 JAVASCRIPT ACTION: not_a_list -- other values are not translated
 PASSED TO PYTHON: This should not be the end of the chain.
 
+WIDGET INTERFACE: widget.new(<target>. <arg0>, ..., <argn>)
+JSON ENCODING: ["new", target, arg0, ... argn]
+JAVASCRIPT ACTION: thing = E(target); result = new E(arg0, ... argn)
+PASSED TO PYTHON: This should not be the end of the chain.
+
 WIDGET INTERFACE: <target>._null.
 JSON ENCODING: ["null", target]
 JAVASCRIPT ACTION: execute E(target) and discard the final value to prevent 
@@ -180,7 +185,8 @@ class ProxyWidget(widgets.DOMWidget):
         count = self.counter
         self.counter = count + 1
         # no need for a wrapper here -- this should never chain.
-        command = ["callback", count, data, level]
+        #command = ["callback", count, data, level]
+        command = CallMaker("callback", count, data, level)
         self.identifier_to_callback[count] = callback_function
         return command
 
@@ -336,23 +342,21 @@ class LiteralMaker(CommandMaker):
         thing = self.thing
         ty = type(thing)
         indicator = self.indicators.get(type(thing))
+        #return [indicator, thing]
         if indicator:
             if ty is types.ListType:
-                thing_cmd = validate_commands(thing, False)
+                return [indicator] + thing
             elif ty is types.DictType:
-                thing_cmd = {}
-                for key in thing:
-                    thing_cmd[key] = validate_command(thing[key], False)
+                return [indicator, thing]
             else:
                 raise ValueError, "can't translate " + repr(ty)
-            return [indicator, thing_cmd]
         return thing
 
 
 def quoteLists(args):
     result = []
     for x in args:
-        if type(x) is LiteralMaker.indicators:
+        if type(x) in LiteralMaker.indicators:
             x = LiteralMaker(x)
         result.append(x)
     return result
