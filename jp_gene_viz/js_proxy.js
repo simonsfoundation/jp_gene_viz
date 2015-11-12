@@ -14,6 +14,12 @@ require(["widgets/js/widget", "widgets/js/manager", "underscore", "jquery"
             that.on("displayed", function() {
                 that.update();
             });
+            // "new" keyword emulation
+            // http://stackoverflow.com/questions/17342497/dynamically-control-arguments-while-creating-objects-in-javascript
+            that.$el.New = function(klass, args) {
+                var obj = Object.create(klass.prototype);
+                return klass.apply(obj, args) || obj;
+            }
         },
 
         update: function(options) {

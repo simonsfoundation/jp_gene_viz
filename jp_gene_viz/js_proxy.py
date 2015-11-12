@@ -147,6 +147,7 @@ class ProxyWidget(widgets.DOMWidget):
         self.on_trait_change(self.handle_results, "results")
 
     def handle_results(self, att_name, old, new):
+        "Callback for when results arrive after the JS View executes commands."
         if self.verbose:
             print ("got results", new)
         [identifier, json_value] = new
@@ -157,6 +158,7 @@ class ProxyWidget(widgets.DOMWidget):
             results_callback(json_value)
 
     def handle_callback_results(self, att_name, old, new):
+        "Callback for when the JS View sends an event notification."
         if self.verbose:
             print ("got callback results", new)
         [identifier, json_value, arguments] = new
@@ -166,9 +168,11 @@ class ProxyWidget(widgets.DOMWidget):
             results_callback(json_value, arguments)
 
     def send(self, command, results_callback=None, level=1):
+        "Send a single command to the JS View."
         return self.send_commands([command], results_callback, level)
 
     def send_commands(self, commands_iter, results_callback=None, level=1):
+        "Send several commands fo the JS View."
         count = self.counter
         self.counter = count + 1
         commands = validate_commands(list(commands_iter))
@@ -180,6 +184,7 @@ class ProxyWidget(widgets.DOMWidget):
         return payload
 
     def callback(self, callback_function, data, level=1):
+        "Create a 'proxy callback' to receive events detected by the JS View."
         assert level > 0, "level must be positive " + repr(level)
         assert level <= 5, "level cannot exceed 5 " + repr(level)
         count = self.counter
@@ -191,15 +196,18 @@ class ProxyWidget(widgets.DOMWidget):
         return command
 
     def forget_callback(self, callback_function):
+        "Remove all uses of callback_function in proxy callbacks (Python side only)."
         i2c = self.identifier_to_callback
         deletes = [i for i in i2c if i2c[i] == callback_function]
         for i in deletes:
             del i2c[i]
 
     def element(self):
+        "Return a proxy reference to the Widget JQuery element this.$el."
         return CommandMaker("element")
 
     def window(self):
+        "Return a proxy reference to the browser window top level name space."
         return CommandMaker("window")
 
 
@@ -278,22 +286,31 @@ class CommandMaker(object):
         self.name = name
     
     def _cmd(self):
+        "Translate self to JSON representation for transmission to view."
         return [self.name]
 
     def __getattr__(self, name):
+        "Proxy to get a property of a jS object."
         return MethodMaker(self, name)
 
     def _set(self, name, value):
+        "Proxy to set a property of a JS object."
         return SetMaker(self, name, value)
 
     def __call__(self, *args):
+        "Proxy to call a JS object."
         raise ValueError("top level object cannot be called.")
 
     def _null(self):
+        "Proxy to discard results of JS evaluation."
         return ["null", self]
 
 
 class SetMaker(CommandMaker):
+    """
+    Proxy container to set target.name = value.
+    For chaining the result is a reference to the target.
+    """
 
     def __init__(self, target, name, value):
         self.target = target
@@ -308,6 +325,9 @@ class SetMaker(CommandMaker):
         return ["set", target, self.name, value]
 
 class MethodMaker(CommandMaker):
+    """
+    Proxy reference to a property or method of a JS object.
+    """
 
     def __init__(self, target, name):
         self.target = target
@@ -323,15 +343,24 @@ class MethodMaker(CommandMaker):
 
 
 class CallMaker(CommandMaker):
+    """
+    Proxy reference to a JS method or function call.
+    If kind == "method" and args == [target, name, arg0, ..., argn]
+    Then proxy value is target.name(arg0, ..., argn)
+    """
 
     def __init__(self, kind, *args):
         self.kind = kind
         self.args = quoteLists(args)
 
     def _cmd(self):
-        return [self.kind] + validate_commands(self.args, False)
+        return [self.kind] + self.args #+ validate_commands(self.args, False)
 
 class LiteralMaker(CommandMaker):
+    """
+    Proxy to make a literal dictionary or list which may contain other
+    proxy references.
+    """
 
     indicators = {types.DictType: "dict", types.ListType: "list"}
 
@@ -354,6 +383,7 @@ class LiteralMaker(CommandMaker):
 
 
 def quoteLists(args):
+    "Wrap lists or dictionaries in the args in LiteralMakers"
     result = []
     for x in args:
         if type(x) in LiteralMaker.indicators:
