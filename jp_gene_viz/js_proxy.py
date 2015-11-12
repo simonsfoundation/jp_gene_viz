@@ -145,6 +145,42 @@ class ProxyWidget(widgets.DOMWidget):
         #self.callback_to_identifier = {}
         self.on_trait_change(self.handle_callback_results, "callback_results")
         self.on_trait_change(self.handle_results, "results")
+        self.buffered_commands = []
+
+    def __call__(self, command):
+        "Add a command to the buffered commands. Convenience."
+        self.buffered_commands.append(command)
+        return command
+
+    def flush(self, results_callback=None, level=1):
+        "send the buffered commands and clear the buffer. Convenience."
+        commands = self.buffered_commands
+        self.buffered_commands = []
+        return self.send_commands(commands, results_callback, level)
+
+    def save(self, name, reference):
+        """
+        Proxy to save referent in the element namespace by name.
+        The command to save the element is buffered and the return
+        value is a reference to the element by name.
+        This must be followed by a flush() to execute the command.
+        """
+        elt = self.element()
+        save_command = elt._set(name, reference)
+        # buffer the save operation
+        self(save_command)
+        # return the referency bu name
+        return getattr(elt, name)
+
+    def save_new(self, name, constructor, arguments):
+        """
+        Construct a 'new constructor(arguments)' and save in the element namespace.
+        Store the construction in the command buffer and return a reference to the
+        new object.
+        This must be followed by a flush() to execute the command.
+        """
+        new_reference = self.element().New(constructor, arguments)
+        return self.save(name, new_reference)
 
     def handle_results(self, att_name, old, new):
         "Callback for when results arrive after the JS View executes commands."
