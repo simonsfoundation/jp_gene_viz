@@ -75,6 +75,17 @@ class ColorInterpolator(object):
         self.maxvalue = maxvalue
         self.breakpoints = [(minvalue, minclr), (maxvalue, maxclr)]
 
+    def set_color_mapping(self, value_to_color):
+        """
+        Re-initialize from a dictionary mapping values to color arrays.
+        """
+        values_colors = sorted(value_to_color.items())
+        (minvalue, minclr) = values_colors[0]
+        (maxvalue, maxclr) = values_colors[-1]
+        self.__init__(minclr, maxclr, minvalue, maxvalue)
+        for (v, c) in values_colors[1:-1]:
+            self.add_color(v, c)
+
     def remove_color(self, clr):
         return self.add_color(None, clr)
 
