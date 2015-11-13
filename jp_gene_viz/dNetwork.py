@@ -23,6 +23,38 @@ SELECTION = "SELECTION"
 from jp_svg_canvas.canvas import load_javascript_support
 
 
+Emilys_colors = """
+0.8941  0.1020  0.1098
+1.0000  0.4980  0
+0.5961  0.3059  0.6392
+0.1725  0.4941  0.7216
+0.3020  0.6863  0.2902
+0   0   0
+0.6510  0.3373  0.1569
+1.0000  1.0000  0.2000
+0.9686  0.5059  0.7490
+0.6000  0.6000  0.6000
+1.0000  1.0000  1.0000
+"""
+
+
+def set_node_color_levels(network, color_text=Emilys_colors):
+    # split text on lines
+    lines = color_text.strip().split("\n")
+    # split each line
+    lists = [line.split() for line in lines]
+    # convert to float in range 0..255
+    numlists = [[float(x) * 255 for x in L] for L in lists]
+    # convert to color arrays.
+    clrlists = [color_scale.clr(*L) for L in numlists]
+    # convert to index mapping with indices from 0 to n-1
+    clrmapping = dict((count, clr) for (count, clr) in enumerate(clrlists))
+    # set the mapping for the network
+    G = network.display_graph
+    interpolator = G.get_node_color_interpolator()
+    interpolator.set_color_mapping(clrmapping)
+
+
 class NetworkDisplay(object):
 
     """
