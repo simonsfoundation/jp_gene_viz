@@ -107,10 +107,16 @@ PASSED TO PYTHON: None
 
 """
 
+import time
 import types
 import ipywidgets as widgets
 import traitlets
 import js_context
+
+
+# In the IPython context get_ipython is a builtin.
+# get a reference to the IPython notebook object.
+ip = get_ipython()
 
 
 def load_javascript_support(verbose=False):
@@ -219,14 +225,34 @@ class ProxyWidget(widgets.DOMWidget):
         self.commands = payload
         return payload
 
+    def evaluate(self, command, level=1, timeout=3000):
+        "Send one command and wait for result.  Return result."
+        return self.evaluate_commands([command], level, timeout)
+
+    def evaluate_commands(self, commands_iter, level=1, timeout=3000):
+        "Send commands and wait for result.  Return result."
+        # inspired by https://github.com/jdfreder/ipython-jsobject/blob/master/jsobject/utils.py
+        result_list = []
+
+        def evaluation_callback(json_value):
+            result_list.append(json_value)
+
+        self.send_commands(commands_iter, evaluation_callback, level)
+        # get_ipython is a builtin in the ipython context (no import needed (?))
+        #ip = get_ipython()
+        start = time.time()
+        while not result_list:
+            if time.time() - start > timeout/ 1000.0:
+                raise Exception("Timeout waiting for command results: " + repr(timeout))
+            ip.kernel.do_one_iteration()
+        return result_list[0]
+
     def callback(self, callback_function, data, level=1):
         "Create a 'proxy callback' to receive events detected by the JS View."
         assert level > 0, "level must be positive " + repr(level)
         assert level <= 5, "level cannot exceed 5 " + repr(level)
         count = self.counter
         self.counter = count + 1
-        # no need for a wrapper here -- this should never chain.
-        #command = ["callback", count, data, level]
         command = CallMaker("callback", count, data, level)
         self.identifier_to_callback[count] = callback_function
         return command
@@ -414,7 +440,7 @@ class LiteralMaker(CommandMaker):
             elif ty is types.DictType:
                 return [indicator, thing]
             else:
-                raise ValueError, "can't translate " + repr(ty)
+                raise ValueError("can't translate " + repr(ty))
         return thing
 
 
