@@ -5,7 +5,7 @@
 
 require(["widgets/js/widget", "widgets/js/manager", "underscore", "jquery"
 ], function(widget, manager, _, $) {
-    debugger;
+    //debugger;
 
     var JSProxyView = widget.DOMWidgetView.extend({
 
@@ -63,6 +63,12 @@ require(["widgets/js/widget", "widgets/js/manager", "underscore", "jquery"
                     } else {
                         result = "In " + target + " no such method " + name;
                     }
+                } else if (indicator == "function") {
+                    var function_desc = remainder.shift();
+                    var function_value = that.execute_command(function_desc);
+                    var args = remainder.map(that.execute_command, that);
+                    // Use "that" as the "this" value for function values?
+                    result = function_value.apply(that, args);
                 } else if (indicator == "id") {
                     result = remainder[0];
                 } else if (indicator == "list") {
