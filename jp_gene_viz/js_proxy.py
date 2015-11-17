@@ -188,6 +188,17 @@ class ProxyWidget(widgets.DOMWidget):
         new_reference = self.element().New(constructor, arguments)
         return self.save(name, new_reference)
 
+    def save_function(self, name, arguments, body):
+        """
+        Buffer a command to create a JS function using "new Function(...)"
+        """
+        klass = self.window().Function
+        return self.save_new(name, klass, list(arguments) + [body])
+
+    def function(self, arguments, body):
+        klass = self.window().Function
+        return self.element().New(klass, list(arguments) + [body])
+
     def handle_results(self, att_name, old, new):
         "Callback for when results arrive after the JS View executes commands."
         if self.verbose:
@@ -227,10 +238,12 @@ class ProxyWidget(widgets.DOMWidget):
 
     def evaluate(self, command, level=1, timeout=3000):
         "Send one command and wait for result.  Return result."
-        return self.evaluate_commands([command], level, timeout)
+        results = self.evaluate_commands([command], level, timeout)
+        assert len(results) == 1
+        return results[0]
 
     def evaluate_commands(self, commands_iter, level=1, timeout=3000):
-        "Send commands and wait for result.  Return result."
+        "Send commands and wait for results.  Return results."
         # inspired by https://github.com/jdfreder/ipython-jsobject/blob/master/jsobject/utils.py
         result_list = []
 
@@ -298,6 +311,12 @@ def validate_command(command, top=True):
             assert type(name) is types.StringType, "method name must be a string " + repr(name)
             args = validate_commands(args, top=False)
             remainder = [target, name] + args
+        elif indicator == "function":
+            target = remainder[0]
+            args = remainder[1:]
+            target = validate_command(target, top=True)
+            args = validate_commands(args, top=False)
+            remainder = [target] + args
         elif indicator == "id":
             assert len(remainder) == 1, "id takes one argument only " + repr(remainder)
         elif indicator == "list":
@@ -406,7 +425,7 @@ class MethodMaker(CommandMaker):
 
 class CallMaker(CommandMaker):
     """
-    Proxy reference to a JS method or function call.
+    Proxy reference to a JS method call or function call.
     If kind == "method" and args == [target, name, arg0, ..., argn]
     Then proxy value is target.name(arg0, ..., argn)
     """
@@ -414,6 +433,12 @@ class CallMaker(CommandMaker):
     def __init__(self, kind, *args):
         self.kind = kind
         self.args = quoteLists(args)
+
+    def __call__(self, *args):
+        """
+        Call the callable returned by the function or method call.
+        """
+        return CallMaker("function", self, *args)
 
     def _cmd(self):
         return [self.kind] + self.args #+ validate_commands(self.args, False)
