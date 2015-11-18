@@ -277,6 +277,14 @@ class ProxyWidget(widgets.DOMWidget):
         for i in deletes:
             del i2c[i]
 
+    def js_debug(self, *arguments):
+        """
+        Break in the Chrome debugger (only if developer tools is open)
+        """
+        if not arguments:
+            arguments = [self.element()]
+        return self.send(self.function(["element"], "debugger;")(self.element()))
+
     def element(self):
         "Return a proxy reference to the Widget JQuery element this.$el."
         return CommandMaker("element")
