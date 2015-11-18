@@ -277,6 +277,14 @@ class ProxyWidget(widgets.DOMWidget):
         for i in deletes:
             del i2c[i]
 
+    def js_debug(self, *arguments):
+        """
+        Break in the Chrome debugger (only if developer tools is open)
+        """
+        if not arguments:
+            arguments = [self.element()]
+        return self.send(self.function(["element"], "debugger;")(self.element()))
+
     def element(self):
         "Return a proxy reference to the Widget JQuery element this.$el."
         return CommandMaker("element")
@@ -324,6 +332,7 @@ def validate_command(command, top=True):
         elif indicator == "dict":
             [d] = remainder
             d = dict((k, validate_command(d[k], top=False)) for k in d)
+            remainder = [d]
         elif indicator == "callback":
             [numerical_identifier, untranslated_data, level] = remainder
             assert type(numerical_identifier) is types.IntType, \
@@ -461,19 +470,19 @@ class LiteralMaker(CommandMaker):
         #return [indicator, thing]
         if indicator:
             if ty is types.ListType:
-                return [indicator] + thing
+                return [indicator] + quoteLists(thing)
             elif ty is types.DictType:
-                return [indicator, thing]
+                return [indicator, dict((k, quoteIfNeeded(thing[k])) for k in thing)]
             else:
                 raise ValueError("can't translate " + repr(ty))
         return thing
 
 
+def quoteIfNeeded(arg):
+    if type(arg) in LiteralMaker.indicators:
+        return LiteralMaker(arg)
+    return arg
+
 def quoteLists(args):
     "Wrap lists or dictionaries in the args in LiteralMakers"
-    result = []
-    for x in args:
-        if type(x) in LiteralMaker.indicators:
-            x = LiteralMaker(x)
-        result.append(x)
-    return result
+    return [quoteIfNeeded(x) for x in args]
