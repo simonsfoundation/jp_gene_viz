@@ -39,6 +39,18 @@ Emilys_colors = """
 
 
 def set_node_color_levels(network, color_text=Emilys_colors):
+    G = network.display_graph
+    interpolator = G.get_node_color_interpolator()
+    return set_color_levels(interpolator, color_text)
+
+
+def set_edge_color_levels(network, color_text=Emilys_colors):
+    G = network.display_graph
+    interpolator = G.get_edge_color_interpolator()
+    return set_color_levels(interpolator, color_text)
+
+
+def set_color_levels(interpolator, color_text=Emilys_colors):
     # split text on lines
     lines = color_text.strip().split("\n")
     # split each line
@@ -49,9 +61,6 @@ def set_node_color_levels(network, color_text=Emilys_colors):
     clrlists = [color_scale.clr(*L) for L in numlists]
     # convert to index mapping with indices from 0 to n-1
     clrmapping = dict((count, clr) for (count, clr) in enumerate(clrlists))
-    # set the mapping for the network
-    G = network.display_graph
-    interpolator = G.get_node_color_interpolator()
     interpolator.set_color_mapping(clrmapping)
 
 
