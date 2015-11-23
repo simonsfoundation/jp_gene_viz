@@ -15,17 +15,18 @@ Structure follows: https://learn.jquery.com/plugins/basic-plugin-creation/
         var that = this;
         // Get setttings from options or default values.
         var settings = $.extend({
-            "letters": {"A": "green", "C": "blue", "T": "red", "G": "darkkhaki"},
+            "letters": {"A": "green", "C": "blue", "T": "red", "G": "orange"},
             "ylabel": "bits",
             "leftlabel": "5'",
             "rightlabel": "3'",
             "x": 0,
             "y": 0,
             "bgcolor": "white",
+            "boundary": "cornsilk",
             "border": 8,
             "labelfont": "10px Arial",
-            "letterfont": "30px Courier",
-            "fontpixelheight": 18,
+            "letterfont": "30px Arial",
+            "fontpixelheight": 24,
         }, options);
         // collect stats on columns
         var maxOffset = 0.0;
@@ -48,7 +49,9 @@ Structure follows: https://learn.jquery.com/plugins/basic-plugin-creation/
         // draw the background
         ctx.translate(settings.x, settings.y);
         ctx.fillStyle = settings.bgcolor;
+        ctx.strokeStyle = settings.boundary;
         ctx.fillRect(0, 0, width, height);
+        ctx.strokeRect(0, 0, width, height);
         // draw the letters
         var columnx = settings.border;
         var columndelta = (width - settings.border)/ncolumns;
@@ -95,6 +98,8 @@ Structure follows: https://learn.jquery.com/plugins/basic-plugin-creation/
         ctx.restore()     
         ctx.restore();
     };
+
+    // example usage and test case: jQuery.fn.sequence_motif.example($("#canvas"))
     $.fn.sequence_motif.example = function (element) {
         debugger;
         var newcanvas = $('<canvas width="300", height="300"/>'); //.width("110px").height("110px");
@@ -103,18 +108,18 @@ Structure follows: https://learn.jquery.com/plugins/basic-plugin-creation/
             "x": 10,
             "y": 10
         };
-        // red fill for reference
+        // light grey fill for reference
         var ctx = newcanvas[0].getContext("2d");
-        ctx.fillStyle = "#FF0000";
-        ctx.fillRect(0, 0, 110, 110);
+        ctx.fillStyle = "#dddddd";
+        ctx.fillRect(0, 0, 300, 300);
         var columns = [
-        [["A", 0.2], ["C", 0.3], ["T", 0.5]],
-        [["A", 0.3], ["C", 0.7]],
-        [["T", 1.0]],
-        [["A", 0.3], ["G", 0.3], ["T", 0.4]],
-        [["A", 0.1], ["C", 0.2], ["G", 0.7]],
+        [["A", 2], ["C", 3], ["T", 5]],
+        [["A", 3], ["C", 7]],
+        [["T", 10]],
+        [["A", 3], ["G", 3], ["T", 4]],
+        [["A", 1], ["C", 2], ["G", 7]],
         ];
-        newcanvas.sequence_motif(90, 50, columns, options);
+        newcanvas.sequence_motif(190, 111, columns, options);
         element.append(newcanvas);
     };
 })(jQuery);
