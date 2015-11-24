@@ -104,6 +104,7 @@ Structure follows: https://learn.jquery.com/plugins/basic-plugin-creation/
         ctx.fillText(settings.ylabel, 0, 0);
         ctx.restore()     
         ctx.restore();
+        return that;
     };
 
     // example usage and test case: jQuery.fn.sequence_motif.example($("#canvas"))

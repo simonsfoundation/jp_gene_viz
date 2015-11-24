@@ -117,8 +117,70 @@ class Motif(object):
         Create a motif encapulation from a letter sequence
         and a 2d array of frequencies for letter positions.
         """
+        frequency_sequence = np.array(frequency_sequence, np.float)
         (nrows, ncols) = frequency_sequence.shape
         assert len(letters) == ncols, "array and letters don't match " + repr((
             letters, ncols))
         self.letters = letters
         self.frequency_sequence = frequency_sequence
+
+    def frequency_entropy(self, epsilon=0.001):
+        """
+        Return frequencies weighted by entropy:
+        http://www.nature.com/nbt/journal/v24/n4/full/nbt0406-423.html.
+        """
+        f = self.frequency_sequence
+        near_zero = (np.abs(f) < epsilon)
+        with np.errstate(all="ignore"):
+            plogp = f * np.log2(f)
+        entropy = np.where(near_zero, 0, plogp)
+        total = entropy.sum(1)
+        rescale = np.log2(len(self.letters)) + total
+        result = f * rescale.reshape(len(f), 1)
+        return result
+
+    def json_columns(self, entropy=True, epsilon=0.05):
+        """
+        Create a JSON array as expected by the sequence_motif jQuery plugin.
+        """
+        letters = self.letters
+        data = self.frequency_sequence
+        if entropy:
+            data = self.frequency_entropy()
+        result = []
+        for d in data:
+            column = []
+            lf = sorted(zip(d, letters))
+            for (frequency, letter) in lf:
+                if frequency > epsilon:
+                    column.append([letter, frequency])
+            result.append(column)
+        return result
+
+    def canvas(self, width=None, height=None, entropy=True):
+        """
+        Make a jsproxy canvas widget which draws the motif using sequence_motif.js.
+        """
+        from jp_gene_viz import js_proxy
+        from jp_gene_viz import js_context
+        js_proxy.load_javascript_support()
+        js_context.load_if_not_loaded(["sequence_motifs.js"])
+        (ncolumns, nrows) = self.frequency_sequence.shape
+        columns = self.json_columns(entropy=entropy)
+        if width is None:
+            width = ncolumns * 30
+        if height is None:
+            height = nrows * 40
+        w = js_proxy.ProxyWidget()
+        elt = w.element()
+        canvas_tag = '<canvas width="%s" height="%s"/>' % (
+            int(width + 10), int(height + 10))
+        options = {
+            "x": 5,
+            "y": 5,
+        }
+        jQuery = w.window().jQuery
+        new_canvas = jQuery(canvas_tag)
+        w(elt.append(new_canvas.sequence_motif(width, height, columns, options)))
+        w.flush()
+        return w

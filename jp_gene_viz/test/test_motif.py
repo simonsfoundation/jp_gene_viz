@@ -1,6 +1,7 @@
 
 import unittest
 import StringIO
+import numpy as np
 
 from .. import motif_data
 
@@ -52,9 +53,27 @@ letter-probability matrix: alength= 4 w= 8 nsites= 20 E= 0
 
 class TestMotif(unittest.TestCase):
 
-    def test_basic(self):
+    def test_collection(self):
         f = StringIO.StringIO(EXAMPLE_FILE)
         md = motif_data.MotifCollection()
         md.read_meme_file(f)
         motif = md["BatfIrf4Th17f_1"]
         self.assertEqual(motif.frequency_sequence[6, 2], 0.0)
+        self.assertEqual(list(md.letter_order), list("ACGT"))
+
+    def test_Motif(self):
+        letters = "abcd"
+        frequencies = [[1,0,0,0], [0.25,0.25,0.25,0.25]]
+        m = motif_data.Motif(letters, frequencies)
+        entropy = m.frequency_entropy()
+        self.assertEqual(entropy[0].tolist(), [2,0,0,0])
+        self.assertEqual(entropy[1].tolist(), [0] * 4)
+
+    def test_columns(self):
+        a = [[1, 2, 3, 4], [4, 2, 3, 1]]
+        m = motif_data.Motif("ABCD", a)
+        c = m.json_columns(entropy=False)
+        expected = [
+            [('A', 1), ('B', 2), ('C', 3), ('D', 4)], 
+            [('D', 1), ('B', 2), ('C', 3), ('A', 4)]]
+        self.assertEqual(c, expected)
