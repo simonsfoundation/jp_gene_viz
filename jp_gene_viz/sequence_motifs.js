@@ -80,6 +80,12 @@ Structure follows: https://learn.jquery.com/plugins/basic-plugin-creation/
                 ctx.restore()
                 lettery -= (weight * yheight) / maxOffset;
             }
+            ctx.save();
+            ctx.fillStyle = "black";
+            ctx.textAlign = "center";
+            ctx.font = settings.labelfont;
+            ctx.fillText("" + (ncolumn + 1), columnx + columndelta/2, height);
+            ctx.restore();
             columnx += columndelta;
         }
         // deaw the labels
