@@ -27,9 +27,10 @@ Structure follows: https://learn.jquery.com/plugins/basic-plugin-creation/
             "labelfont": "10px Arial",
             "letterfont": "30px Arial",
             "fontpixelheight": 24,
+            "yMaximumDefault": 0,
         }, options);
         // collect stats on columns
-        var maxOffset = 0.0;
+        var maxOffset = settings.yMaximumDefault;
         var ncolumns = columns.length;
         for (var ncolumn = 0; ncolumn < ncolumns; ncolumn++) {
             var totalweight = 0.0;
