@@ -15,7 +15,7 @@ def read_network(fn=network0, limit=None, threshhold=None):
 
     The first line of the file is assumed to be a header line.  It is skipped.
     """
-    f = open(fn)
+    f = open(fn, "rU")
     headers = f.readline()
     G = dGraph.WGraph()
     count = 0
