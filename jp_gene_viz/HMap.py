@@ -137,8 +137,11 @@ class HeatMap(object):
         result = self._color_interpolator
         if result is None:
             v = self.data.flatten()
-            M = numpy.max(v)
-            m = numpy.min(v)
+            M = 1.0
+            m = 0.0
+            if len(v) > 0:
+                M = numpy.max(v)
+                m = numpy.min(v)
             mc = self.min_clr
             Mc = self.max_clr
             result = color_scale.ColorInterpolator(mc, Mc, m, M)
@@ -181,14 +184,14 @@ class HeatMap(object):
         """
         Fit an svg canvas view box for the data in a heat map.
         """
-        dx = max(1, side_length / self.ncols)
-        dy = max(1, side_length / self.nrows)
+        ncols = max(1, self.ncols)
+        nrows = max(1, self.nrows)
+        dx = max(1, side_length / ncols)
+        dy = max(1, side_length / nrows)
         if label_space is None:
             additional = 0
         else:
             additional = label_space
-        if self.ncols == 0 or self.nrows == 0:
-            return
         width = dx * self.ncols + label_space
         height = dy * self.nrows + label_space
         side = max(width, height)
