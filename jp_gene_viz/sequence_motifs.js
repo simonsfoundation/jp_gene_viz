@@ -27,9 +27,10 @@ Structure follows: https://learn.jquery.com/plugins/basic-plugin-creation/
             "labelfont": "10px Arial",
             "letterfont": "30px Arial",
             "fontpixelheight": 24,
+            "yMaximumDefault": 0,
         }, options);
         // collect stats on columns
-        var maxOffset = 0.0;
+        var maxOffset = settings.yMaximumDefault;
         var ncolumns = columns.length;
         for (var ncolumn = 0; ncolumn < ncolumns; ncolumn++) {
             var totalweight = 0.0;
@@ -79,6 +80,12 @@ Structure follows: https://learn.jquery.com/plugins/basic-plugin-creation/
                 ctx.restore()
                 lettery -= (weight * yheight) / maxOffset;
             }
+            ctx.save();
+            ctx.fillStyle = "black";
+            ctx.textAlign = "center";
+            ctx.font = settings.labelfont;
+            ctx.fillText("" + (ncolumn + 1), columnx + columndelta/2, height);
+            ctx.restore();
             columnx += columndelta;
         }
         // deaw the labels
@@ -97,6 +104,7 @@ Structure follows: https://learn.jquery.com/plugins/basic-plugin-creation/
         ctx.fillText(settings.ylabel, 0, 0);
         ctx.restore()     
         ctx.restore();
+        return that;
     };
 
     // example usage and test case: jQuery.fn.sequence_motif.example($("#canvas"))
