@@ -179,6 +179,11 @@ class Motif(object):
             "x": 5,
             "y": 5,
         }
+        if not entropy:
+            options["ylabel"] = "probability"
+        else:
+            options["ylabel"] = "bits"
+            options["yMaximumDefault"] = 2.0
         jQuery = w.window().jQuery
         new_canvas = jQuery(canvas_tag)
         w(elt.append(new_canvas.sequence_motif(width, height, columns, options)))
