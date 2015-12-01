@@ -88,11 +88,14 @@ class WGraph(object):
     def __init__(self):
         self.edge_weights = {}
         self.node_weights = {}
+        self.edge_attributes = {}
 
     def clone(self):
         result = WGraph()
         result.edge_weights = self.edge_weights.copy()
         result.node_weights = self.node_weights.copy()
+        # share edge attributes for now
+        result.edge_attributes = self.edge_attributes
         return result
         
     def unordered_weight(self, a, b):
@@ -115,15 +118,23 @@ class WGraph(object):
     def sizes(self):
         return (len(self.edge_weights), len(self.node_weights))
         
-    def add_edge(self, from_node, to_node, weight):
+    def add_edge(self, from_node, to_node, weight, attributes=None):
         # ignore self edges (?)
         if from_node == to_node:
             return
+        if attributes is None:
+            attributes = {}
         e = self.edge_weights
         n = self.node_weights
-        e[(from_node, to_node)] = weight
+        edge = (from_node, to_node)
+        # add the edge
+        e[edge] = weight
+        # extend or add attributes
+        atts = self.edge_attributes.get(edge, {})
+        atts.update(attributes)
+        self.edge_attributes[edge] = atts
         a = abs(weight)
-        for node in (from_node, to_node):
+        for node in edge:
             n[node] = n.get(node, 0) + a
             
     def weights_extrema(self):

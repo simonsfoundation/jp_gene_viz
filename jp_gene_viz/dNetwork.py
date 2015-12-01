@@ -7,6 +7,7 @@ import pprint
 import ipywidgets as widgets
 from IPython.display import display
 from jp_svg_canvas import canvas
+from jp_gene_viz import js_proxy
 import dGraph
 import dLayout
 import color_scale
@@ -16,11 +17,16 @@ import igraph
 import json
 import os
 import traitlets
+import time
 
 SELECTION = "SELECTION"
 
 # This function should be called once in a notebook before creating a display.
-from jp_svg_canvas.canvas import load_javascript_support
+#from jp_svg_canvas.canvas import load_javascript_support
+
+def load_javascript_support(verbose=False):
+    canvas.load_javascript_support()
+    js_proxy.load_javascript_support()
 
 
 Emilys_colors = """
@@ -73,6 +79,13 @@ class NetworkDisplay(object):
 
     default_side = 10
 
+    dialog_time = None
+
+    dialog_timeout = 5
+
+    # The motif collection to use for looking up motif data.
+    motif_collection = None
+
     def __init__(self):
         self.title_html = widgets.HTML("Gene network")
         self.zoom_button = self.make_button("zoom", self.zoom_click, True)
@@ -95,6 +108,7 @@ class NetworkDisplay(object):
         self.pattern_assembly = self.make_pattern_assembly()
         self.info_area = widgets.Textarea(description="status")
         self.colors_assembly = self.make_colors_assembly()
+        self.dialog = self.make_dialog()
         self.colors_assembly.visible = False
         svg = self.svg = canvas.SVGCanvasWidget()
         sslider = self.size_slider = widgets.FloatSlider(value=500, min=500, max=2000, step=10,
@@ -127,7 +141,8 @@ class NetworkDisplay(object):
                    self.size_slider,
                    self.draw_button,
                    self.colors_button,
-                   self.colors_assembly]
+                   self.colors_assembly,
+                   self.dialog]
         self.inputs = widgets.VBox(children=buttons)
         self.assembly = widgets.HBox(children=[self.inputs, self.vertical])
         self.select_start = None
@@ -144,6 +159,15 @@ class NetworkDisplay(object):
 
     def set_title(self, value):
         self.title_html.value = value
+
+    def make_dialog(self):
+        "Make a dialog widget and hide it for now."
+        w = js_proxy.ProxyWidget()
+        e = w.element()
+        w(e.html("Temporary content for dialog").dialog())
+        w(e.dialog("close"))
+        w.flush()
+        return w
 
     def make_pattern_assembly(self):
         "Make a pattern match widget area."
@@ -578,19 +602,79 @@ class NetworkDisplay(object):
         name = info.get("name")
         shift = info.get("shiftKey")
         if name and not shift:
-            self.info_area.value = name
+            self.info_area.value = name + pprint.pformat(info)
             split = name.split("_")
             L = []
             if len(split) == 2:
                 [indicator, data] = split
                 if indicator == "NODE":
                     L.append(self.node_detail(data))
+                    self.close_dialog()
                 elif indicator == "EDGE":
                     e = json.loads(data)
                     L.append(self.edge_detail(e))
+                    if not (self.selecting or self.moving_node):
+                        self.edge_dialog(e, info)
                 else:
                     L.append("name " + repr(name))
+                if indicator != "EDGE":
+                    self.check_dialog()
             self.info_area.value = "\n".join(L)
+
+    def check_dialog(self):
+        dt = self.dialog_time
+        if dt is not None:
+            elapsed = time.time() - dt
+            if elapsed > self.dialog_timeout:
+                self.close_dialog()
+
+    def close_dialog(self):
+        self.dialog_time = None
+        d = self.dialog
+        elt = d.element()
+        d(elt.dialog("close"))
+        d.flush()
+
+    def edge_dialog(self, edge, info):
+        edge = tuple(edge)
+        dg = self.data_graph
+        atts = dg.edge_attributes.get(edge)
+        motif_displays = []
+        if atts is None:
+            html = "No such edge? " + repr(edge)
+        else:
+            R = atts.get("Regulator", edge[0])
+            T = atts.get("Target", edge[1])
+            html = "%s -> %s" % (R, T)
+            motifs = comma_separated(atts.get("Motifs", ""))
+            if not motifs:
+                html += "<br> no motifs."
+            else:
+                mc = self.motif_collection
+                if not mc:
+                    html += "<br> motifs=" + repr(motifs)
+                else:
+                    for motif_name in motifs:
+                        # drop the suffix, like "_hg19"
+                        motif_prefix = motif_name.rsplit("_", 1)[0]
+                        motif_data = mc.get(motif_prefix)
+                        if motif_data is None:
+                            html += "<br> not found " + repr(motif_prefix)
+                        else:
+                            motif_displays.append((motif_prefix, motif_data))
+        d = self.dialog
+        elt = d.element()
+        x = info["pageX"] + 5
+        y = info["pageY"] + 5
+        d(elt.empty)
+        d(elt.dialog("option", {"position": [x, y]}).
+            html(html))
+        d(elt.dialog("open"))
+        d.flush()
+        for (prefix, data) in motif_displays:
+            d(elt.append("<div> %s </div>" % prefix))
+            data.add_canvas(d, elt, dwidth=12, dheight=14)
+        self.dialog_time = time.time()
 
     def node_detail(self, node):
         "Return a string describing a node of the network."
@@ -676,6 +760,7 @@ class NetworkDisplay(object):
             self.update_selection(info)
         if self.moving_node:
             self.update_moving_node(info)
+        self.check_dialog()
 
     def update_moving_node(self, info):
         moving_node = self.moving_node
@@ -762,3 +847,7 @@ def display_network(filename, N=None, threshhold=20.0, save_layout=True, show=Tr
     if show:
         N.show()
     return N
+
+def comma_separated(s):
+    no_whitespace = "".join(s.split())
+    return filter(None, no_whitespace.split(","))

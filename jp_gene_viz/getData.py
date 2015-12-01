@@ -15,17 +15,18 @@ def read_network(fn=network0, limit=None, threshhold=None):
 
     The first line of the file is assumed to be a header line.  It is skipped.
     """
-    f = open(fn, "rU")
-    headers = f.readline()
+    f = open(fn)
+    headers = f.readline().strip().split("\t")
     G = dGraph.WGraph()
     count = 0
     for dataline in f:
-        columns = dataline.split()
+        columns = dataline.strip().split("\t")
         [regulator, target, beta_s] = columns[:3]
         beta = float(beta_s)
-        if abs(beta) < threshhold:
+        if threshhold is not None and  abs(beta) < threshhold:
             continue
-        G.add_edge(regulator.lower(), target.lower(), beta)
+        attributes = dict(zip(headers, columns))
+        G.add_edge(regulator.lower(), target.lower(), beta, attributes)
         count += 1
         if limit is not None and count > limit:
             break
