@@ -83,6 +83,9 @@ class NetworkDisplay(object):
 
     dialog_timeout = 5
 
+    # The motif collection to use for looking up motif data.
+    motif_collection = None
+
     def __init__(self):
         self.title_html = widgets.HTML("Gene network")
         self.zoom_button = self.make_button("zoom", self.zoom_click, True)
@@ -636,10 +639,29 @@ class NetworkDisplay(object):
         edge = tuple(edge)
         dg = self.data_graph
         atts = dg.edge_attributes.get(edge)
+        motif_displays = []
         if atts is None:
             html = "No such edge? " + repr(edge)
         else:
-            html = "<pre> %s </pre>" % pprint.pformat(atts)
+            R = atts.get("Regulator", edge[0])
+            T = atts.get("Target", edge[1])
+            html = "%s -> %s" % (R, T)
+            motifs = comma_separated(atts.get("Motifs", ""))
+            if not motifs:
+                html += "<br> no motifs."
+            else:
+                mc = self.motif_collection
+                if not mc:
+                    html += "<br> motifs=" + repr(motifs)
+                else:
+                    for motif_name in motifs:
+                        # drop the suffix, like "_hg19"
+                        motif_prefix = motif_name.rsplit("_", 1)[0]
+                        motif_data = mc.get(motif_prefix)
+                        if motif_data is None:
+                            html += "<br> not found " + repr(motif_prefix)
+                        else:
+                            motif_displays.append((motif_prefix, motif_data))
         d = self.dialog
         elt = d.element()
         x = info["pageX"] + 5
@@ -649,6 +671,9 @@ class NetworkDisplay(object):
             html(html))
         d(elt.dialog("open"))
         d.flush()
+        for (prefix, data) in motif_displays:
+            d(elt.append("<div> %s </div>" % prefix))
+            data.add_canvas(d, elt, dwidth=12, dheight=14)
         self.dialog_time = time.time()
 
     def node_detail(self, node):
@@ -822,3 +847,7 @@ def display_network(filename, N=None, threshhold=20.0, save_layout=True, show=Tr
     if show:
         N.show()
     return N
+
+def comma_separated(s):
+    no_whitespace = "".join(s.split())
+    return filter(None, no_whitespace.split(","))

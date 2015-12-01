@@ -29,6 +29,9 @@ class MotifCollection(object):
         "self[motif_name]: retrieve a motif"
         return self.name_to_motif[name]
 
+    def get(self, name, default=None):
+        return self.name_to_motif.get(name, default)
+
     def read_meme_file(self, file):
         """
         Read a MEME format file
