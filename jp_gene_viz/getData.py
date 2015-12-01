@@ -46,7 +46,8 @@ def read_tsv(fn=expr1):
     The remaining lines give the row name followed by numeric entry
     values for that row.
     """
-    f = open(fn)
+    # open with universal newline support
+    f = open(fn, "rU")
     heading = f.readline()
     assert heading[0] == "\t", "expect tab first in headings " + repr(heading)
     column_names = [x.strip().lower() for x in heading[1:].split("\t")]
