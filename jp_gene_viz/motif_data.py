@@ -162,28 +162,40 @@ class Motif(object):
         Make a jsproxy canvas widget which draws the motif using sequence_motif.js.
         """
         from jp_gene_viz import js_proxy
-        from jp_gene_viz import js_context
         js_proxy.load_javascript_support()
-        js_context.load_if_not_loaded(["sequence_motifs.js"])
-        (ncolumns, nrows) = self.frequency_sequence.shape
-        columns = self.json_columns(entropy=entropy)
-        if width is None:
-            width = ncolumns * 30
-        if height is None:
-            height = nrows * 40
         w = js_proxy.ProxyWidget()
         elt = w.element()
+        return self.add_canvas(w, elt,
+            width=width, height=height, entropy=entropy,
+            x=5, y=5)
+
+    def add_canvas(self, proxy_widget, dom_element_ref, 
+            width=None, height=None, x=0, y=0, entropy=True, 
+            dwidth=30, dheight=40, ylabel=None):
+        from jp_gene_viz import js_context
+        js_context.load_if_not_loaded(["sequence_motifs.js"])
+        columns = self.json_columns(entropy=entropy)
+        (ncolumns, nrows) = self.frequency_sequence.shape
+        if width is None:
+            width = ncolumns * dwidth
+        if height is None:
+            height = nrows * dheight
+        w = proxy_widget
+        elt = dom_element_ref
         canvas_tag = '<canvas width="%s" height="%s"/>' % (
-            int(width + 10), int(height + 10))
+            int(width + x * 2), int(height + y * 2))
         options = {
-            "x": 5,
-            "y": 5,
+            "x": x,
+            "y": y,
         }
-        if not entropy:
-            options["ylabel"] = "probability"
+        if ylabel is not None:
+            options["ylabel"] = ylabel
         else:
-            options["ylabel"] = "bits"
-            options["yMaximumDefault"] = 2.0
+            if not entropy:
+                options["ylabel"] = "probability"
+            else:
+                options["ylabel"] = "bits"
+                options["yMaximumDefault"] = 2.0
         jQuery = w.window().jQuery
         new_canvas = jQuery(canvas_tag)
         w(elt.append(new_canvas.sequence_motif(width, height, columns, options)))
