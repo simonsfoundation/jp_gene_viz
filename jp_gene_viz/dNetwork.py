@@ -113,6 +113,8 @@ class NetworkDisplay(object):
         svg = self.svg = canvas.SVGCanvasWidget()
         sslider = self.size_slider = widgets.FloatSlider(value=500, min=500, max=2000, step=10,
             readout=False, width="150px")
+        self.depth_slider = widgets.IntSlider(
+            description="depth", value=0, min=0, max=5, width="50px")
         traitlets.directional_link((sslider, "value"), (svg, "width"))
         traitlets.directional_link((sslider, "value"), (svg, "height"))
         #self.svg = widgets.Button(description="dummy button")
@@ -140,6 +142,7 @@ class NetworkDisplay(object):
                    self.restore_button,
                    self.size_slider,
                    self.draw_button,
+                   self.depth_slider,
                    self.colors_button,
                    self.colors_assembly,
                    self.dialog]
@@ -795,7 +798,8 @@ class NetworkDisplay(object):
         svg = self.svg
         positions = self.display_positions
         dG = self.display_graph
-        dG.move_node(svg, positions, moving_node, svgX, svgY)
+        depth = self.depth_slider.value
+        dG.move_descendants(svg, positions, moving_node, svgX, svgY, depth)
 
     def update_selection(self, info):
         svg = self.svg
@@ -831,6 +835,7 @@ class NetworkDisplay(object):
                 # otherwords if it's a node, start moving it
                 nodename = name[5:]
                 self.moving_node = nodename
+                self.display_graph.uncache()
 
     def cancel_selection(self):
         "Remove the circular selection area, if present."
