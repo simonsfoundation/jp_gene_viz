@@ -536,6 +536,24 @@ class NetworkDisplay(object):
                 Pfocus[node] = p
         return (Gfocus, Pfocus)
 
+    def restrict_edges(self, edge_restriction):
+        "Show only nodes and edges listed in edge_restriction."
+        dG = self.display_graph
+        edge_weights = dG.edge_weights
+        node_weights = dG.node_weights
+        current_edges = set(edge_weights.keys())
+        keep_edges = set(edge_restriction) & current_edges
+        keep_nodes = set([x[0] for x in keep_edges] +
+            [x[1] for x in keep_edges])
+        dG.edge_weights = dict((e, edge_weights[e])
+            for e in edge_weights if e in keep_edges)
+        dG.node_weights = dict((n, node_weights[n])
+            for n in node_weights if n in keep_nodes)
+        self.draw()
+
+    def visible_edges(self):
+        return set(self.display_graph.edge_weights.keys())
+
     def set_selection(self, nodes):
         "Restrict network to the nodes sequence and edges between them."
         (Gfocus, Pfocus) = self.select_nodes(nodes, self.data_graph, self.data_positions)
@@ -677,6 +695,12 @@ class NetworkDisplay(object):
             d(elt.append("<div> %s </div>" % prefix))
             data.add_canvas(d, elt, dwidth=12, dheight=14)
         self.dialog_time = time.time()
+
+    def alert(self, message):
+        "Use the dialog to present a javascript alert."
+        d = self.dialog
+        d(d.window().alert(message))
+        d.flush()
 
     def node_detail(self, node):
         "Return a string describing a node of the network."

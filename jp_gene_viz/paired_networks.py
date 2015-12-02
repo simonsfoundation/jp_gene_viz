@@ -23,8 +23,11 @@ class PairedNetworks(traitlets.HasTraits):
         self.left_network = dNetwork.NetworkDisplay()
         self.right_network = dNetwork.NetworkDisplay()
         lb = self.left_sync_button = self.make_button(u"sync \u21DB", self.left_sync_click)
-        rb =self.right_sync_button = self.make_button(u"\u21DA sync", self.right_sync_click)
-        left_stack = widgets.VBox(children=[lb, self.left_network.assembly])
+        rb = self.right_sync_button = self.make_button(u"\u21DA sync", self.right_sync_click)
+        ib = self.intersect_button = self.make_button("intersect", self.intersect_click)
+        db = self.difference_button = self.make_button("difference", self.difference_click)
+        lbuttons = widgets.HBox(children=[ib, db, lb])
+        left_stack = widgets.VBox(children=[lbuttons, self.left_network.assembly])
         right_stack = widgets.VBox(children=[rb, self.right_network.assembly])
         self.assembly = widgets.HBox(children=[left_stack, right_stack])
 
@@ -36,7 +39,7 @@ class PairedNetworks(traitlets.HasTraits):
         display(self.assembly)
 
     def make_button(self, description, on_click,
-                    disabled=False, width="250px"):
+                    disabled=False, width="200px"):
         "Create a button."
         # XXXX refactor to superclass.
         result = widgets.Button(description=description)
@@ -57,3 +60,23 @@ class PairedNetworks(traitlets.HasTraits):
         to_network.display_positions = from_network.display_positions.copy()
         to_network.draw()
 
+    def intersect_click(self, b):
+        return self.combine_networks("intersect")
+
+    def difference_click(self, b):
+        return self.combine_networks("difference")
+
+    def combine_networks(self, mode):
+        left_edges = self.left_network.visible_edges()
+        right_edges = self.right_network.visible_edges()
+        if mode == "intersect":
+            combined_edges = left_edges & right_edges
+        elif mode == "difference":
+            combined_edges = left_edges.symmetric_difference(right_edges)
+        else:
+            raise ValueError("bad mode: " + repr(mode))
+        if not combined_edges:
+            self.left_network.alert("Network %s has no edges" % mode)
+            return
+        for network in (self.left_network, self.right_network):
+            network.restrict_edges(combined_edges)
