@@ -89,6 +89,21 @@ class WGraph(object):
         self.edge_weights = {}
         self.node_weights = {}
         self.edge_attributes = {}
+        # populate on demand
+        self._node_to_descendents = None
+
+    def uncache(self):
+        "clear all caching data structures (for safety)."
+        self._node_to_descendents = None
+
+    def get_node_to_descendants(self):
+        result = self._node_to_descendents
+        if result is None:
+            result = {}
+            for (f, t) in self.edge_weights.keys():
+                result.setdefault(f, set()).add(t)
+            self._node_to_descendents = result
+        return result
 
     def clone(self):
         result = WGraph()
@@ -119,6 +134,8 @@ class WGraph(object):
         return (len(self.edge_weights), len(self.node_weights))
         
     def add_edge(self, from_node, to_node, weight, attributes=None):
+        # reset descendants structure
+        self._node_to_descendents = None
         # ignore self edges (?)
         if from_node == to_node:
             return
@@ -279,7 +296,46 @@ class WGraph(object):
     def node_name(self, n):
         return "NODE_" + str(n)
 
+    def descendant_set(self, n, level, accumulator=None):
+        if accumulator is None:
+            accumulator = set()
+        if n not in accumulator:
+            accumulator.add(n)
+            if level is None or level > 0:
+                next_level = None
+                if level is not None:
+                    next_level = level - 1
+                n2d = self.get_node_to_descendants()
+                descendants = n2d.get(n, ())
+                for d in descendants:
+                    self.descendant_set(d, next_level, accumulator)
+        return accumulator
+
+    def move_descendants(self, canvas, positions, n, x, y, depth=0):
+        descendants = self.descendant_set(n, int(depth))
+        offset = pos(x, y) - positions[n]
+        for d in descendants:
+            positions[d] = positions[d] + offset
+        # move edges attached to descendants
+        for (f, t) in self.edge_weights:
+            for (n0, xname, yname) in ((f, "x1", "y1"), (t, "x2", "y2")):
+                if n0 in descendants:
+                    (x0, y0) = positions[n0]
+                    name0 = self.edge_name(f, t)
+                    markname = "mark" + name0
+                    attributes = {xname: x0, yname: y0}
+                    canvas.change_element(name0, attributes)
+                    canvas.delete_names([markname])
+        # move the nodes
+        for d in descendants:
+            (xd, yd) = positions[d]
+            dname = self.node_name(d)
+            attributes = {"cx": xd, "cy": yd}
+            canvas.change_element(dname, attributes)
+        canvas.send_commands()
+
     def move_node(self, canvas, positions, n, x, y):
+        # deprecate in favor of move_descendents?
         positions[n] = pos(x, y)
         ew = self.edge_weights
         for (f, t) in ew:
