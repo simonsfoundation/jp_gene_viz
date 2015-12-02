@@ -632,6 +632,8 @@ class NetworkDisplay(object):
         self.dialog_time = None
         d = self.dialog
         elt = d.element()
+        # set the focus to the parent of the dialog
+        d(elt.parent().focus())
         d(elt.dialog("close"))
         d.flush()
 
