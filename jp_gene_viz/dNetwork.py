@@ -659,6 +659,9 @@ class NetworkDisplay(object):
         d.flush()
 
     def edge_dialog(self, edge, info):
+        # Only show the dialog if a motif collection is attached to the network.
+        if self.motif_collection is None:
+            return
         edge = tuple(edge)
         dg = self.data_graph
         atts = dg.edge_attributes.get(edge)
