@@ -383,6 +383,9 @@ class CommandMaker(object):
         "Proxy to get a property of a jS object."
         return MethodMaker(self, name)
 
+    # for parallelism to _set
+    _get = __getattr__
+
     def _set(self, name, value):
         "Proxy to set a property of a JS object."
         return SetMaker(self, name, value)
