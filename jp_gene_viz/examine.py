@@ -92,6 +92,9 @@ class ObjectDisplay(object):
             try:
                 target_iter = iter(target)
             except TypeError:
+                # not iterable
+                if getattr(target, "__doc__", None) is not None:
+                    self.add_text(identifier, "<pre>" + target.__doc__ + "</pre>")
                 if hasattr(target, "__dict__"):
                     under_dict = target.__dict__
                     self.add_text(identifier, "__dict__")
@@ -121,7 +124,7 @@ class ObjectDisplay(object):
         # remember the4 object by id
         self.displays[child_id] = target
         # create a div for the object on JS side. save in mapping, and attach to parent
-        new_div = self.jQuery('<div style="padding-left: 10px;"></div>')
+        new_div = self.jQuery('<div style="padding-left: 10px; border-style:solid; border-color:#ffffff #eeeecc"></div>')
         save_div = d._set(child_id, new_div)
         w(save_div)
         attach_div = parent_reference.append(d._get(child_id))
