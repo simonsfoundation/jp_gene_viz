@@ -15,11 +15,15 @@ import cgi
 arrow_right = u"\u25b6 &nbsp;"
 arrow_down = u"\u25bc &nbsp;"
 
-def examine(thing):
+def examine(thing, component_limit=100):
     od = ObjectDisplay(thing)
+    od.component_limit = component_limit
     od.show()
 
 class ObjectDisplay(object):
+
+    # Stop iterating over components when this limit is reached
+    component_limit = 100
 
     def __init__(self, target):
         self.target = target
@@ -31,29 +35,33 @@ class ObjectDisplay(object):
         w(e._set("DISPLAYS", {}))
         self.displays_reference = e.DISPLAYS
         self.jQuery = w.window().jQuery
-        self.display_object(None, target)
+        self.display_object(None, target, expanded=True, top=True)
 
-    def display_object(self, parent_id, target):
+    def display_object(self, parent_id, target, expanded=False, top=False):
         identifier = self.add_object_display(parent_id, target)
-        self.unexpand_object(identifier)
+        if expanded:
+            return self.expand_object(identifier, top=top)
+        else:
+            return self.unexpand_object(identifier, top=top)
 
     def click_callback(self, identifier):
         return self.widget.callback(self.click_object, data=identifier)
 
     def click_object(self, identifier, arguments):
         if identifier in self.expanded:
-            self.unexpand_object(identifier, arguments)
+            self.unexpand_object(identifier, arguments, top=True)
         else:
-            self.expand_object(identifier, arguments)
+            self.expand_object(identifier, arguments, top=True)
 
-    def unexpand_object(self, identifier, arguments=None):
+    def unexpand_object(self, identifier, arguments=None, top=False):
         if identifier in self.expanded:
             del self.expanded[identifier]
         target = self.displays[identifier]
         self.clear_object_display(identifier)
         self.add_text(identifier, arrow_right, onclick=self.click_callback(identifier))
         self.add_text(identifier, self.short_descriptor(target))
-        self.widget.flush()
+        if top:
+            self.widget.flush()
 
     def short_descriptor(self, target, limit=80):
         ty = type(target)
@@ -69,7 +77,8 @@ class ObjectDisplay(object):
     def quote(self, s):
         return cgi.escape(s).encode("ascii", "xmlcharrefreplace")
 
-    def expand_object(self, identifier, arguments=None, limit=100000):
+    def expand_object(self, identifier, arguments=None, top=False):
+        limit = self.component_limit
         target = self.displays[identifier]
         self.expanded[identifier] = target
         target = self.displays[identifier]
@@ -80,45 +89,61 @@ class ObjectDisplay(object):
         if ty is types.DictType:
             self.add_text(identifier, " len=" + repr(len(target)))
             for (count, (k, v)) in enumerate(sorted(target.items())):
-                self.add_text(identifier, "&nbsp; <em>dict item %s</em" % repr(count))
+                self.add_text(identifier, 
+                    '&nbsp; <em style="color:blue">dict item %s</em>' % repr(count))
                 k_id = self.display_object(identifier, k)
                 v_id = self.display_object(identifier, v)
-                if count > limit:
+                if limit and count > limit:
+                    self.add_text(identifier, '<b style="color:red">DICT TRUNCATED AT COMPONENT LIMIT.</b>')
                     break
         elif ty in types.StringTypes:
             quoted = self.quote(target)
-            self.add_text(identifier, "<pre>" + quoted + "</pre>")
+            self.add_text(identifier, 
+                '<pre style="color:darkmagenta">' + quoted + "</pre>")
         else:
             try:
                 target_iter = iter(target)
             except TypeError:
                 # not iterable
                 if getattr(target, "__doc__", None) is not None:
-                    self.add_text(identifier, "<pre>" + target.__doc__ + "</pre>")
+                    self.add_text(identifier, 
+                        '<pre style="color:purple">' + target.__doc__ + "</pre>")
                 if hasattr(target, "__dict__"):
                     under_dict = target.__dict__
                     #self.add_text(identifier, "__dict__")
                     #self.display_object(identifier, under_dict)
-                    self.add_text(identifier, " <em>len(__dict__)= %s </em>" % repr(len(under_dict)))
+                    self.add_text(identifier, 
+                        ' <em style="color:blue">len(__dict__)= %s </em>' % repr(len(under_dict)))
                     for (count, (k, v)) in enumerate(sorted(under_dict.items())):
-                        self.add_text(identifier, "<br><b><em>%s</em></b> attribute:" % str(k))
+                        self.add_text(identifier, 
+                            '<br><b style="color:green"><em>%s</em></b> attribute:' % str(k))
                         self.display_object(identifier, v)
-                    if hasattr(target, "_trait_values"):
-                        trait_values = target._trait_values
-                        self.add_text(identifier, "<br><em>#traits=%s</em>" % repr(len(trait_values)))
+                        if limit and count > limit:
+                            self.add_text(identifier, '<b style="color:red">ATTRIBUTES TRUNCATED AT COMPONENT LIMIT.</b>')
+                            break
+                    trait_values = getattr(target, "_trait_values", None)
+                    if type(trait_values) is dict:
+                        self.add_text(identifier, 
+                            '<br><em style="color:blue">#traits=%s</em>' % repr(len(trait_values)))
                         for (count, (k, v)) in enumerate(sorted(trait_values.items())):
-                            self.add_text(identifier, "<br><b><em>%s</em></b> trait:" % str(k))
+                            self.add_text(identifier, 
+                                '<br><b style="color:green"><em>%s</em></b> trait:' % str(k))
                             self.display_object(identifier, v)
+                            if limit and count > limit:
+                                self.add_text(identifier, '<b style="color:red">TRAITS TRUNCATED AT COMPONENT LIMIT.</b>')
+                                break
                 else:
-                    self.add_text(identifier, "??? can't expand this object ???")
+                    self.add_text(identifier, '<em style="color:red">??? can\'t expand this object ???</em>')
             else:
                 # Iterable
                 for (count, item) in enumerate(target_iter):
-                    self.add_text(identifier, "&nbsp; <em>item %s</em>" % repr(count))
+                    self.add_text(identifier, '&nbsp; <em style="color:green">item %s</em>' % repr(count))
                     self.display_object(identifier, item)
-                    if count > limit:
+                    if limit and count > limit:
+                        self.add_text(identifier, '<b style="color:red">ITERABLE TRUNCATED AT COMPONENT LIMIT.</b>')
                         break
-        self.widget.flush()
+        if top:
+            self.widget.flush()
 
     def add_object_display(self, parent_id, target):
         child_id = id(target)
