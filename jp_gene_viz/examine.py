@@ -80,7 +80,7 @@ class ObjectDisplay(object):
         if ty is types.DictType:
             self.add_text(identifier, " len=" + repr(len(target)))
             for (count, (k, v)) in enumerate(sorted(target.items())):
-                self.add_text(identifier, "&nbsp; dict item " + repr(count))
+                self.add_text(identifier, "&nbsp; <em>dict item %s</em" % repr(count))
                 k_id = self.display_object(identifier, k)
                 v_id = self.display_object(identifier, v)
                 if count > limit:
@@ -97,14 +97,24 @@ class ObjectDisplay(object):
                     self.add_text(identifier, "<pre>" + target.__doc__ + "</pre>")
                 if hasattr(target, "__dict__"):
                     under_dict = target.__dict__
-                    self.add_text(identifier, "__dict__")
-                    self.display_object(identifier, under_dict)
+                    #self.add_text(identifier, "__dict__")
+                    #self.display_object(identifier, under_dict)
+                    self.add_text(identifier, " <em>len(__dict__)= %s </em>" % repr(len(under_dict)))
+                    for (count, (k, v)) in enumerate(sorted(under_dict.items())):
+                        self.add_text(identifier, "<br><b><em>%s</em></b> attribute:" % str(k))
+                        self.display_object(identifier, v)
+                    if hasattr(target, "_trait_values"):
+                        trait_values = target._trait_values
+                        self.add_text(identifier, "<br><em>#traits=%s</em>" % repr(len(trait_values)))
+                        for (count, (k, v)) in enumerate(sorted(trait_values.items())):
+                            self.add_text(identifier, "<br><b><em>%s</em></b> trait:" % str(k))
+                            self.display_object(identifier, v)
                 else:
                     self.add_text(identifier, "??? can't expand this object ???")
             else:
                 # Iterable
                 for (count, item) in enumerate(target_iter):
-                    self.add_text(identifier, "&nbsp; item " + repr(count))
+                    self.add_text(identifier, "&nbsp; <em>item %s</em>" % repr(count))
                     self.display_object(identifier, item)
                     if count > limit:
                         break
