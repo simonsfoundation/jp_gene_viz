@@ -107,7 +107,8 @@ class ObjectDisplay(object):
                 # not iterable
                 if getattr(target, "__doc__", None) is not None:
                     self.add_text(identifier, 
-                        '<pre style="color:purple">' + target.__doc__ + "</pre>")
+                        '<br><em style="color:orange">__doc__ string</em>')
+                    self.display_object(identifier, target.__doc__)
                 if hasattr(target, "__dict__"):
                     under_dict = target.__dict__
                     #self.add_text(identifier, "__dict__")
