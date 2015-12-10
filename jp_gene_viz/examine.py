@@ -86,7 +86,9 @@ class ObjectDisplay(object):
         self.add_text(identifier, arrow_down, onclick=self.click_callback(identifier))
         self.add_text(identifier, self.short_descriptor(target))
         ty = type(target)
+        expanded = False
         if ty is types.DictType:
+            expanded = True
             self.add_text(identifier, " len=" + repr(len(target)))
             for (count, (k, v)) in enumerate(sorted(target.items())):
                 self.add_text(identifier, 
@@ -97,6 +99,7 @@ class ObjectDisplay(object):
                     self.add_text(identifier, '<b style="color:red">DICT TRUNCATED AT COMPONENT LIMIT.</b>')
                     break
         elif ty in types.StringTypes:
+            expanded = True
             quoted = self.quote(target)
             self.add_text(identifier, 
                 '<pre style="color:darkmagenta">' + quoted + "</pre>")
@@ -105,44 +108,49 @@ class ObjectDisplay(object):
                 target_iter = iter(target)
             except TypeError:
                 # not iterable
-                if getattr(target, "__doc__", None) is not None:
-                    self.add_text(identifier, 
-                        '<br><em style="color:orange">__doc__ string</em>')
-                    self.display_object(identifier, target.__doc__)
-                if hasattr(target, "__dict__"):
-                    under_dict = target.__dict__
-                    #self.add_text(identifier, "__dict__")
-                    #self.display_object(identifier, under_dict)
-                    self.add_text(identifier, 
-                        ' <em style="color:blue">len(__dict__)= %s </em>' % repr(len(under_dict)))
-                    for (count, (k, v)) in enumerate(sorted(under_dict.items())):
-                        self.add_text(identifier, 
-                            '<br><b style="color:green"><em>%s</em></b> attribute:' % str(k))
-                        self.display_object(identifier, v)
-                        if limit and count > limit:
-                            self.add_text(identifier, '<b style="color:red">ATTRIBUTES TRUNCATED AT COMPONENT LIMIT.</b>')
-                            break
-                    trait_values = getattr(target, "_trait_values", None)
-                    if type(trait_values) is dict:
-                        self.add_text(identifier, 
-                            '<br><em style="color:blue">#traits=%s</em>' % repr(len(trait_values)))
-                        for (count, (k, v)) in enumerate(sorted(trait_values.items())):
-                            self.add_text(identifier, 
-                                '<br><b style="color:green"><em>%s</em></b> trait:' % str(k))
-                            self.display_object(identifier, v)
-                            if limit and count > limit:
-                                self.add_text(identifier, '<b style="color:red">TRAITS TRUNCATED AT COMPONENT LIMIT.</b>')
-                                break
-                else:
-                    self.add_text(identifier, '<em style="color:red">??? can\'t expand this object ???</em>')
+                pass
             else:
                 # Iterable
+                expanded = True
                 for (count, item) in enumerate(target_iter):
                     self.add_text(identifier, '&nbsp; <em style="color:green">item %s</em>' % repr(count))
                     self.display_object(identifier, item)
                     if limit and count > limit:
                         self.add_text(identifier, '<b style="color:red">ITERABLE TRUNCATED AT COMPONENT LIMIT.</b>')
                         break
+            if getattr(target, "__doc__", None) is not None:
+                expanded = True
+                self.add_text(identifier, 
+                    '<br><em style="color:orange">__doc__ string</em>')
+                self.display_object(identifier, target.__doc__)
+            if hasattr(target, "__dict__"):
+                expanded = True
+                under_dict = target.__dict__
+                #self.add_text(identifier, "__dict__")
+                #self.display_object(identifier, under_dict)
+                self.add_text(identifier, 
+                    ' <em style="color:blue">len(__dict__)= %s </em>' % repr(len(under_dict)))
+                for (count, (k, v)) in enumerate(sorted(under_dict.items())):
+                    self.add_text(identifier, 
+                        '<br><b style="color:green"><em>%s</em></b> attribute:' % str(k))
+                    self.display_object(identifier, v)
+                    if limit and count > limit:
+                        self.add_text(identifier, '<b style="color:red">ATTRIBUTES TRUNCATED AT COMPONENT LIMIT.</b>')
+                        break
+                trait_values = getattr(target, "_trait_values", None)
+                if type(trait_values) is dict:
+                    self.add_text(identifier, 
+                        '<br><em style="color:blue">#traits=%s</em>' % repr(len(trait_values)))
+                    for (count, (k, v)) in enumerate(sorted(trait_values.items())):
+                        self.add_text(identifier, 
+                            '<br><b style="color:green"><em>%s</em></b> trait:' % str(k))
+                        self.display_object(identifier, v)
+                        if limit and count > limit:
+                            self.add_text(identifier, '<b style="color:red">TRAITS TRUNCATED AT COMPONENT LIMIT.</b>')
+                            break
+            
+        if not expanded:
+            self.add_text(identifier, '<em style="color:red">??? can\'t expand this object ???</em>')
         if top:
             self.widget.flush()
 
