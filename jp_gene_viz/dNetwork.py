@@ -319,14 +319,23 @@ class NetworkDisplay(object):
         self.svg_origin = G.draw(svg, P)
         self.cancel_selection()
         self.info_area.value = "Done drawing: " + repr((G.sizes(), len(P)))
-        style = {"font-size": 5, "text-anchor": "middle"}
+        style0 = {"font-size": 5, "text-anchor": "middle"}
         color = "black"
         if self.labels_button.value:
-            self.info_area.value = "Adding labels."
             nw = G.node_weights
+            self.info_area.value = "Adding labels."
+            # find the max position
+            max_x = max(position[0] for position in [P[n] for n in nw])
+            left_x = max_x * 0.25
+            right_x = max_x * 0.75
             for node in nw:
                 if node in P:
                     (x, y) = P[node]
+                    style = style0.copy()
+                    if x < left_x:
+                        style["text-anchor"] = "start"
+                    if x > right_x:
+                        style["text-anchor"] = "end"
                     svg.text(None, x, y-4, node, color, **style)
             svg.send_commands()
             self.info_area.value = "Labels added."
