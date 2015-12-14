@@ -8,10 +8,10 @@ import ipywidgets as widgets
 from IPython.display import display
 from jp_svg_canvas import canvas
 from jp_gene_viz import js_proxy
-import dGraph
-import dLayout
-import color_scale
-import color_widget
+from jp_gene_viz import dGraph
+from jp_gene_viz import dLayout
+from jp_gene_viz import color_scale
+from jp_gene_viz import color_widget
 import fnmatch
 import igraph
 import json
@@ -867,8 +867,8 @@ class NetworkDisplay(object):
         self.display_graph.set_node_color_interpolator(colors)
 
 def display_network(filename, N=None, threshhold=20.0, save_layout=True, show=True):
-    import dLayout
-    import getData
+    from jp_gene_viz import dLayout
+    from jp_gene_viz import getData
     assert os.path.exists(filename)
     print ("Reading network", filename)
     G = getData.read_network(filename)

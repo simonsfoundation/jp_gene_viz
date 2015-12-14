@@ -1,5 +1,5 @@
 
-import color_scale
+from jp_gene_viz import color_scale
 import ipywidgets as widgets
 from IPython.display import display
 from jp_svg_canvas import canvas
@@ -117,8 +117,8 @@ class ColorChooser(traitlets.HasTraits):
     def draw(self):
         svg = self.svg
         svg.empty()
-        for i in xrange(self.ncolors):
-            for j in xrange(self.ncolors):
+        for i in range(self.ncolors):
+            for j in range(self.ncolors):
                 color = color_scale.color(color_scale.color64(i, j))
                 svg.rect("R_" + color, i * self.dx, j * self.dy, self.dx, self.dy, color)
         bary = self.palette_side + self.bar_region / 2 - self.bar_height / 2
@@ -126,7 +126,7 @@ class ColorChooser(traitlets.HasTraits):
         maxcount = 1
         if dhistogram:
             maxcount = float(max(dhistogram.values()))
-        for i in xrange(self.palette_side):
+        for i in range(self.palette_side):
             color_value = self.interpolation_value(i)
             color = self.scale.interpolate_color(color_value)
             adjustment = (dhistogram.get(i, 0) / maxcount) * self.histogram_region

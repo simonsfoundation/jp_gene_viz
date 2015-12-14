@@ -1,6 +1,9 @@
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 import unittest
-import StringIO
 import numpy as np
 
 from .. import motif_data
@@ -54,7 +57,7 @@ letter-probability matrix: alength= 4 w= 8 nsites= 20 E= 0
 class TestMotif(unittest.TestCase):
 
     def test_collection(self):
-        f = StringIO.StringIO(EXAMPLE_FILE)
+        f = StringIO(EXAMPLE_FILE)
         md = motif_data.MotifCollection()
         md.read_meme_file(f)
         motif = md["BatfIrf4Th17f_1"]
@@ -76,4 +79,7 @@ class TestMotif(unittest.TestCase):
         expected = [
             [('A', 1), ('B', 2), ('C', 3), ('D', 4)], 
             [('D', 1), ('B', 2), ('C', 3), ('A', 4)]]
-        self.assertEqual(c, expected)
+        self.assertEqual(self.intcolumns(c), expected)
+
+    def intcolumns(self, columns):
+        return [[(letter, int(number)) for (letter, number) in column] for column in columns]

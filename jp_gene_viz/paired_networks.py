@@ -9,7 +9,7 @@ from ipywidgets import widgets
 import traitlets
 
 # Call this once.
-from dNetwork import load_javascript_support
+from jp_gene_viz.dNetwork import load_javascript_support
 
 
 class PairedNetworks(traitlets.HasTraits):

@@ -94,7 +94,7 @@ def l1_fit(U, v, penalty=None, tolerance=None, callback=None):
         #print "A, c, bounds", A.shape, len(c), len(bounds)
     options = {"maxiter": 10000}
     r = scipy.optimize.linprog(c, A, b, bounds=bounds, callback=callback, options=options)
-    print r.message
+    #print r.message
     x = r.x
     m = x[n:n+d]
     k = x[n+d]
@@ -123,16 +123,16 @@ def testl1():
     v = numpy.array([-1.0, 2.0, 3.0])
     for expected_error in (0.2, 0):
         for penalty in (0, 0.001):
-            print
-            print "expected error", expected_error, "penalty", penalty
+            print()
+            print( "expected error", expected_error, "penalty", penalty)
             fit = l1_fit(U, v, expected_error=expected_error, penalty=penalty)
             pprint.pprint(fit)
             m = fit["m"]
             k = fit["k"]
-            print "v"
-            print v
-            print "U * m + k"
-            print numpy.dot(U, m) + k
+            print ("v")
+            print (v)
+            print ("U * m + k")
+            print (numpy.dot(U, m) + k)
 
 def interpolate(u, v):
     r = slope_intercept(u, v)
@@ -144,8 +144,8 @@ def test0():
     import pprint
     check = slope_intercept( (1, 0), (0, 1) )
     pprint.pprint(check)
-    print "slope should be -1", check["slope"]
-    print "intercept should be 1", check["intercept"]
+    print ("slope should be -1", check["slope"])
+    print ("intercept should be 1", check["intercept"])
 
 if __name__ == "__main__":
     test0()

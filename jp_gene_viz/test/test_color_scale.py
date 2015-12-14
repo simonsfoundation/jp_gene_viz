@@ -6,7 +6,7 @@ from .. import color_scale
 class TestColor64(unittest.TestCase):
 
     def ints(self, x, y):
-        return map(int, color_scale.color64(x,y))
+        return list(map(int, color_scale.color64(x,y)))
 
     def test_black(self):
         self.assertEqual([0, 0, 0], self.ints(0,0))
