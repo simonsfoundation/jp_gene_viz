@@ -91,7 +91,7 @@ class MotifCollection(object):
                 if m is None:
                     raise ValueError("failed to match probability line: "
                         + repr(line))
-                for nrow in xrange(nrows):
+                for nrow in range(nrows):
                     rowstring = file.readline()
                     row = np.fromstring(rowstring, sep=" ")
                     row = row / np.sum(row)

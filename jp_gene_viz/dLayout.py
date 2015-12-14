@@ -1,5 +1,5 @@
 
-from dGraph import primary_influence, skeleton, pos
+from jp_gene_viz.dGraph import primary_influence, skeleton, pos
 
 import igraph
 

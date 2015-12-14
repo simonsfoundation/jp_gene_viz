@@ -5,7 +5,7 @@ from jp_gene_viz import genome_bar
 from ipywidgets import widgets
 from jp_svg_canvas import canvas
 from jp_gene_viz import gtf_format
-import types
+#import types
 import traitlets
 
 # This must be called once:
@@ -119,7 +119,7 @@ class ExonExplorer(traitlets.HasTraits):
         # save genes only if not a traitlets call
         if old_gene_ids is None:
             self.genes = gene_ids
-        assert type(gene_ids) == types.ListType, "gene_ids must be a list. " + repr(gene_ids)[:100]
+        assert type(gene_ids) == list, "gene_ids must be a list. " + repr(gene_ids)[:100]
         n2f = self.name_to_feature = {}
         self.genome_zoom.empty()
         self.genome_guide.empty()

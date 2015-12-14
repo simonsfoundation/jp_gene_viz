@@ -6,8 +6,8 @@ from traitlets import Unicode, Float, List, Dict
 import json
 import os
 import pprint
-import types
-import js_context
+#import types
+from jp_gene_viz import js_context
 
 
 def load_javascript_support(verbose=False):
@@ -31,13 +31,13 @@ def validate_command(command, top=True):
     """
     if isinstance(command, CommandMaker):
         command = command.cmd()
-    if type(command) is types.ListType:
+    if type(command) is list:
         indicator = command[0]
         remainder = command[1:]
         if indicator == "fun":
             name = remainder[0]
             args = remainder[1:]
-            assert type(name) is types.StringType, (
+            assert type(name) is str, (
                 "function name must be string " + repr(name))
             args = validate_commands(args, top=False)
             remainder = [name] + args
@@ -45,7 +45,7 @@ def validate_command(command, top=True):
             target = remainder[0]
             name = remainder[1]
             args = remainder[2:]
-            assert type(name) is types.StringType, (
+            assert type(name) is str, (
                 "method name must be string " + repr(name))
             target = validate_command(target)
             args = validate_commands(args, top=False)
@@ -64,7 +64,7 @@ def validate_command(command, top=True):
             raise ValueError("bad indicator " + repr(indicator))
         command = [indicator] + remainder
     elif top:
-        assert type(command) is types.ListType, (
+        assert type(command) is list, (
             "top level command must be list " + repr(command))
     return command
 
@@ -239,7 +239,7 @@ class LiteralListMaker(CommandMaker):
 def quoteLists(args):
     result = []
     for x in args:
-        if type(x) is types.ListType:
+        if type(x) is list:
             x = LiteralListMaker(x)
         result.append(x)
     return result

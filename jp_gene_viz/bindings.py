@@ -129,7 +129,7 @@ class WigData(traitlets.HasTraits):
             maxheight = self.maxheight
         yscale = (1.0 * svg_height) / maxheight
         dlocation = (end_location - start_location) * 1.0 / svg_width
-        for svgx in xrange(svg_width):
+        for svgx in range(svg_width):
             locationx = start_location + dlocation * svgx
             maxh = self.maximum(locationx, locationx + dlocation)
             svgy = maxh * yscale
