@@ -102,6 +102,9 @@ class NetworkDisplay(object):
         self.layout_dropdown = self.make_layout_dropdown()
         self.labels_button = self.make_checkbox("labels", self.labels_click)
         self.colors_button = self.make_checkbox("colors", self.colors_click)
+        self.motifs_button = self.make_checkbox("show motifs", self.show_motifs)
+        self.motifs_button.visible = False
+        self.motifs_button.value = True
         self.draw_button = self.make_button("draw", self.draw_click)
         # Assemble the layout
         self.threshhold_assembly = self.make_threshhold_assembly()
@@ -143,6 +146,7 @@ class NetworkDisplay(object):
                    self.size_slider,
                    self.draw_button,
                    self.depth_slider,
+                   self.motifs_button,
                    self.colors_button,
                    self.colors_assembly,
                    self.dialog]
@@ -387,6 +391,10 @@ class NetworkDisplay(object):
         self.colors_assembly.visible = self.colors_button.value
         self.svg.empty()
         self.draw()
+
+    def show_motifs(self, b):
+        # do nothing
+        pass
 
     def layout_click(self, b):
         "Apply the current layout to the viewable graph."
@@ -670,6 +678,9 @@ class NetworkDisplay(object):
     def edge_dialog(self, edge, info):
         # Only show the dialog if a motif collection is attached to the network.
         if self.motif_collection is None:
+            return
+        self.motifs_button.visible = True
+        if not self.motifs_button.value:
             return
         edge = tuple(edge)
         dg = self.data_graph
