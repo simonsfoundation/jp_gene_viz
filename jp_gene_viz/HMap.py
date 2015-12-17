@@ -1,7 +1,7 @@
 
 import numpy
-import dGraph
-import color_scale
+from jp_gene_viz import dGraph
+from jp_gene_viz import color_scale
 
 
 def checked_names(subset, superset, strict=False):
@@ -44,8 +44,8 @@ class HeatMap(object):
             # dummy example data
             nrows = 20
             ncols = 10
-            row_names = ["r%s" % i for i in xrange(nrows)]
-            col_names = ["c%s" % i for i in xrange(ncols)]
+            row_names = ["r%s" % i for i in range(nrows)]
+            col_names = ["c%s" % i for i in range(ncols)]
             data = numpy.arange(nrows * ncols).reshape((nrows, ncols))
         self.set_data(row_names, col_names, data)
 
@@ -156,8 +156,8 @@ class HeatMap(object):
         """
         canvas.empty()
         ci = self.get_color_interpolator()
-        for rowi in xrange(self.nrows):
-            for colj in xrange(self.ncols):
+        for rowi in range(self.nrows):
+            for colj in range(self.ncols):
                 dataij = self.data[rowi, colj]
                 nameij = self.rectName(rowi, colj)
                 colorij = ci.interpolate_color(dataij)
@@ -166,12 +166,12 @@ class HeatMap(object):
             label_color = "black"
             col_end = self.ncols * dx
             style = {"font-size": min(dy, 15), "text-anchor": "start"}
-            for rowi in xrange(self.nrows):
+            for rowi in range(self.nrows):
                 row_name = self.row_names[rowi]
                 canvas.text(None, col_end, (rowi + 1) * dy,
                             row_name, label_color, **style)
             row_end = self.nrows * dy
-            for colj in xrange(self.ncols):
+            for colj in range(self.ncols):
                 x = colj * dx
                 transform = "rotate(90,%s,%s)" % (x, row_end)
                 style = {"font-size": min(dx, 15),

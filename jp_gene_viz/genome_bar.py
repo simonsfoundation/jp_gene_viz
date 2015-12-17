@@ -102,7 +102,7 @@ def test0():
         #pprint.pprint(sorted(D.gene_id_to_dicts.keys()))
         pprint.pprint(GF)
         L = GF["tmc6"]
-    print "loading", len(L)
+    print ("loading", len(L))
     for feature in L:
         atts = feature["attribute"]
         kind = feature.get("feature")

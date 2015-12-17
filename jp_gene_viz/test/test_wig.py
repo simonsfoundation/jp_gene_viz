@@ -1,7 +1,9 @@
 
 import unittest
-import StringIO
-
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 from .. import bindings
 
 EXAMPLE_FILE = """
@@ -35,7 +37,7 @@ from .. import bindings
 class TestMaximum(unittest.TestCase):
 
     def parse_file(self):
-        f = StringIO.StringIO(EXAMPLE_FILE)
+        f = StringIO(EXAMPLE_FILE)
         result = bindings.WigData()
         result.load_file(f)
         return result

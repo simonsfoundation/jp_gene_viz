@@ -2,8 +2,8 @@ import numpy
 import heapq
 import json
 
-from color_scale import (clr, clr_check, weighted_color, color)
-import color_scale
+from jp_gene_viz.color_scale import (clr, clr_check, weighted_color, color)
+from jp_gene_viz import color_scale
 
 def trim_leaves(Gin):
     Gout = WGraph()
@@ -373,9 +373,9 @@ def draw_heat_map(canvas, a, dx, dy):
     diff = maxval - minval
     if diff<0.1:
         return
-    for i in xrange(len(a)):
+    for i in range(len(a)):
         rowi = a[i]
-        for j in xrange(len(rowi)):
+        for j in range(len(rowi)):
             val = rowi[j]
             intensity = (val - minval)/diff
             iclr = (1-intensity)*lowclr + intensity*highclr

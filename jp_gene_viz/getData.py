@@ -1,4 +1,4 @@
-import dGraph
+from jp_gene_viz import dGraph
 
 
 network0 = ("../../../misc/networks/"

@@ -108,10 +108,10 @@ PASSED TO PYTHON: None
 """
 
 import time
-import types
+#import types
 import ipywidgets as widgets
 import traitlets
-import js_context
+from jp_gene_viz import js_context
 
 
 # In the IPython context get_ipython is a builtin.
@@ -306,7 +306,7 @@ def validate_command(command, top=True):
     if isinstance(command, CommandMaker):
         command = command._cmd()
     ty = type(command)
-    if ty is types.ListType:
+    if ty is list:
         indicator = command[0]
         remainder = command[1:]
         if indicator == "element" or indicator == "window":
@@ -316,7 +316,7 @@ def validate_command(command, top=True):
             name = remainder[1]
             args = remainder[2:]
             target = validate_command(target, top=True)
-            assert type(name) is types.StringType, "method name must be a string " + repr(name)
+            assert type(name) is str, "method name must be a string " + repr(name)
             args = validate_commands(args, top=False)
             remainder = [target, name] + args
         elif indicator == "function":
@@ -335,9 +335,9 @@ def validate_command(command, top=True):
             remainder = [d]
         elif indicator == "callback":
             [numerical_identifier, untranslated_data, level] = remainder
-            assert type(numerical_identifier) is types.IntType, \
+            assert type(numerical_identifier) is int, \
                 "must be integer " + repr(numerical_identifier)
-            assert type(level) is types.IntType, \
+            assert type(level) is int, \
                 "must be integer " + repr(level)
         elif indicator == "get":
             [target, name] = remainder
@@ -461,7 +461,7 @@ class LiteralMaker(CommandMaker):
     proxy references.
     """
 
-    indicators = {types.DictType: "dict", types.ListType: "list"}
+    indicators = {dict: "dict", list: "list"}
 
     def __init__(self, thing):
         self.thing = thing
@@ -472,9 +472,9 @@ class LiteralMaker(CommandMaker):
         indicator = self.indicators.get(type(thing))
         #return [indicator, thing]
         if indicator:
-            if ty is types.ListType:
+            if ty is list:
                 return [indicator] + quoteLists(thing)
-            elif ty is types.DictType:
+            elif ty is dict:
                 return [indicator, dict((k, quoteIfNeeded(thing[k])) for k in thing)]
             else:
                 raise ValueError("can't translate " + repr(ty))

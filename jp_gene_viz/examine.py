@@ -8,7 +8,7 @@ Widget implementation to examine a value in Jupiter/IPython notebook.
 
 from jp_gene_viz import js_proxy
 from IPython.display import display
-import types
+#import types
 import collections
 import cgi
 
@@ -75,7 +75,7 @@ class ObjectDisplay(object):
         self.widget(ref.empty())
 
     def quote(self, s):
-        return cgi.escape(s).encode("ascii", "xmlcharrefreplace")
+        return cgi.escape(s).encode("ascii", "xmlcharrefreplace").decode("utf8")
 
     def expand_object(self, identifier, arguments=None, top=False):
         limit = self.component_limit
@@ -87,7 +87,7 @@ class ObjectDisplay(object):
         self.add_text(identifier, self.short_descriptor(target))
         ty = type(target)
         expanded = False
-        if ty is types.DictType:
+        if ty is dict:
             expanded = True
             self.add_text(identifier, " len=" + repr(len(target)))
             for (count, (k, v)) in enumerate(sorted(target.items())):
@@ -98,7 +98,7 @@ class ObjectDisplay(object):
                 if limit and count > limit:
                     self.add_text(identifier, '<b style="color:red">DICT TRUNCATED AT COMPONENT LIMIT.</b>')
                     break
-        elif ty in types.StringTypes:
+        elif ty is str:
             expanded = True
             quoted = self.quote(target)
             self.add_text(identifier, 
