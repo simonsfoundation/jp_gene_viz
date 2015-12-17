@@ -18,7 +18,7 @@ class MotifCollection(object):
         self.name_to_motif = {}
 
     def set_order(self, letters):
-        assert self.letter_order is None, "cannot reset letter order."
+        #assert self.letter_order is None or self.letter_order==letters, "cannot reset letter order."
         self.letter_order = letters
 
     def __setitem__(self, name, motif):
