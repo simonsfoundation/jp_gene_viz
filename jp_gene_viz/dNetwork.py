@@ -718,7 +718,10 @@ class NetworkDisplay(object):
         d(elt.dialog("open"))
         d.flush()
         for (prefix, data) in motif_displays:
-            d(elt.append("<div> %s </div>" % prefix))
+            names = prefix
+            if data.names:
+                names = " ".join(data.names)
+            d(elt.append("<div> %s </div>" % names))
             data.add_canvas(d, elt, dwidth=12, dheight=14)
         self.dialog_time = time.time()
 

@@ -101,6 +101,7 @@ class MotifCollection(object):
                     raise ValueError("No motif frequencies found for "
                         + repr(motif_names))
                 motif = Motif(self.letter_order, frequencies)
+                motif.names = motif_names
                 for name in motif_names:
                     self[name] = motif
             else:
@@ -126,6 +127,7 @@ class Motif(object):
             letters, ncols))
         self.letters = letters
         self.frequency_sequence = frequency_sequence
+        self.names = None   # name set externally
 
     def frequency_entropy(self, epsilon=0.001):
         """
