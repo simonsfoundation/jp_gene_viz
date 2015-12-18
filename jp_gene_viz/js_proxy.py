@@ -124,16 +124,27 @@ def load_javascript_support(verbose=False):
     js_context.load_if_not_loaded(["js_proxy.js"])
 
 HTML_EMBEDDING_TEMPLATE = u"""
-<div id="%s"></div>
+<div id="{div_id}"></div>
 
 <script>
-(
-    function () {
-        %s
-        var element = $("#%s");
-        %s;
-    }
-)();
+(function () {{
+    {debugger_string}
+    var do_actions = function () {{
+        var element = $("#{div_id}");
+        {actions};
+    }};
+    var wait_for_libraries = function () {{
+        var names = {names};
+        for (var i=0; i<names.length; i++) {{
+            var library = window[names[i]];
+            if ((typeof library) == "undefined") {{
+                return window.setTimeout(wait_for_libraries, 500);
+            }}
+        }}
+        return do_actions();
+    }};
+    wait_for_libraries();
+}})();
 </script>
 """
 
@@ -170,25 +181,32 @@ class ProxyWidget(widgets.DOMWidget):
         self.on_trait_change(self.handle_results, "results")
         self.buffered_commands = []
 
-    def embedded_html(self, debugger=False):
+    def embedded_html(self, debugger=False, await=()):
         """
         Translate buffered commands to static HTML.
         """
+        await_string = json.dumps(await)
         IDENTITY_COUNTER[0] += 1
         div_id = "jupyter_proxy_widget" + str(IDENTITY_COUNTER[0])
+        print("id", div_id)
         debugger_string = "// Initialize static widget display with no debugging."
         if debugger:
             debugger_string = "// Debug mode for static widget display\ndebugger;"
         commands = self.buffered_commands
         js_commands = [to_javascript(c) for c in commands]
         command_string = indent_string(";\n".join(js_commands), 2)
-        return HTML_EMBEDDING_TEMPLATE % (div_id, debugger_string, div_id, command_string)
+        #return HTML_EMBEDDING_TEMPLATE % (div_id, debugger_string, div_id, command_string)
+        return HTML_EMBEDDING_TEMPLATE.format(
+            div_id=div_id,
+            debugger_string=debugger_string,
+            actions=command_string,
+            names=await_string)
 
-    def embed(self, debugger=False):
+    def embed(self, debugger=False, await=()):
         """
         Embed the buffered commands into the current notebook as static HTML.
         """
-        embedded_html = self.embedded_html(debugger)
+        embedded_html = self.embedded_html(debugger, await=await)
         display(HTML(embedded_html))
 
     def __call__(self, command):
