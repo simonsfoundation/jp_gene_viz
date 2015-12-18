@@ -188,7 +188,7 @@ class ProxyWidget(widgets.DOMWidget):
         await_string = json.dumps(await)
         IDENTITY_COUNTER[0] += 1
         div_id = "jupyter_proxy_widget" + str(IDENTITY_COUNTER[0])
-        print("id", div_id)
+        #print("id", div_id)
         debugger_string = "// Initialize static widget display with no debugging."
         if debugger:
             debugger_string = "// Debug mode for static widget display\ndebugger;"
