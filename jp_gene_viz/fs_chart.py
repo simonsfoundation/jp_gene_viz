@@ -110,7 +110,7 @@ class DirectoryPieChart(object):
         if clickDirectory and os.path.isdir(clickDirectory):
             self.nextChart = DirectoryPieChart(clickDirectory, widget, element.nextDiv)
         else:
-            widget(element.nextDiv.html(clickDirectory + " is not a directory."))
+            widget(element.nextDiv.html(repr(clickDirectory) + " is not a directory."))
         widget.flush()
 
 
