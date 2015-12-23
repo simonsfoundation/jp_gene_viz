@@ -12,6 +12,7 @@ from jp_gene_viz import dGraph
 from jp_gene_viz import dLayout
 from jp_gene_viz import color_scale
 from jp_gene_viz import color_widget
+from jp_gene_viz.json_mixin import JsonMixin
 import fnmatch
 import igraph
 import json
@@ -70,12 +71,23 @@ def set_color_levels(interpolator, color_text=Emilys_colors):
     interpolator.set_color_mapping(clrmapping)
 
 
-class NetworkDisplay(object):
+class NetworkDisplay(traitlets.HasTraits, JsonMixin):
 
     """
     Create a widget which displays a network with controls for 
     manipulating the network.
     """
+
+    json_atts = "data_positions display_positions".split()
+
+    json_objects = {
+        "data_graph": dGraph.WGraph,
+        "display_graph": dGraph.WGraph,
+        "data_positions": dLayout.layoutConverter,
+        "display_positions": dLayout.layoutConverter,
+    }
+
+    threshhold = traitlets.Float()
 
     default_side = 10
 
@@ -86,7 +98,8 @@ class NetworkDisplay(object):
     # The motif collection to use for looking up motif data.
     motif_collection = None
 
-    def __init__(self):
+    def __init__(self, *pargs, **kwargs):
+        super(NetworkDisplay, self).__init__(*pargs, **kwargs)
         self.title_html = widgets.HTML("Gene network")
         self.zoom_button = self.make_button("zoom", self.zoom_click, True)
         self.trim_button = self.make_button("trim", self.trim_click)
@@ -218,6 +231,8 @@ class NetworkDisplay(object):
                                                     step=0.1, width="300px")
         #self.apply_button = widgets.Button(description="threshhold")
         #self.apply_button.on_click(self.apply_click)
+        # makd the local variable "threshhold" an alias for the slider valut
+        traitlets.link((self.threshhold_slider, "value"), (self, "threshhold"))
         self.apply_button = self.make_button("threshhold", self.apply_click)
         assembly = widgets.HBox(children=[self.apply_button, self.threshhold_slider])
         return assembly

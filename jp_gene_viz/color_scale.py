@@ -4,6 +4,7 @@ Logic for manipulating and interpolating colors.
 """
 
 import numpy
+from jp_gene_viz.json_mixin import JsonMixin
 
 
 def clr(r, g, b):
@@ -60,7 +61,36 @@ def color64(x, y):
     return clr(r, g, b)
 
 
-class ColorInterpolator(object):
+class colorConverter(object):
+
+    @staticmethod
+    def to_json_value(color):
+        return color.tolist()
+
+    @staticmethod
+    def from_json_value(alist):
+        return clr(*alist)
+
+
+class breakpointConverter(object):
+
+    @staticmethod
+    def to_json_value(alist):
+        return [(v, c.tolist()) for (v, c) in alist]
+
+    @staticmethod
+    def from_json_value(alist):
+        return [(v, clr(*c)) for (v, c) in alist]
+
+
+class ColorInterpolator(JsonMixin):
+
+    json_atts = "minvalue maxvalue".split()
+    json_objects = {
+        "minclr": colorConverter,
+        "maxclr": colorConverter,
+        "breakpoints": breakpointConverter,
+    }
 
     def __init__(self, minclr=clr(0,0,0), maxclr=clr(255,0,0),
                 minvalue=0.0, maxvalue=1.0):

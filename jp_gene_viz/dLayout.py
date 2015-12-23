@@ -35,7 +35,7 @@ def group_layout(G, name="fr", fit=1000):
     return iGraphLayout(Gp, name, fit)
 
 def dump(layout, filename):
-    jlayout = {k: list(layout[k]) for k in layout}
+    jlayout = layoutConverter.to_json_value(layout)
     with open(filename, "w") as f:
         json.dump(jlayout, f)
 
@@ -43,5 +43,15 @@ def load(filename):
     with open(filename) as f:
         jlayout = json.load(f)
     # Lower case gene names and array positions.
-    layout = {k.lower(): pos(*jlayout[k]) for k in jlayout}
+    layout = layoutConverter.from_json_value(jlayout)
     return layout
+
+class layoutConverter(object):
+
+    @staticmethod
+    def to_json_value(layout):
+        return {k: list(layout[k]) for k in layout}
+
+    @staticmethod
+    def from_json_value(jlayout):
+        return {k.lower(): pos(*jlayout[k]) for k in jlayout}
