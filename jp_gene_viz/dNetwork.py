@@ -78,7 +78,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
     manipulating the network.
     """
 
-    json_atts = "data_positions display_positions".split()
+    json_atts = "threshhold".split()
 
     json_objects = {
         "data_graph": dGraph.WGraph,
