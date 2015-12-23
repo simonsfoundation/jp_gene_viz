@@ -108,10 +108,11 @@ PASSED TO PYTHON: None
 """
 
 import time
-#import types
+from IPython.display import display, HTML
 import ipywidgets as widgets
 import traitlets
 from jp_gene_viz import js_context
+import json
 
 
 # In the IPython context get_ipython is a builtin.
@@ -122,6 +123,33 @@ ip = get_ipython()
 def load_javascript_support(verbose=False):
     js_context.load_if_not_loaded(["js_proxy.js"])
 
+HTML_EMBEDDING_TEMPLATE = u"""
+<div id="{div_id}"></div>
+
+<script>
+(function () {{
+    {debugger_string}
+    var do_actions = function () {{
+        var element = $("#{div_id}");
+        {actions};
+    }};
+    var wait_for_libraries = function () {{
+        var names = {names};
+        for (var i=0; i<names.length; i++) {{
+            var library = window[names[i]];
+            if ((typeof library) == "undefined") {{
+                return window.setTimeout(wait_for_libraries, 500);
+            }}
+        }}
+        return do_actions();
+    }};
+    wait_for_libraries();
+}})();
+</script>
+"""
+
+# For creating unique DOM identities for embedded objects
+IDENTITY_COUNTER = [0]
 
 class ProxyWidget(widgets.DOMWidget):
 
@@ -152,6 +180,34 @@ class ProxyWidget(widgets.DOMWidget):
         self.on_trait_change(self.handle_callback_results, "callback_results")
         self.on_trait_change(self.handle_results, "results")
         self.buffered_commands = []
+
+    def embedded_html(self, debugger=False, await=()):
+        """
+        Translate buffered commands to static HTML.
+        """
+        await_string = json.dumps(await)
+        IDENTITY_COUNTER[0] += 1
+        div_id = "jupyter_proxy_widget" + str(IDENTITY_COUNTER[0])
+        #print("id", div_id)
+        debugger_string = "// Initialize static widget display with no debugging."
+        if debugger:
+            debugger_string = "// Debug mode for static widget display\ndebugger;"
+        commands = self.buffered_commands
+        js_commands = [to_javascript(c) for c in commands]
+        command_string = indent_string(";\n".join(js_commands), 2)
+        #return HTML_EMBEDDING_TEMPLATE % (div_id, debugger_string, div_id, command_string)
+        return HTML_EMBEDDING_TEMPLATE.format(
+            div_id=div_id,
+            debugger_string=debugger_string,
+            actions=command_string,
+            names=await_string)
+
+    def embed(self, debugger=False, await=()):
+        """
+        Embed the buffered commands into the current notebook as static HTML.
+        """
+        embedded_html = self.embedded_html(debugger, await=await)
+        display(HTML(embedded_html))
 
     def __call__(self, command):
         "Add a command to the buffered commands. Convenience."
@@ -362,6 +418,19 @@ def validate_command(command, top=True):
     return command
 
 
+def indent_string(s, level, indent="    "):
+    lindent = indent * level
+    return s.replace("\n", "\n" + lindent)
+
+
+def to_javascript(thing, level=0):
+    if isinstance(thing, CommandMaker):
+        return thing.javascript(level)
+    else:
+        json_value = json.dumps(thing, indent=4)
+        return indent_string(json_value, level)
+
+
 class CommandMaker(object):
 
     """
@@ -374,6 +443,13 @@ class CommandMaker(object):
     def __init__(self, name="window"):
         assert name in self.top_level_names
         self.name = name
+
+    def __repr__(self):
+        return self.javascript()
+
+    def javascript(self, level=0):
+        "Return javascript text intended for this command"
+        return indent_string(self.name, level)
     
     def _cmd(self):
         "Translate self to JSON representation for transmission to view."
@@ -399,6 +475,21 @@ class CommandMaker(object):
         return ["null", self]
 
 
+# For attribute access use target[value] instead of target.name
+# because sometimes the value will not be a string.
+
+
+Set_Template = """
+(function () {
+    var target = %s;
+    var attribute = %s;
+    var value = %s;
+    target[attribute] = value;
+    return target;
+})()
+""".strip()
+
+
 class SetMaker(CommandMaker):
     """
     Proxy container to set target.name = value.
@@ -410,12 +501,21 @@ class SetMaker(CommandMaker):
         self.name = name
         self.value = value
 
+    def javascript(self, level=0):
+        innerlevel = 2
+        target = to_javascript(self.target, innerlevel)
+        value = to_javascript(self.value, innerlevel)
+        name = to_javascript(self.name, innerlevel)
+        T = Set_Template % (target, name, value)
+        return indent_string(T, level)
+
     def _cmd(self):
         #target = validate_command(self.target, False)
         #@value = validate_command(self.value, False)
         target = self.target
         value = self.value
         return ["set", target, self.name, value]
+
 
 class MethodMaker(CommandMaker):
     """
@@ -426,6 +526,14 @@ class MethodMaker(CommandMaker):
         self.target = target
         self.name = name
 
+    def javascript(self, level=0):
+        # use target[value] notation (see comment above)
+        target = to_javascript(self.target)
+        attribute = to_javascript(self.name)
+        # add a line break in case of long chains
+        T = "%s\n[%s]" % (target, attribute)
+        return indent_string(T, level)
+
     def _cmd(self):
         #target = validate_command(self.target, False)
         target = self.target
@@ -433,6 +541,12 @@ class MethodMaker(CommandMaker):
 
     def __call__(self, *args):
         return CallMaker("method", self.target, self.name, *args)
+
+
+def format_args(args):
+    args_js = [to_javascript(a, 1) for a in args]
+    args_inner = ",\n".join(args_js)
+    return "(%s)" % args_inner
 
 
 class CallMaker(CommandMaker):
@@ -445,6 +559,30 @@ class CallMaker(CommandMaker):
     def __init__(self, kind, *args):
         self.kind = kind
         self.args = quoteLists(args)
+
+    def javascript(self, level=0):
+        kind = self.kind
+        args = self.args
+        # Add newlines in case of long chains.
+        if kind == "function":
+            function_desc = args[0]
+            function_args = args[1:]
+            function_value = to_javascript(function_desc)
+            call_js = "%s\n%s" % (function_value, format_args(function_args))
+            return indent_string(call_js, level)
+        elif kind == "method":
+            target_desc = args[0]
+            name = args[1]
+            method_args = args[2:]
+            target_value = to_javascript(target_desc)
+            name_value = to_javascript(name)
+            method_js = "%s\n[%s]\n%s" % (target_value, name_value, format_args(method_args))
+            return indent_string(method_js, level)
+        else:
+            # This should never be executed, but the javascript
+            # translation is useful for debugging.
+            message = "Warning: External callable " + repr(self.args)
+            return "alert(%s)" % to_javascript(message)
 
     def __call__(self, *args):
         """
@@ -465,6 +603,10 @@ class LiteralMaker(CommandMaker):
 
     def __init__(self, thing):
         self.thing = thing
+
+    def javascript(self, level=0):
+        thing_fmt = to_javascript(self.thing)
+        return indent_string(thing_fmt, level)
 
     def _cmd(self):
         thing = self.thing
