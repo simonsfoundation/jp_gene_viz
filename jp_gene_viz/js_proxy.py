@@ -113,12 +113,28 @@ import ipywidgets as widgets
 import traitlets
 from jp_gene_viz import js_context
 import json
+import threading
 
 
 # In the IPython context get_ipython is a builtin.
 # get a reference to the IPython notebook object.
 ip = get_ipython()
 
+def delay_in_thread(callable):
+    """
+    Return a function which calls callable in a new thread.
+    This is a hack to avoid apparent synchronization issues.
+    Note that the context of the thread seems different than
+    the standard IPython context -- in particular the print
+    function does not work as expected.
+    """
+    def call_then_iterate(*args):
+        callable(*args)
+        ip.kernel.do_one_iteration()
+    def delayed_callable(*args):
+        t = threading.Timer(0.01, call_then_iterate, list(args))
+        t.start()
+    return delayed_callable
 
 def load_javascript_support(verbose=False):
     js_context.load_if_not_loaded(["js_proxy.js"])
@@ -270,7 +286,7 @@ class ProxyWidget(widgets.DOMWidget):
         "Callback for when the JS View sends an event notification."
         if self.verbose:
             print ("got callback results", new)
-        [identifier, json_value, arguments] = new
+        [identifier, json_value, arguments, counter] = new
         i2c = self.identifier_to_callback
         results_callback = i2c.get(identifier)
         if results_callback is not None:
@@ -316,13 +332,15 @@ class ProxyWidget(widgets.DOMWidget):
             ip.kernel.do_one_iteration()
         return result_list[0]
 
-    def callback(self, callback_function, data, level=1):
+    def callback(self, callback_function, data, level=1, delay=False):
         "Create a 'proxy callback' to receive events detected by the JS View."
         assert level > 0, "level must be positive " + repr(level)
         assert level <= 5, "level cannot exceed 5 " + repr(level)
         count = self.counter
         self.counter = count + 1
         command = CallMaker("callback", count, data, level)
+        if delay:
+            callback_function = delay_in_thread(callback_function)
         self.identifier_to_callback[count] = callback_function
         return command
 
