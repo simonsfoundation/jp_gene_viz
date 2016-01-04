@@ -131,9 +131,11 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             readout=False, width="150px")
         self.depth_slider = widgets.IntSlider(
             description="depth", value=0, min=0, max=5, width="50px")
+        # Adjust the width and height of the svg when the size slider changes.
         traitlets.directional_link((sslider, "value"), (svg, "width"))
         traitlets.directional_link((sslider, "value"), (svg, "height"))
-        #self.svg = widgets.Button(description="dummy button")
+        # Adjust the svg view box when the bounding box changes.
+        svg.on_trait_change(self.handle_bounding_box_change, "boundingBox")
         svg.add_style("background-color", "white")
         svg.watch_event = "click mousedown mouseup mousemove mouseover"
         svg.default_event_callback = self.svg_callback
@@ -322,7 +324,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         return (self.display_graph is not None and 
                 self.display_positions is not None)
 
-    def draw(self):
+    def draw(self, fit=True):
         "Draw the network."
         G = self.display_graph
         P = self.display_positions
@@ -351,11 +353,15 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
                 if node in P:
                     (x, y) = P[node]
                     style = style0.copy()
-                    if x < left_x:
-                        style["text-anchor"] = "start"
-                    if x > right_x:
-                        style["text-anchor"] = "end"
+                    # XXXX delete commented logic?
+                    #if x < left_x:
+                    #    style["text-anchor"] = "start"
+                    #if x > right_x:
+                    #    style["text-anchor"] = "end"
                     svg.text(None, x, y-4, node, color, **style)
+            if fit:
+                # async: get svg bounding box
+                svg.fit(False)
             svg.send_commands()
             self.info_area.value = "Labels added."
         if self.colors_assembly.visible:
@@ -894,6 +900,17 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             nw[node] = weights.get(node, 0)
         self.display_graph.reset_colorization()
         self.display_graph.set_node_color_interpolator(colors)
+
+    def handle_bounding_box_change(self, att_name, old, new):
+        "Adjust the svg view box to include the bounding box for the network."
+        if new:
+            svg = self.svg
+            h = new["height"]
+            w = new["width"]
+            x = new["x"]
+            y = new["y"]
+            hw = max(100, h, w) + 10
+            svg.set_view_box(x - 5, y - 5, hw, hw)
 
 def display_network(filename, N=None, threshhold=20.0, save_layout=True, show=True):
     from jp_gene_viz import dLayout
