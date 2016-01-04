@@ -150,7 +150,7 @@ class HeatMap(object):
             self._color_interpolator = result
         return result
 
-    def draw(self, canvas, dx, dy, labels_space=None):
+    def draw(self, canvas, dx, dy, labels_space=None, fit=True):
         """
         Draw the heat map on an SVG canvas.
         """
@@ -179,6 +179,8 @@ class HeatMap(object):
                          "text-anchor": "start"}
                 col_name = self.col_names[colj]
                 canvas.text(None, x, row_end, col_name, label_color, **style)
+        if fit:
+            canvas.fit(True)
 
     def fit(self, canvas, side_length, label_space=None):
         """
