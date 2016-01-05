@@ -101,7 +101,7 @@ class NetworkDisplay(object):
         self.edges_button = self.make_button("list edges", self.edges_click)
         self.layout_dropdown = self.make_layout_dropdown()
         self.labels_button = self.make_checkbox("labels", self.labels_click)
-        self.colors_button = self.make_checkbox("colors", self.colors_click)
+        self.colors_button = self.make_checkbox("settings", self.settings_click)
         self.motifs_button = self.make_checkbox("show motifs", self.show_motifs)
         self.motifs_button.visible = False
         self.motifs_button.value = True
@@ -110,9 +110,9 @@ class NetworkDisplay(object):
         self.threshhold_assembly = self.make_threshhold_assembly()
         self.pattern_assembly = self.make_pattern_assembly()
         self.info_area = widgets.Textarea(description="status")
-        self.colors_assembly = self.make_colors_assembly()
+        self.settings_assembly = self.make_settings_assembly()
         self.dialog = self.make_dialog()
-        self.colors_assembly.visible = False
+        self.settings_assembly.visible = False
         svg = self.svg = canvas.SVGCanvasWidget()
         sslider = self.size_slider = widgets.FloatSlider(value=500, min=500, max=2000, step=10,
             readout=False, width="150px")
@@ -150,7 +150,7 @@ class NetworkDisplay(object):
                    self.depth_slider,
                    self.motifs_button,
                    self.colors_button,
-                   self.colors_assembly,
+                   self.settings_assembly,
                    self.dialog]
         self.inputs = widgets.VBox(children=buttons)
         self.assembly = widgets.HBox(children=[self.inputs, self.vertical])
@@ -224,12 +224,18 @@ class NetworkDisplay(object):
         assembly = widgets.HBox(children=[self.apply_button, self.threshhold_slider])
         return assembly
 
-    def make_colors_assembly(self):
+    def make_settings_assembly(self):
+        font_sl = self.font_size_slider = widgets.IntSlider(
+            description="labels",
+            value=5, min=5, max=20, width="50px")
+        font_fsl = self.tf_font_size_slider = widgets.IntSlider(
+            description="tf labels",
+            value=5, min=5, max=20, width="50px")
         ncc = self.node_color_chooser = color_widget.ColorChooser()
         ncc.title = "nodes"
         ecc = self.edge_color_chooser = color_widget.ColorChooser()
         ecc.title = "edges"
-        assembly = widgets.VBox(children=[ncc.svg, ecc.svg])
+        assembly = widgets.VBox(children=[font_sl, font_fsl, ncc.svg, ecc.svg])
         assembly.visible = False # default
         return assembly
 
@@ -325,10 +331,13 @@ class NetworkDisplay(object):
         self.svg_origin = G.draw(svg, P)
         self.cancel_selection()
         self.info_area.value = "Done drawing: " + repr((G.sizes(), len(P)))
-        style0 = {"font-size": 5, "text-anchor": "middle"}
+        font_size = self.font_size_slider.value
+        tf_font_size = self.tf_font_size_slider.value
+        style0 = {"font-size": font_size, "text-anchor": "middle"}
         color = "black"
         if self.labels_button.value:
             nw = G.node_weights
+            sources = set(G.get_node_to_descendants())
             self.info_area.value = "Adding labels."
             # find the max position
             max_x = max(position[0] for position in [P[n] for n in nw])
@@ -338,6 +347,8 @@ class NetworkDisplay(object):
                 if node in P:
                     (x, y) = P[node]
                     style = style0.copy()
+                    if node in sources:
+                        style["font-size"] = tf_font_size
                     # XXXX delete commented logic?
                     #if x < left_x:
                     #    style["text-anchor"] = "start"
@@ -349,7 +360,7 @@ class NetworkDisplay(object):
                 svg.fit(False)
             svg.send_commands()
             self.info_area.value = "Labels added."
-        if self.colors_assembly.visible:
+        if self.settings_assembly.visible:
             #G.reset_colorization()
             self.info_area.value = "Displaying color choosers."
             ecc = self.edge_color_chooser
@@ -392,9 +403,9 @@ class NetworkDisplay(object):
         self.svg.empty()
         self.draw()
 
-    def colors_click(self, b):
-        self.info_area.value = "colors click " + repr(self.colors_button.value)
-        self.colors_assembly.visible = self.colors_button.value
+    def settings_click(self, b):
+        self.info_area.value = "settings " + repr(self.colors_button.value)
+        self.settings_assembly.visible = self.colors_button.value
         self.svg.empty()
         self.draw()
 
