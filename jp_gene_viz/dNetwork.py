@@ -164,7 +164,12 @@ class NetworkDisplay(object):
         self.display_graph = None
         self.selected_nodes = None
         self.svg_origin = dGraph.pos(0, 0)
+        self.reset_interactive_bookkeeping()
+
+    def reset_interactive_bookkeeping(self):
         self.moving_node = None
+        self.moving_label = None
+        self.label_position_overrides = {}
 
     def set_title(self, value):
         self.title_html.value = value
@@ -245,6 +250,7 @@ class NetworkDisplay(object):
 
     def apply_click(self, b):
         "Apply threshhold value to the viewable network."
+        self.reset_interactive_bookkeeping()
         self.do_threshhold()
         self.svg.empty()
         self.draw()
@@ -302,6 +308,7 @@ class NetworkDisplay(object):
         maxw = max(abs(ew[e]) for e in ew) + 1.0
         self.threshhold_slider.max = maxw
         self.do_threshhold()
+        self.reset_interactive_bookkeeping()
         self.draw()
 
     def fit_heuristic(self, graph):
@@ -340,12 +347,15 @@ class NetworkDisplay(object):
             sources = set(G.get_node_to_descendants())
             self.info_area.value = "Adding labels."
             # find the max position
-            max_x = max(position[0] for position in [P[n] for n in nw])
-            left_x = max_x * 0.25
-            right_x = max_x * 0.75
+            #max_x = max(position[0] for position in [P[n] for n in nw])
+            #left_x = max_x * 0.25
+            #right_x = max_x * 0.75
+            overrides = self.label_position_overrides
             for node in nw:
                 if node in P:
                     (x, y) = P[node]
+                    if node in overrides:
+                        (x, y) = overrides[node]
                     style = style0.copy()
                     if node in sources:
                         style["font-size"] = tf_font_size
@@ -354,7 +364,8 @@ class NetworkDisplay(object):
                     #    style["text-anchor"] = "start"
                     #if x > right_x:
                     #    style["text-anchor"] = "end"
-                    svg.text(None, x, y-4, node, color, **style)
+                    lname = self.label_name(node)
+                    svg.text(lname, x, y-4, node, color, **style)
             if fit:
                 # async: get svg bounding box
                 svg.fit(False)
@@ -393,6 +404,7 @@ class NetworkDisplay(object):
             self.data_graph, self.data_positions)
         self.display_graph = Gfocus
         self.display_positions = Pfocus
+        self.reset_interactive_bookkeeping()
         self.do_threshhold()
         self.svg.empty()
         self.draw()
@@ -415,6 +427,7 @@ class NetworkDisplay(object):
 
     def layout_click(self, b):
         "Apply the current layout to the viewable graph."
+        self.reset_interactive_bookkeeping()
         self.info_area.value = "layout clicked"
         if not self.loaded:
             self.info_area.value = "Cannot layout: no graph loaded"
@@ -668,7 +681,7 @@ class NetworkDisplay(object):
                 elif indicator == "EDGE":
                     e = json.loads(data)
                     L.append(self.edge_detail(e))
-                    if not (self.selecting or self.moving_node):
+                    if not (self.selecting or self.moving_node or self.moving_label):
                         self.edge_dialog(e, info)
                 else:
                     L.append("name " + repr(name))
@@ -832,7 +845,24 @@ class NetworkDisplay(object):
             self.update_selection(info)
         if self.moving_node:
             self.update_moving_node(info)
+        if self.moving_label:
+            self.update_moving_label(info)
         self.check_dialog()
+
+    def update_moving_label(self, info):
+        moving_label = self.moving_label
+        svgX = info["svgX"]
+        svgY = info["svgY"]
+        svg = self.svg
+        overrides = self.label_position_overrides
+        overrides[moving_label] = (svgX, svgY + 4)
+        attributes = {"x": svgX, "y": svgY}
+        name = self.label_name(moving_label)
+        svg.change_element(name, attributes)
+        svg.send_commands()
+
+    def label_name(self, node):
+        return "LABEL_" + node
 
     def update_moving_node(self, info):
         moving_node = self.moving_node
@@ -871,14 +901,18 @@ class NetworkDisplay(object):
             # if we are moving a node, stop moving it.
             name = info.get("name", "")
             moving_node = self.moving_node
-            if self.moving_node:
+            if self.moving_node or self.moving_label:
                 self.moving_node = None
+                self.moving_label = None
                 self.draw()
             elif name.startswith("NODE_"):
                 # otherwords if it's a node, start moving it
                 nodename = name[5:]
                 self.moving_node = nodename
                 self.display_graph.uncache()
+            elif name.startswith("LABEL_"):
+                nodename = name[6:]
+                self.moving_label = nodename
 
     def cancel_selection(self):
         "Remove the circular selection area, if present."
