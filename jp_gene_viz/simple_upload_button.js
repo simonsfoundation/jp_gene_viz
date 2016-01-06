@@ -1,7 +1,9 @@
 
 /*
 jQuery plugin for a simple upload button that
-sends file information and contents to a callback.
+sends file information and contents to a callback
+
+elt.append(elt.simple_upload_button(callback))
 
 Structure follows: https://learn.jquery.com/plugins/basic-plugin-creation/
 Logic from http://www.html5rocks.com/en/tutorials/file/dndfiles/
@@ -11,10 +13,9 @@ Logic from http://www.html5rocks.com/en/tutorials/file/dndfiles/
     $.fn.simple_upload_button = function (callback, options) {
         var settings = $.extend({
             "size_limit": 10000000
-        })
+        }, options);
         var result = $('<input type="file"/>');
         result.on("change", function(event) {
-            debugger;
             var file = this.files[0];
             if (file) {
                 var data = {
@@ -26,7 +27,6 @@ Logic from http://www.html5rocks.com/en/tutorials/file/dndfiles/
                 if (settings.size_limit && (settings.size_limit > data.size)) {
                     var reader = new FileReader();
                     reader.onload = function (event) {
-                        debugger;
                         data["content"] = event.target.result;
                         // callback with content (not too big)
                         callback(data);
@@ -39,7 +39,7 @@ Logic from http://www.html5rocks.com/en/tutorials/file/dndfiles/
             }
         });
         return result;
-    }
+    };
 
     $.fn.simple_upload_button.example = function(element) {
         var output_area = $("<pre/>");
@@ -56,5 +56,5 @@ Logic from http://www.html5rocks.com/en/tutorials/file/dndfiles/
         var upload_button = element.simple_upload_button(callback_function);
         element.append(upload_button);
         return element;
-    }
+    };
 })(jQuery)
