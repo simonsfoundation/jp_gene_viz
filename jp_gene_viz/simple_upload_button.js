@@ -57,4 +57,4 @@ Logic from http://www.html5rocks.com/en/tutorials/file/dndfiles/
         element.append(upload_button);
         return element;
     };
-})(jQuery)
+})(jQuery);
