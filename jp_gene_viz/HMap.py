@@ -165,18 +165,24 @@ class HeatMap(object):
         if labels_space is not None:
             label_color = "black"
             col_end = self.ncols * dx
-            style = {"font-size": min(dy, 15), "text-anchor": "start"}
+            style = {
+                "font-size": min(dy, 15), 
+                "text-anchor": "start",
+                "alignment-baseline": "middle"
+                }
             for rowi in range(self.nrows):
                 row_name = self.row_names[rowi]
-                canvas.text(None, col_end, (rowi + 1) * dy,
+                y = (rowi + 0.5) * dy
+                canvas.text(None, col_end, y,
                             row_name, label_color, **style)
             row_end = self.nrows * dy
             for colj in range(self.ncols):
-                x = colj * dx
+                x = (colj + 0.5) * dx
                 transform = "rotate(90,%s,%s)" % (x, row_end)
                 style = {"font-size": min(dx, 15),
                          "transform": transform,
-                         "text-anchor": "start"}
+                         "text-anchor": "start",
+                         "alignment-baseline": "middle"}
                 col_name = self.col_names[colj]
                 canvas.text(None, x, row_end, col_name, label_color, **style)
         if fit:
