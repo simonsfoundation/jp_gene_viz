@@ -20,6 +20,14 @@ require(["widgets/js/widget", "widgets/js/manager", "underscore", "jquery"
                 var obj = Object.create(klass.prototype);
                 return klass.apply(obj, args) || obj;
             }
+
+            // fix key bindings for wayward element.
+            // XXXX This is a bit of a hack that may not be needed in future
+            // Jupyter releases.
+            that.$el.Fix = function(element) {
+                debugger;
+                that.model.widget_manager.keyboard_manager.register_events(element);
+            }
         },
 
         update: function(options) {
