@@ -12,9 +12,13 @@ Logic from http://www.html5rocks.com/en/tutorials/file/dndfiles/
 (function($) {
     $.fn.simple_upload_button = function (callback, options) {
         var settings = $.extend({
-            "size_limit": 10000000
+            "size_limit": 10000000,
+            "style": {"display": "inline-block"},
         }, options);
         var result = $('<input type="file"/>');
+        if (settings.style) {
+            result.css(settings.style);
+        }
         result.on("change", function(event) {
             var file = this.files[0];
             if (file) {
