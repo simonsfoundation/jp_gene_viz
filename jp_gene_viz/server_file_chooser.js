@@ -10,10 +10,12 @@ See example below for usage.
 
 (function ($) {
     $.fn.server_file_chooser = function (top_path, top_listing, 
-        select_callback, upload_callback, options) {
+        select_callback, upload_callback, message, options) {
+        debugger;
         var settings = $.extend({
             "pathstyle": {"border-style": "solid", "padding-left": "10px"},
-            "liststyle": {"padding-left": "20px"}
+            "liststyle": {"padding-left": "20px"},
+            "files": true,
         }, options);
         var result = $('<div/>');
         var patharea = $('<div/>').html("(path)").appendTo(result);
@@ -37,9 +39,12 @@ See example below for usage.
                 return upload_callback(upload_path, data);
             };
         };
-        var layout = function (path, listing) {
+        var layout = function (path, listing, message) {
             patharea.empty();
             listarea.empty();
+            if (message) {
+                patharea.append("<div>" + message + "</div>")
+            }
             patharea.append("\u21DB &nbsp;")
             var ancestors = [];
             for (var i=0; i<path.length; i++) {
@@ -64,20 +69,37 @@ See example below for usage.
                 var kind = item[1];
                 var itemdiv = $("<div/>");
                 var onclick = on_click_maker(path, item);
-                $('<a href="#"/>').
-                html(name).
-                click(onclick).
-                appendTo(itemdiv);
-                if (kind == "folder") {
-                    $("<b>&nbsp; \u21DA </b>").appendTo(itemdiv);
+                if (!settings.files && (kind == "file"))
+                {
+                    // files disabled -- don't make clickable.
+                    $("<em/>").html(name).appendTo(itemdiv);
+                } else {
+                    $('<a href="#"/>').
+                    html(name).
+                    click(onclick).
+                    appendTo(itemdiv);
+                    if (kind == "folder") {
+                        $("<b>&nbsp; \u21DA </b>").appendTo(itemdiv);
+                    }
                 }
                 itemdiv.appendTo(listarea);
             }
         };
-        layout(top_path, top_listing);
+        layout(top_path, top_listing, message);
         result.layout = layout;
+
         return result;
     };
+
+    // Download function convenience should be called with fully specified URI
+    // http://stackoverflow.com/questions/3749231/download-file-using-javascript-jquery
+    $.fn.server_file_chooser.download = function(uri, name) {
+        var link = document.createElement("a");
+        link.download = name;
+        link.href = uri;
+        link.click();
+    };
+
 
     $.fn.server_file_chooser.example = function (element) {
         var output_area = $("<pre/>").html("(Output will go here)");
@@ -121,9 +143,10 @@ See example below for usage.
                 ].join("\n"));
         };
         var chooser = element.server_file_chooser(
-            path, listing, select_callback, upload_callback);
+            path, listing, select_callback, upload_callback, "Fake chooser.");
         element.append(chooser);
         element.append(output_area);
         return element;
     };
 })(jQuery);
+
