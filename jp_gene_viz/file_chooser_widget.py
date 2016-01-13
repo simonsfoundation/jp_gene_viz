@@ -12,6 +12,9 @@ class FileChooser(traitlets.HasTraits):
     """
     Upload a file and/or choose a file from server side directory.
     Watch the file_path for changes for chosen file.
+
+    XXXX This widget uses "data" URIs to implement the upload feature.
+    which may not work for files larger than a few 10s of Megs.
     """
 
     file_path = traitlets.Unicode("", sync=True)
@@ -75,28 +78,39 @@ class FileChooser(traitlets.HasTraits):
             self.layout(path)
 
     def handle_upload(self, data, args):
+        # XXX does not check for file exists.
         if self.verbose:
             from pprint import pprint
             pprint(("handle_upload", args))
         parent_path = args["0"]
         file_info = args["1"]
         filename = file_info["name"]
-        content = file_info["content"]
+        hexcontent = file_info["hexcontent"]
         path = parent_path + [filename]
         path_str = os.path.join(*path)
         f = open(path_str, "wb")
-        f.write(content)
+        #f.write(content)
+        #print "hexcontent", hexcontent
+        for i in xrange(0, len(hexcontent), 2):
+            hexcode = hexcontent[i: i+2]
+            char = chr(int(hexcode, 16))
+            f.write(char)
         f.close()
         self.layout(parent_path)
 
     def download_on_change_callback(self, dummy, filepath):
+        """
+        Use a "data download link" to download a file from the server.
+        WARNING: This method silently fails for files larger than a few megabytes.
+        """
         # https://gist.github.com/jbergantine/1171682
         base64 = open(filepath, "rb").read().encode("base64").replace("\n", "")
         uri = "data:x-download/misc;base64," + base64
         (_, filename) = os.path.split(filepath)
         w = self.widget
         download = w.element().server_file_chooser.download
-        w.evaluate(download(uri, filename))
+        w(download(uri, filename))
+        w.flush()
 
     def enable_downloads(self):
         self.on_trait_change(self.download_on_change_callback, "file_path")
@@ -106,11 +120,19 @@ class FileChooser(traitlets.HasTraits):
 
 
 def print_filename(dummy, filename):
+    "useful for debugging."
     print ("path chosen callback: " + filename)
 
 
-def simple_file_downloader(root=".", upload=True):
+def simple_file_downloader(root=".", upload=False):
+    "Download file in root or descendant of root."
     chooser = FileChooser(upload=upload)
     chooser.enable_downloads()
+    chooser.show()
+    return chooser
+
+def simple_file_uploader(root="."):
+    "Upload to root or existing folder descendant of root."
+    chooser = FileChooser(upload=True, files=False)
     chooser.show()
     return chooser

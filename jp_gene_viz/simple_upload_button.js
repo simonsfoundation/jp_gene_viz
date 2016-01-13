@@ -14,8 +14,21 @@ Logic from http://www.html5rocks.com/en/tutorials/file/dndfiles/
         var settings = $.extend({
             "size_limit": 10000000,
             "style": {"display": "inline-block"},
+            "hexidecimal": true,
         }, options);
         var result = $('<input type="file"/>');
+        var hex_byte = function (b) {
+            var result = b.toString(16);
+            if (result.length < 2) {
+                result = "0" + result
+            }
+            return result;
+        };
+        var to_hex_string = function (buffer) {
+            debugger;
+            var bytes = new Uint8Array(buffer);
+            return Array.from(bytes).map(hex_byte).join("");
+        };
         if (settings.style) {
             result.css(settings.style);
         }
@@ -31,11 +44,20 @@ Logic from http://www.html5rocks.com/en/tutorials/file/dndfiles/
                 if (settings.size_limit && (settings.size_limit > data.size)) {
                     var reader = new FileReader();
                     reader.onload = function (event) {
-                        data["content"] = event.target.result;
+                        var result = event.target.result;
+                        if (settings.hexidecimal) {
+                            data["hexcontent"] = to_hex_string(result);
+                        } else {
+                            data["content"] = result;
+                        }
                         // callback with content (not too big)
                         callback(data);
                     };
-                    reader.readAsText(file);
+                    if (settings.hexidecimal) {
+                        reader.readAsArrayBuffer(file);
+                    } else {
+                        reader.readAsText(file);
+                    }
                 } else {
                     // invoke callback with no content (too big).
                     callback(data);
@@ -57,7 +79,8 @@ Logic from http://www.html5rocks.com/en/tutorials/file/dndfiles/
                 "" + data.content
                 ].join("\n"));
         };
-        var upload_button = element.simple_upload_button(callback_function);
+        var options = {"hexidecimal": false}
+        var upload_button = element.simple_upload_button(callback_function, options);
         element.append(upload_button);
         return element;
     };

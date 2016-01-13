@@ -14,8 +14,10 @@ See example below for usage.
         debugger;
         var settings = $.extend({
             "pathstyle": {"border-style": "solid", "padding-left": "10px"},
-            "liststyle": {"padding-left": "20px"},
+            "liststyle": {"border-style": "solid", "padding-left": "20px", 
+                "height": "300px", "overflow": "scroll"},
             "files": true,
+            "hexidecimal": true,
         }, options);
         var result = $('<div/>');
         var patharea = $('<div/>').html("(path)").appendTo(result);
@@ -60,7 +62,8 @@ See example below for usage.
             // ad upload option, if appropriate
             if (upload_callback) {
                 var on_upload = on_upload_maker(path);
-                var on_upload_button = patharea.simple_upload_button(on_upload);
+                var options = {"hexidecimal": settings.hexidecimal};
+                var on_upload_button = patharea.simple_upload_button(on_upload, options);
                 patharea.append($("<div>upload </div>").append(on_upload_button));
             }
             for (var i=0; i<listing.length; i++) {
@@ -142,8 +145,9 @@ See example below for usage.
                 "" + data.content
                 ].join("\n"));
         };
+        var settings = {"hexidecimal": false};
         var chooser = element.server_file_chooser(
-            path, listing, select_callback, upload_callback, "Fake chooser.");
+            path, listing, select_callback, upload_callback, "Fake chooser.", settings);
         element.append(chooser);
         element.append(output_area);
         return element;
