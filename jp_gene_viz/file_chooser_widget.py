@@ -23,7 +23,8 @@ class FileChooser(traitlets.HasTraits):
 
     def __init__(self, message="Choose file",
         root=".", files=True, folders=False, upload=False, 
-        dialog=True, *args, **kwargs):
+        dialog=True, width=500,
+        *args, **kwargs):
         super(FileChooser, self).__init__(*args, **kwargs)
         js_context.load_if_not_loaded(["simple_upload_button.js"])
         js_context.load_if_not_loaded(["server_file_chooser.js"])
@@ -33,6 +34,7 @@ class FileChooser(traitlets.HasTraits):
         self.folders = folders
         self.dialog = dialog
         self.message = message
+        self.width = width
         self.widget = js_proxy.ProxyWidget()
         self.layout([self.root])
 
@@ -58,10 +60,18 @@ class FileChooser(traitlets.HasTraits):
         if self.upload:
             upload_callback = w.callback(self.handle_upload, data=None, level=2)
         elt = w.element()
+        w(elt.empty())
         target = elt
         if self.dialog:
             target = elt.dialog()
-        w(target.empty())
+            if self.width:
+                # initialize the dialog before calling methods
+                w(target)
+                w(elt.dialog("option", "width", self.width))
+                pass
+        #w(target.empty())
+        if self.width:
+            w(target.width(self.width))
         w(elt.server_file_chooser(
             path_list, listing, select_callback, upload_callback, message, options).
             appendTo(target)
