@@ -12,12 +12,15 @@ from jp_gene_viz import dGraph
 from jp_gene_viz import dLayout
 from jp_gene_viz import color_scale
 from jp_gene_viz import color_widget
+from jp_gene_viz.json_mixin import JsonMixin
+from jp_gene_viz import file_chooser_widget
 import fnmatch
 import igraph
 import json
 import os
 import traitlets
 import time
+import zlib
 
 SELECTION = "SELECTION"
 
@@ -70,12 +73,23 @@ def set_color_levels(interpolator, color_text=Emilys_colors):
     interpolator.set_color_mapping(clrmapping)
 
 
-class NetworkDisplay(object):
+class NetworkDisplay(traitlets.HasTraits, JsonMixin):
 
     """
     Create a widget which displays a network with controls for 
     manipulating the network.
     """
+
+    json_atts = "threshhold label_position_overrides".split()
+
+    json_objects = {
+        "data_graph": dGraph.WGraph,
+        "display_graph": dGraph.WGraph,
+        "data_positions": dLayout.layoutConverter,
+        "display_positions": dLayout.layoutConverter,
+    }
+
+    threshhold = traitlets.Float()
 
     default_side = 10
 
@@ -86,7 +100,8 @@ class NetworkDisplay(object):
     # The motif collection to use for looking up motif data.
     motif_collection = None
 
-    def __init__(self):
+    def __init__(self, *pargs, **kwargs):
+        super(NetworkDisplay, self).__init__(*pargs, **kwargs)
         self.title_html = widgets.HTML("Gene network")
         self.zoom_button = self.make_button("zoom", self.zoom_click, True)
         self.trim_button = self.make_button("trim", self.trim_click)
@@ -130,7 +145,8 @@ class NetworkDisplay(object):
                       self.svg, 
                       self.threshhold_assembly, 
                       self.pattern_assembly,
-                      self.info_area]
+                      self.info_area,
+                      self.settings_assembly]
         self.vertical = widgets.VBox(children=left_panel)
         buttons = [self.zoom_button,
                    self.focus_button,
@@ -150,7 +166,7 @@ class NetworkDisplay(object):
                    self.depth_slider,
                    self.motifs_button,
                    self.colors_button,
-                   self.settings_assembly,
+                   #self.settings_assembly,
                    self.dialog]
         self.inputs = widgets.VBox(children=buttons)
         self.assembly = widgets.HBox(children=[self.inputs, self.vertical])
@@ -225,6 +241,8 @@ class NetworkDisplay(object):
                                                     step=0.1, width="300px")
         #self.apply_button = widgets.Button(description="threshhold")
         #self.apply_button.on_click(self.apply_click)
+        # makd the local variable "threshhold" an alias for the slider valut
+        traitlets.link((self.threshhold_slider, "value"), (self, "threshhold"))
         self.apply_button = self.make_button("threshhold", self.apply_click)
         assembly = widgets.HBox(children=[self.apply_button, self.threshhold_slider])
         return assembly
@@ -240,9 +258,84 @@ class NetworkDisplay(object):
         ncc.title = "nodes"
         ecc = self.edge_color_chooser = color_widget.ColorChooser()
         ecc.title = "edges"
-        assembly = widgets.VBox(children=[font_sl, font_fsl, ncc.svg, ecc.svg])
+        w = "150px"
+        self.filename_button = self.make_button("file name", self.filename_click, width=w)
+        self.save_button = self.make_button("save", self.save_click, width=w)
+        self.load_button = self.make_button("load", self.load_click, width=w)
+        self.upload_button = self.make_button("upload/download", self.upload_click, width=w)
+        self.filename_text = widgets.Text(value='')
+        labels_sliders = widgets.HBox(children=[font_sl, font_fsl])
+        color_choosers = widgets.HBox(children=[ncc.svg, ecc.svg])
+        file_input = widgets.HBox(children=[
+            self.filename_button, self.filename_text])
+        file_buttons = widgets.HBox(children=[
+            self.save_button, self.load_button, self.upload_button])
+        assembly = widgets.VBox(children=[
+            labels_sliders, 
+            color_choosers, 
+            file_input,
+            file_buttons])
+        #assembly = widgets.VBox(children=[font_sl, font_fsl, ncc.svg, ecc.svg])
         assembly.visible = False # default
         return assembly
+
+    def filename_click(self, b):
+        # XXXX this may leak memory? Does it matter?
+        self.info_area.value = "filename click"
+        chooser = file_chooser_widget.FileChooser(
+            upload=False, message="choose folder and filename", folders=True)
+        fn = self.filename_text
+        traitlets.directional_link((chooser, "file_path"), (fn, "value"))
+        chooser.show()
+
+    def save_click(self, b):
+        self.info_area.value = "save click"
+        filename = self.filename_text.value
+        try:
+            f = open(filename, "wb")
+        except Exception:
+            return self.alert("could not write filename: " + repr(filename))
+        json = self.as_json()
+        zjson = zlib.compress(json)
+        f.write(zjson)
+        f.close()
+        msg = "saved %s bytes as zipped JSON to %s" % (len(zjson), repr(filename))
+        self.alert(msg)
+
+    def load_click(self, b):
+        self.info_area.value = "restore click"
+        filename = self.filename_text.value
+        try:
+            f = open(filename, "rb")
+        except Exception:
+            return self.alert("could not read filename: " + repr(filename))
+        zjson = f.read()
+        try:
+            json_string = zlib.decompress(zjson)
+        except Exception:
+            return self.alert("could not unzip " + repr(filename))
+        try:
+            json_object = json.loads(json_string)
+        except Exception:
+            return self.alert("could not parse as JSON " + repr(filename))
+        try:
+            self.from_json_value(json_object)
+            pass
+        except Exception:
+            self.alert("error loading JSON value " + repr(filename))
+            raise
+        self.draw()
+        msg = "loaded JSON value " + repr(filename)
+        self.alert(msg)
+        self.info_area.value = msg
+
+    def upload_click(self, b):
+        # XXXX this may leak memory? Does it matter?
+        self.info_area.value = "upload click"
+        chooser = file_chooser_widget.FileChooser(
+            upload=True, message="choose folder and filename")
+        chooser.enable_downloads()
+        chooser.show()
 
     def draw_click(self, b):
         self.svg.empty()

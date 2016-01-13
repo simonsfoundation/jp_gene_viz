@@ -4,6 +4,7 @@ import json
 
 from jp_gene_viz.color_scale import (clr, clr_check, weighted_color, color)
 from jp_gene_viz import color_scale
+from jp_gene_viz.json_mixin import JsonMixin
 
 def trim_leaves(Gin):
     Gout = WGraph()
@@ -83,7 +84,18 @@ def skeleton(Gin):
     return Gout
 
 
-class WGraph(object):
+class edgeDictConverter(object):
+
+    @staticmethod
+    def to_json_value(adict):
+        return list(adict.items())
+
+    @staticmethod
+    def from_json_value(alist):
+        return dict((tuple(key), value) for (key, value) in alist)
+
+
+class WGraph(JsonMixin):
     
     def __init__(self):
         self.edge_weights = {}
@@ -91,6 +103,14 @@ class WGraph(object):
         self.edge_attributes = {}
         # populate on demand
         self._node_to_descendents = None
+
+    json_atts = ["node_weights"]
+    json_objects = {
+        "edge_weights": edgeDictConverter,
+        "edge_attributes": edgeDictConverter,
+        "_node_color_interpolator": color_scale.ColorInterpolator, 
+        "_edge_color_interpolator": color_scale.ColorInterpolator,
+        }
 
     def uncache(self):
         "clear all caching data structures (for safety)."

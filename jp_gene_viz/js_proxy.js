@@ -20,6 +20,14 @@ require(["widgets/js/widget", "widgets/js/manager", "underscore", "jquery"
                 var obj = Object.create(klass.prototype);
                 return klass.apply(obj, args) || obj;
             }
+
+            // fix key bindings for wayward element.
+            // XXXX This is a bit of a hack that may not be needed in future
+            // Jupyter releases.
+            that.$el.Fix = function(element) {
+                debugger;
+                that.model.widget_manager.keyboard_manager.register_events(element);
+            }
         },
 
         update: function(options) {
@@ -123,8 +131,11 @@ require(["widgets/js/widget", "widgets/js/manager", "underscore", "jquery"
 
         callback_factory: function(identifier, data, level) {
             var that = this;
+            // Counter makes sure change is noticed even if other arguments don't change.
+            var counter = 0;
             var handler = function () {
-                var payload = that.json_safe([identifier, data, arguments], level + 1);
+                counter += 1;
+                var payload = that.json_safe([identifier, data, arguments, counter], level + 1);
                 that.model.set("callback_results", payload);
                 that.touch();
             };
