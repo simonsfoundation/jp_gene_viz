@@ -21,7 +21,9 @@ class FileChooser(traitlets.HasTraits):
 
     verbose = False
 
-    def __init__(self, root=".", files=True, folders=False, upload=False, *args, **kwargs):
+    def __init__(self, message="Choose file",
+        root=".", files=True, folders=False, upload=False, 
+        dialog=True, *args, **kwargs):
         super(FileChooser, self).__init__(*args, **kwargs)
         js_context.load_if_not_loaded(["simple_upload_button.js"])
         js_context.load_if_not_loaded(["server_file_chooser.js"])
@@ -29,10 +31,14 @@ class FileChooser(traitlets.HasTraits):
         self.upload = upload
         self.files = files
         self.folders = folders
+        self.dialog = dialog
+        self.message = message
         self.widget = js_proxy.ProxyWidget()
         self.layout([self.root])
 
     def layout(self, path_list, message=""):
+        if not message:
+            message = self.message
         path = os.path.join(*path_list)
         listing = []
         if not os.path.isdir(path):
@@ -52,10 +58,13 @@ class FileChooser(traitlets.HasTraits):
         if self.upload:
             upload_callback = w.callback(self.handle_upload, data=None, level=2)
         elt = w.element()
-        w(elt.empty())
+        target = elt
+        if self.dialog:
+            target = elt.dialog()
+        w(target.empty())
         w(elt.server_file_chooser(
             path_list, listing, select_callback, upload_callback, message, options).
-            appendTo(elt)
+            appendTo(target)
         )
         w.flush()
 
@@ -75,7 +84,9 @@ class FileChooser(traitlets.HasTraits):
                 # Set the trait selecting the folder
                 self.file_path = path_str
             # open the folder in the widget
-            self.layout(path)
+            self.layout(path, message="chose folder " + repr(path_str))
+        else:
+            self.layout(parent_path, message="chose " + repr(path_str))
 
     def handle_upload(self, data, args):
         # XXX does not check for file exists.
@@ -96,7 +107,7 @@ class FileChooser(traitlets.HasTraits):
             char = chr(int(hexcode, 16))
             f.write(char)
         f.close()
-        self.layout(parent_path)
+        self.layout(parent_path, message="uploaded " + repr(path_str))
 
     def download_on_change_callback(self, dummy, filepath):
         """
@@ -126,13 +137,13 @@ def print_filename(dummy, filename):
 
 def simple_file_downloader(root=".", upload=False):
     "Download file in root or descendant of root."
-    chooser = FileChooser(upload=upload)
+    chooser = FileChooser(upload=upload, message="download files")
     chooser.enable_downloads()
     chooser.show()
     return chooser
 
 def simple_file_uploader(root="."):
     "Upload to root or existing folder descendant of root."
-    chooser = FileChooser(upload=True, files=False)
+    chooser = FileChooser(upload=True, files=False, message="upload files")
     chooser.show()
     return chooser
