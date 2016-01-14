@@ -26,6 +26,26 @@ class FileChooser(traitlets.HasTraits):
         root=".", files=True, folders=False, upload=False, 
         dialog=True, width=500,
         *args, **kwargs):
+        """
+        FileChooser constructor.
+
+        Parameters
+        ----------
+        message : str 
+            Message near the top of the widget as a prompt.
+        root : str
+            The root path for the top folder to display.
+        files : bool
+            Make non-folders selectable iff true.
+        folders : bool
+            Show folders iff true.
+        upload : bool
+            Enable file upload iff true.
+        dialog : bool
+            Show in a jQueryUI dialog iff true, else inline.
+        width : int
+            Width of widget in pixels.
+        """
         super(FileChooser, self).__init__(*args, **kwargs)
         js_context.load_if_not_loaded(["simple_upload_button.js"])
         js_context.load_if_not_loaded(["server_file_chooser.js"])
@@ -113,9 +133,10 @@ class FileChooser(traitlets.HasTraits):
         f = open(path_str, "wb")
         #f.write(content)
         #print "hexcontent", hexcontent
-        for i in xrange(0, len(hexcontent), 2):
-            hexcode = hexcontent[i: i+2]
-            char = chr(int(hexcode, 16))
+        #for i in xrange(0, len(hexcontent), 2):
+        #    hexcode = hexcontent[i: i+2]
+        #    char = chr(int(hexcode, 16))
+        for char in from_hex_iterator(hexcontent):
             f.write(char)
         f.close()
         self.layout(parent_path, message="uploaded " + repr(path_str))
@@ -167,6 +188,15 @@ class FileChooser(traitlets.HasTraits):
     def show(self):
         display(self.widget)
 
+
+def from_hex_iterator(hexcontent):
+    for i in xrange(0, len(hexcontent), 2):
+        hexcode = hexcontent[i: i+2]
+        char = chr(int(hexcode, 16))
+        yield char
+
+def from_hex(hexcontent):
+    return "".join(list(from_hex_iterator(hexcontent)))
 
 def print_filename(dummy, filename):
     "useful for debugging."
