@@ -116,7 +116,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.edges_button = self.make_button("list edges", self.edges_click)
         self.layout_dropdown = self.make_layout_dropdown()
         self.labels_button = self.make_checkbox("labels", self.labels_click)
-        self.colors_button = self.make_checkbox("settings", self.settings_click)
+        self.settings_button = self.make_checkbox("settings", self.settings_click)
         self.motifs_button = self.make_checkbox("show motifs", self.show_motifs)
         self.motifs_button.visible = False
         self.motifs_button.value = True
@@ -165,7 +165,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
                    self.draw_button,
                    self.depth_slider,
                    self.motifs_button,
-                   self.colors_button,
+                   self.settings_button,
                    #self.settings_assembly,
                    self.dialog]
         self.inputs = widgets.VBox(children=buttons)
@@ -509,10 +509,10 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.draw()
 
     def settings_click(self, b):
-        self.info_area.value = "settings " + repr(self.colors_button.value)
-        self.settings_assembly.visible = self.colors_button.value
+        self.settings_assembly.visible = self.settings_button.value
         self.svg.empty()
         self.draw()
+        self.info_area.value = "settings " + repr(self.settings_button.value)
 
     def show_motifs(self, b):
         # do nothing

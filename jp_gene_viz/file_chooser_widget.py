@@ -5,6 +5,7 @@ import traitlets
 from jp_gene_viz import js_proxy
 from jp_gene_viz import js_context
 from IPython.display import display
+import urlparse
 
 
 class FileChooser(traitlets.HasTraits):
@@ -120,6 +121,33 @@ class FileChooser(traitlets.HasTraits):
         self.layout(parent_path, message="uploaded " + repr(path_str))
 
     def download_on_change_callback(self, dummy, filepath):
+        """
+        Use an URL served by the notebook server to download the file.
+        This will only work for files under the folder containing the notebook.
+
+        This method may break if a proxy changes the URL in transit.
+        """
+        w = self.widget
+        window = w.window()
+        # eg: http://localhost:8888/notebooks/repos/jp_gene_viz/examples/cytoscape%20js_proxy.ipynb#
+        notebook_url = w.evaluate(window.location.href)
+        # eg: /notebooks/repos/jp_gene_viz/examples/cytoscape%20js_proxy.ipynb
+        notebook_path = urlparse.urlsplit(notebook_url).path
+        # eg /notebooks/repos/jp_gene_viz/examples
+        folder_path = notebook_path.rsplit("/", 1)[0]
+        prefix = "/notebooks/"
+        assert folder_path.startswith(prefix), "bad folder " + repr((prefix, folder_path))
+        # eg /files/repos/jp_gene_viz/examples
+        file_folder = "/files/" + folder_path[len(prefix):]
+        (_, filename) = os.path.split(filepath)
+        uri = urlparse.urljoin(file_folder + "/", filepath)
+        w(window.console.log("Download uri " + repr(uri)))
+        print ("Download uri " + repr(uri))
+        download = w.element().server_file_chooser.download
+        w(download(uri, filename))
+        w.flush()
+
+    def download_on_change_callback_base64(self, dummy, filepath):
         """
         Use a "data download link" to download a file from the server.
         WARNING: This method silently fails for files larger than a few megabytes.
