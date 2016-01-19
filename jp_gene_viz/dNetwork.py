@@ -250,7 +250,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
     def make_settings_assembly(self):
         font_sl = self.font_size_slider = widgets.IntSlider(
             description="labels",
-            value=5, min=5, max=20, width="50px")
+            value=5, min=0, max=20, width="50px")
         font_fsl = self.tf_font_size_slider = widgets.IntSlider(
             description="tf labels",
             value=5, min=5, max=20, width="50px")
@@ -458,7 +458,9 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
                     #if x > right_x:
                     #    style["text-anchor"] = "end"
                     lname = self.label_name(node)
-                    svg.text(lname, x, y-4, node, color, **style)
+                    # If font-size is zero, don't show the text
+                    if style["font-size"] != 0:
+                        svg.text(lname, x, y-4, node, color, **style)
             if fit:
                 # async: get svg bounding box
                 svg.fit(False)
