@@ -229,7 +229,7 @@ class WGraph(JsonMixin):
         # probably should clone XXXX
         self._node_color_interpolator = color_interpolator
     
-    def draw(self, canvas, positions, edgewidth=1, nodesize=3):
+    def draw(self, canvas, positions, edgewidth=1, nodesize=3, fit=True):
         (Me, me, Mn, mn) = self.weights_extrema()
         # layout edges
         ew = self.edge_weights
@@ -306,7 +306,8 @@ class WGraph(JsonMixin):
         #canvas.width = int(width * view_scale)
         #canvas.height = int(height * view_scale)
         (originx, originy) = (minx-10, miny-10)
-        canvas.set_view_box(originx, originy, dimension, dimension)
+        if fit:
+            canvas.set_view_box(originx, originy, dimension, dimension)
         #print ("canvas positioned at", (originx, originy))
         return pos(originx, originy)
 
