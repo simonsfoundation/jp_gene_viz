@@ -266,15 +266,21 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.filename_text = widgets.Text(value='')
         labels_sliders = widgets.HBox(children=[font_sl, font_fsl])
         color_choosers = widgets.HBox(children=[ncc.svg, ecc.svg])
+        fmt = self.format_dropdown = widgets.Dropdown(options=["PNG", "TIFF"], value="PNG")
+        iss = self.image_side_slider = widgets.IntSlider(
+            description="side", value=1000, min=500, max=4000, width="100px")
+        snp = self.snapshot_button = self.make_button("snapshot", self.snapshot_click)
         file_input = widgets.HBox(children=[
             self.filename_button, self.filename_text])
         file_buttons = widgets.HBox(children=[
             self.save_button, self.load_button, self.upload_button])
+        snapshot_area = widgets.HBox(children=[fmt, iss, snp])
         assembly = widgets.VBox(children=[
             labels_sliders, 
             color_choosers, 
             file_input,
-            file_buttons])
+            file_buttons,
+            snapshot_area])
         #assembly = widgets.VBox(children=[font_sl, font_fsl, ncc.svg, ecc.svg])
         assembly.visible = False # default
         return assembly
@@ -287,6 +293,22 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         fn = self.filename_text
         traitlets.directional_link((chooser, "file_path"), (fn, "value"))
         chooser.show()
+
+    def snapshot_click(self, b):
+        from jp_svg_canvas import fake_svg
+        self.info_area.value = "snapshot click"
+        title = self.title_html.value
+        file_prefix = title
+        if not title or "<" in title:
+            file_prefix = "gene_network"
+        format = self.format_dropdown.value.lower()
+        filename = file_prefix + "." + format
+        mime_type = "image/" + format
+        svg = self.svg
+        dimension = self.image_side_slider.value
+        fsvg = fake_svg.FakeCanvasWidget(svg.viewBox, filename, mime_type, dimension)
+        self.draw(fit=False, svg=fsvg)
+        fsvg.embed()
 
     def save_click(self, b):
         self.info_area.value = "save click"
@@ -415,7 +437,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         return (self.display_graph is not None and 
                 self.display_positions is not None)
 
-    def draw(self, fit=True):
+    def draw(self, fit=True, svg=None):
         "Draw the network."
         G = self.display_graph
         P = self.display_positions
@@ -426,9 +448,10 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             self.info_area.value = "No nodes to draw."
             return
         self.info_area.value = "Drawing graph: " + repr((G.sizes(), len(P)))
-        svg = self.svg
-        svg.empty()
-        self.svg_origin = G.draw(svg, P)
+        if svg is None:
+            svg = self.svg
+            svg.empty()
+        self.svg_origin = G.draw(svg, P, fit=fit)
         self.cancel_selection()
         self.info_area.value = "Done drawing: " + repr((G.sizes(), len(P)))
         font_size = self.font_size_slider.value
