@@ -12,6 +12,7 @@ from jp_gene_viz import dGraph
 from jp_gene_viz import dLayout
 from jp_gene_viz import color_scale
 from jp_gene_viz import color_widget
+from jp_gene_viz import js_context
 from jp_gene_viz.json_mixin import JsonMixin
 from jp_gene_viz import file_chooser_widget
 import fnmatch
@@ -30,6 +31,7 @@ SELECTION = "SELECTION"
 def load_javascript_support(verbose=False):
     canvas.load_javascript_support()
     js_proxy.load_javascript_support()
+    js_context.load_if_not_loaded(["color_cursor.js"])
 
 
 Emilys_colors = """
@@ -167,9 +169,12 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
                    self.motifs_button,
                    self.settings_button,
                    #self.settings_assembly,
-                   self.dialog]
+                   ]
         self.inputs = widgets.VBox(children=buttons)
-        self.assembly = widgets.HBox(children=[self.inputs, self.vertical])
+        dummy = self.dummy_widget = js_proxy.ProxyWidget()
+        # Note: dummy widget has the entire assembly as its parent.
+        #    So code can modify the parent using d.element().parent().
+        self.assembly = widgets.HBox(children=[self.inputs, self.vertical, self.dialog, dummy])
         self.select_start = None
         self.select_end = None
         self.selection_id = None
@@ -181,6 +186,20 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.selected_nodes = None
         self.svg_origin = dGraph.pos(0, 0)
         self.reset_interactive_bookkeeping()
+
+    def colorize_cursor(self, color):
+        "Set the cursor to the given color"
+        d = self.dummy_widget
+        assembly = d.element().parent()
+        d(assembly.color_cursor(color))
+        d.flush()
+
+    def uncolorize_cursor(self):
+        "Restore cursor to default behavior."
+        d = self.dummy_widget
+        assembly = d.element().parent()
+        d(assembly.color_cursor_reset())
+        d.flush()
 
     def reset_interactive_bookkeeping(self):
         self.moving_node = None
