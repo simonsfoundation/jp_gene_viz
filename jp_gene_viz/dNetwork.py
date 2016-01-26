@@ -212,7 +212,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         #result = widgets.Button(description="labels", value=False)
         result = widgets.Checkbox(description=description, value=False)
         #result.on_click(self.labels_click)
-        result.on_trait_change(callback, "value")
+        if callback is not None:
+            result.on_trait_change(callback, "value")
         return result
 
     def make_layout_dropdown(self):
@@ -259,7 +260,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         ecc = self.edge_color_chooser = color_widget.ColorChooser()
         ecc.title = "edges"
         w = "150px"
-        self.filename_button = self.make_button("file name", self.filename_click, width=w)
+        self.filename_button = self.make_button("save/load file name", self.filename_click, width=w)
         self.save_button = self.make_button("save", self.save_click, width=w)
         self.load_button = self.make_button("load", self.load_click, width=w)
         self.upload_button = self.make_button("upload/download", self.upload_click, width=w)
@@ -269,7 +270,12 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         fmt = self.format_dropdown = widgets.Dropdown(options=["PNG", "TIFF"], value="PNG")
         iss = self.image_side_slider = widgets.IntSlider(
             description="side", value=1000, min=500, max=4000, width="100px")
+        sfn = self.snapshot_filename_text = widgets.Text(
+            description="Snapshot filename:", value=self.title_html.value)
         snp = self.snapshot_button = self.make_button("snapshot", self.snapshot_click)
+        pcb = self.preview_checkbox = self.make_checkbox('show preview', None)
+        pcb.value = False
+        snap_file_area = widgets.HBox(children=[sfn, pcb])
         file_input = widgets.HBox(children=[
             self.filename_button, self.filename_text])
         file_buttons = widgets.HBox(children=[
@@ -280,6 +286,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             color_choosers, 
             file_input,
             file_buttons,
+            snap_file_area,
             snapshot_area])
         #assembly = widgets.VBox(children=[font_sl, font_fsl, ncc.svg, ecc.svg])
         assembly.visible = False # default
@@ -297,18 +304,21 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
     def snapshot_click(self, b):
         from jp_svg_canvas import fake_svg
         self.info_area.value = "snapshot click"
-        title = self.title_html.value
+        title = self.snapshot_filename_text.value
         file_prefix = title
         if not title or "<" in title:
             file_prefix = "gene_network"
         format = self.format_dropdown.value.lower()
-        filename = file_prefix + "." + format
+        filename = file_prefix
+        if "." not in file_prefix:
+            filename = file_prefix + "." + format
         mime_type = "image/" + format
         svg = self.svg
         dimension = self.image_side_slider.value
         fsvg = fake_svg.FakeCanvasWidget(svg.viewBox, filename, mime_type, dimension)
         self.draw(fit=False, svg=fsvg)
-        fsvg.embed()
+        preview = self.preview_checkbox.value
+        fsvg.embed(preview=preview)
 
     def save_click(self, b):
         self.info_area.value = "save click"
