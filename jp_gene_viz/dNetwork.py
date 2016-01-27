@@ -367,6 +367,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         fsvg = fake_svg.FakeCanvasWidget(svg.viewBox, filename, mime_type, dimension)
         self.draw(fit=False, svg=fsvg)
         preview = self.preview_checkbox.value
+        # XXXX for debugging!!!
+        #open("embedding.js", "w").write(fsvg.embedding())
         fsvg.embed(preview=preview)
 
     def save_click(self, b):
@@ -1069,7 +1071,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             name = info.get("name", "")
             if name:
                 color = self.color_picker.color
-                self.color_overrides[name] = color
+                self.color_overrides[name] = str(color)
                 # change the color of the object selected
                 atts = {"stroke": color, "fill": color}
                 self.svg.change_element(name, atts)
