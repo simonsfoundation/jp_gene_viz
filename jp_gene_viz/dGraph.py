@@ -229,7 +229,9 @@ class WGraph(JsonMixin):
         # probably should clone XXXX
         self._node_color_interpolator = color_interpolator
     
-    def draw(self, canvas, positions, edgewidth=1, nodesize=3, fit=True):
+    def draw(self, canvas, positions, edgewidth=1, nodesize=3, fit=True, color_overrides=None):
+        if color_overrides is None:
+            color_overrides = {}
         (Me, me, Mn, mn) = self.weights_extrema()
         # layout edges
         ew = self.edge_weights
@@ -258,6 +260,7 @@ class WGraph(JsonMixin):
             #ecolor = self.edge_color(w, me, Me)
             ecolor = eci.interpolate_color(w)
             name = self.edge_name(f, t)  # "EDGE_" + json.dumps([f,t])
+            ecolor = color_overrides.get(name, ecolor)
             canvas.line(name, fp[0], fp[1], tp[0], tp[1], ecolor, edgewidth)
             # add a mark to indicate target
             p = tp - (2 * nodesize) * n
@@ -291,7 +294,8 @@ class WGraph(JsonMixin):
                 #ncol = self.node_color(w, Mn)
                 #ncol = weighted_color(pnode, znode, Mn, w)
                 ncol = nci.interpolate_color(w)
-                name = self.node_name(n)  # "NODE_" + str(n)
+                name = self.node_name(n)  # "NODE_" + str(n) 
+                ncol = color_overrides.get(name, ncol)
                 degree = min(outdegree.get(n, 1) - 1, 4)
                 canvas.circle(name, x, y, nodesize + degree, ncol) 
         canvas.send_commands()
