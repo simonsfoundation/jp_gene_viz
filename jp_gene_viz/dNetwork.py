@@ -332,9 +332,13 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
     def colorize_click(self, *args):
         if self.colorize_checkbox.value:
             self.color_picker.svg.visible = True
+            self.node_color_chooser.svg.visible = False
+            self.edge_color_chooser.svg.visible = False
             self.colorize_cursor(self.color_picker.color)
         else:
             self.color_picker.svg.visible = False
+            self.node_color_chooser.svg.visible = True
+            self.edge_color_chooser.svg.visible = True
             self.uncolorize_cursor()
 
     def filename_click(self, b):
