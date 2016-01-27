@@ -9,7 +9,78 @@ import traitlets
 from jp_svg_canvas.canvas import load_javascript_support
 
 
-class ColorChooser(traitlets.HasTraits):
+class ColorMixin:
+
+    ncolors = 8
+    dx = dy = 16
+    palette_side = dx * ncolors
+
+    def draw_colors(self, svg):
+        for i in range(self.ncolors):
+            for j in range(self.ncolors):
+                color = color_scale.color(color_scale.color64(i, j))
+                svg.rect("R_" + color, i * self.dx, j * self.dy, self.dx, self.dy, color)
+
+
+class ColorPicker(traitlets.HasTraits, ColorMixin):
+
+    color = traitlets.Unicode("")
+
+    def __init__(self, *args, **kwargs):
+        super(ColorPicker, self).__init__(*args, **kwargs)
+        svg = self.svg = canvas.SVGCanvasWidget()
+        svg.height = self.palette_side + 2 * self.dy
+        svg.width = self.palette_side
+        svg.set_view_box(0, 0, svg.width, svg.height)
+        svg.watch_event = "click"
+        svg.default_event_callback = self.svg_callback
+        self.color = color = color_scale.color(color_scale.color64(0, 0))
+
+    def svg_callback(self, info):
+        name = info.get("name", "")
+        typ = info.get("type")
+        if typ == "click":
+            if name.startswith("R_"):
+                color = name.split("_")[-1]
+                self.unshow_color_choice(self.color)
+                self.color = color
+                self.show_color_choice()
+                self.svg.send_commands()
+
+    def draw(self):
+        svg = self.svg
+        svg.empty()
+        self.draw_colors(svg)
+        self.show_color_choice()
+        svg.send_commands()
+
+    def show_color_choice(self):
+        color = self.color
+        svg = self.svg
+        marker = "color_choice"
+        tmarker = "color_text"
+        # display the color
+        atts = {"stroke-width": 2, "stroke": "rgb(100,100,100)"}
+        svg.delete_names([marker, tmarker])
+        svg.rect(marker, 0, self.palette_side + self.dy, self.palette_side, self.dy, color, **atts)
+        svg.text(tmarker, 0, self.palette_side + self.dy, self.color, "black")
+        # outline the chosen element of the palette
+        svg.change_element("R_" + color, atts)
+
+    def unshow_color_choice(self, color):
+        svg = self.svg
+        atts = {"stroke-width": 0}
+        svg.change_element("R_" + color, atts)
+
+    def show(self):
+        display(self.svg)
+        self.draw()
+
+
+class ColorChooser(traitlets.HasTraits, ColorMixin):
+    """
+    Interactive widget for choosing color interpolation.
+    """
 
     margin = 15
     bar_region = 40
@@ -117,10 +188,11 @@ class ColorChooser(traitlets.HasTraits):
     def draw(self):
         svg = self.svg
         svg.empty()
-        for i in range(self.ncolors):
-            for j in range(self.ncolors):
-                color = color_scale.color(color_scale.color64(i, j))
-                svg.rect("R_" + color, i * self.dx, j * self.dy, self.dx, self.dy, color)
+        self.draw_colors(svg)
+        #for i in range(self.ncolors):
+        #    for j in range(self.ncolors):
+        #        color = color_scale.color(color_scale.color64(i, j))
+        #        svg.rect("R_" + color, i * self.dx, j * self.dy, self.dx, self.dy, color)
         bary = self.palette_side + self.bar_region / 2 - self.bar_height / 2
         dhistogram = self.display_histogram()
         maxcount = 1

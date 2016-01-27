@@ -12,6 +12,7 @@ from jp_gene_viz import dGraph
 from jp_gene_viz import dLayout
 from jp_gene_viz import color_scale
 from jp_gene_viz import color_widget
+from jp_gene_viz import js_context
 from jp_gene_viz.json_mixin import JsonMixin
 from jp_gene_viz import file_chooser_widget
 import fnmatch
@@ -30,6 +31,7 @@ SELECTION = "SELECTION"
 def load_javascript_support(verbose=False):
     canvas.load_javascript_support()
     js_proxy.load_javascript_support()
+    js_context.load_if_not_loaded(["color_cursor.js"])
 
 
 Emilys_colors = """
@@ -167,9 +169,12 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
                    self.motifs_button,
                    self.settings_button,
                    #self.settings_assembly,
-                   self.dialog]
+                   ]
         self.inputs = widgets.VBox(children=buttons)
-        self.assembly = widgets.HBox(children=[self.inputs, self.vertical])
+        dummy = self.dummy_widget = js_proxy.ProxyWidget()
+        # Note: dummy widget has the entire assembly as its parent.
+        #    So code can modify the parent using d.element().parent().
+        self.assembly = widgets.HBox(children=[self.inputs, self.vertical, self.dialog, dummy])
         self.select_start = None
         self.select_end = None
         self.selection_id = None
@@ -180,7 +185,23 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.display_graph = None
         self.selected_nodes = None
         self.svg_origin = dGraph.pos(0, 0)
+        # svg name to color override dictionary
+        self.color_overrides = {}
         self.reset_interactive_bookkeeping()
+
+    def colorize_cursor(self, color):
+        "Set the cursor to the given color"
+        d = self.dummy_widget
+        assembly = d.element().parent()
+        d(assembly.color_cursor(color))
+        d.flush()
+
+    def uncolorize_cursor(self):
+        "Restore cursor to default behavior."
+        d = self.dummy_widget
+        assembly = d.element().parent()
+        d(assembly.color_cursor_reset())
+        d.flush()
 
     def reset_interactive_bookkeeping(self):
         self.moving_node = None
@@ -249,24 +270,36 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         return assembly
 
     def make_settings_assembly(self):
+        # label size sliders
         font_sl = self.font_size_slider = widgets.IntSlider(
             description="labels",
             value=5, min=0, max=20, width="50px")
         font_fsl = self.tf_font_size_slider = widgets.IntSlider(
             description="tf labels",
             value=5, min=5, max=20, width="50px")
+        # colorize area
+        cb = self.colorize_checkbox = self.make_checkbox("manual colorize", self.colorize_click)
+        cp = self.color_picker = color_widget.ColorPicker()
+        uc = self.undo_colorize_button = self.make_button("reset default", self.uncolorize_click)
+        cp.draw()
+        cp.svg.visible = False
+        #traitlets.directional_link((cb, "value"), (cp.svg, "visible"))
+        cp.on_trait_change(self.colorize_click, "color")
+        colorize_area = widgets.VBox(children=[cb, cp.svg, uc])
+        # node and edge color choosers
         ncc = self.node_color_chooser = color_widget.ColorChooser()
         ncc.title = "nodes"
         ecc = self.edge_color_chooser = color_widget.ColorChooser()
         ecc.title = "edges"
         w = "150px"
+        # file save area
         self.filename_button = self.make_button("save/load file name", self.filename_click, width=w)
         self.save_button = self.make_button("save", self.save_click, width=w)
         self.load_button = self.make_button("load", self.load_click, width=w)
         self.upload_button = self.make_button("upload/download", self.upload_click, width=w)
         self.filename_text = widgets.Text(value='')
         labels_sliders = widgets.HBox(children=[font_sl, font_fsl])
-        color_choosers = widgets.HBox(children=[ncc.svg, ecc.svg])
+        color_choosers = widgets.HBox(children=[ncc.svg, ecc.svg, colorize_area])
         fmt = self.format_dropdown = widgets.Dropdown(options=["PNG", "TIFF"], value="PNG")
         iss = self.image_side_slider = widgets.IntSlider(
             description="side", value=1000, min=500, max=4000, width="100px")
@@ -291,6 +324,22 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         #assembly = widgets.VBox(children=[font_sl, font_fsl, ncc.svg, ecc.svg])
         assembly.visible = False # default
         return assembly
+
+    def uncolorize_click(self, *args):
+        self.color_overrides = {}
+        self.draw()
+
+    def colorize_click(self, *args):
+        if self.colorize_checkbox.value:
+            self.color_picker.svg.visible = True
+            self.node_color_chooser.svg.visible = False
+            self.edge_color_chooser.svg.visible = False
+            self.colorize_cursor(self.color_picker.color)
+        else:
+            self.color_picker.svg.visible = False
+            self.node_color_chooser.svg.visible = True
+            self.edge_color_chooser.svg.visible = True
+            self.uncolorize_cursor()
 
     def filename_click(self, b):
         # XXXX this may leak memory? Does it matter?
@@ -318,6 +367,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         fsvg = fake_svg.FakeCanvasWidget(svg.viewBox, filename, mime_type, dimension)
         self.draw(fit=False, svg=fsvg)
         preview = self.preview_checkbox.value
+        # XXXX for debugging!!!
+        #open("embedding.js", "w").write(fsvg.embedding())
         fsvg.embed(preview=preview)
 
     def save_click(self, b):
@@ -451,6 +502,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         "Draw the network."
         G = self.display_graph
         P = self.display_positions
+        color_overrides = self.color_overrides
         if not self.loaded():
             self.info_area.value = "Cannot draw: no graph loaded."
             return
@@ -461,13 +513,14 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         if svg is None:
             svg = self.svg
             svg.empty()
-        self.svg_origin = G.draw(svg, P, fit=fit)
+        self.svg_origin = G.draw(svg, P, 
+            fit=fit, color_overrides=color_overrides)
         self.cancel_selection()
         self.info_area.value = "Done drawing: " + repr((G.sizes(), len(P)))
         font_size = self.font_size_slider.value
         tf_font_size = self.tf_font_size_slider.value
         style0 = {"font-size": font_size, "text-anchor": "middle"}
-        color = "black"
+        #color = "black"
         if self.labels_button.value:
             nw = G.node_weights
             sources = set(G.get_node_to_descendants())
@@ -485,12 +538,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
                     style = style0.copy()
                     if node in sources:
                         style["font-size"] = tf_font_size
-                    # XXXX delete commented logic?
-                    #if x < left_x:
-                    #    style["text-anchor"] = "start"
-                    #if x > right_x:
-                    #    style["text-anchor"] = "end"
                     lname = self.label_name(node)
+                    color = color_overrides.get(lname, "black")
                     # If font-size is zero, don't show the text
                     if style["font-size"] != 0:
                         svg.text(lname, x, y-4, node, color, **style)
@@ -1017,6 +1066,18 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         svg = self.svg
         info_area = self.info_area
         shift = info.get("shiftKey")
+        # if the colorize checkbox is set then only do colorization
+        if self.colorize_checkbox.value:
+            name = info.get("name", "")
+            if name:
+                color = self.color_picker.color
+                self.color_overrides[name] = str(color)
+                # change the color of the object selected
+                atts = {"stroke": color, "fill": color}
+                self.svg.change_element(name, atts)
+                svg.send_commands()
+            # don't respond to any other behavior if colorizing.
+            return
         #info_area.value = pprint.pformat(info)
         if shift:
             self.start_selecting(info)

@@ -33,14 +33,16 @@ class JsonMixin(object):
     def from_json_value(self, json_value):
         "Load object attributes from json compatible value"
         for att in self.json_atts:
-            setattr(self, att, json_value.get(att))
+            json_encoding = json_value.get(att)
+            if json_encoding is not None:
+                setattr(self, att, json_value.get(att))
         for att in self.json_objects:
             klass = self.json_objects[att]
             inst = klass()
             json_encoding = json_value.get(att)
-            if json_encoding:
+            if json_encoding is not None:
                 inst = inst.from_json_value(json_encoding)
-            setattr(self, att, inst)
+                setattr(self, att, inst)
         return self
 
     def as_json(self):
