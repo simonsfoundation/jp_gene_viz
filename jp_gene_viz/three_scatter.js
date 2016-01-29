@@ -5,6 +5,7 @@ A three.js plugin to support 3d scatter plots.
 (function (THREE, $) {
     // shared objects
     var wireboxGeometry = new THREE.BoxGeometry(2, 2, 2);
+    var wireTetrahedronGeometry = new THREE.TetrahedronGeometry();
     wireboxGeometry.shift_origin = -1;
     var wireframeMaterial = function (hexcolor) {
         return new THREE.MeshBasicMaterial( { color: hexcolor, wireframe: true } );
@@ -28,6 +29,37 @@ A three.js plugin to support 3d scatter plots.
         geometry.shift_origin = 0;
         return geometry;
     })();
+    var starGeometry = (function () {
+        var geometry = new THREE.Geometry();
+        var p = +1;
+        var o = new THREE.Vector3(0, 0, 0);
+        var xp = new THREE.Vector3(p, 0, 0)
+        var xn = xp.clone().negate();
+        var yp = new THREE.Vector3(0, p, 0)
+        var yn = yp.clone().negate();
+        var zp = new THREE.Vector3(0, 0, p)
+        var zn = zp.clone().negate();
+        var star = [xp, xn, o, yp, yn, o, zp, zn];
+        for (var i=0; i<star.length; i++) {
+            geometry.vertices.push(star[i]);
+        }
+        geometry.shift_origin = 0;
+        return geometry;
+    })();
+    var axesGeometry = (function () {
+        var geometry = new THREE.Geometry();
+        var p = +1;
+        var o = new THREE.Vector3(0, 0, 0);
+        var xp = new THREE.Vector3(p, 0, 0)
+        var yp = new THREE.Vector3(0, p, 0)
+        var zp = new THREE.Vector3(0, 0, p)
+        var axes= [xp, o, yp, o, zp];
+        for (var i=0; i<axes.length; i++) {
+            geometry.vertices.push(axes[i]);
+        }
+        geometry.shift_origin = 0;
+        return geometry;
+    })();
     var lineMaterial = function (hexcolor) {
         return new THREE.LineBasicMaterial({color: hexcolor});
     };
@@ -38,8 +70,19 @@ A three.js plugin to support 3d scatter plots.
         if (shapeName == "wireBox") {
             geometry = wireboxGeometry;
             material = wireframeMaterial(hexcolor);
+        } else if (shapeName == "openTetrahedron") {
+            // XXXX openTetrahedron is not working!!!
+            geometry = wireboxGeometry;
+            //geometry = wireTetrahedronGeometry;
+            material = wireframeMaterial(hexcolor);
         } else if (shapeName == "openCube") {
             geometry = openCubeGeometry;
+            material = lineMaterial(hexcolor);
+        } else if (shapeName == "star") {
+            geometry = starGeometry;
+            material = lineMaterial(hexcolor);
+        } else if (shapeName == "axes") {
+            geometry = axesGeometry;
             material = lineMaterial(hexcolor);
         } else {
             throw "Unknown shape name for scatter " + shapeName;
@@ -47,7 +90,7 @@ A three.js plugin to support 3d scatter plots.
         for (var i=0; i<centers.length; i++) {
             var center = centers[i];
             var mesh;
-            if (shapeName == "openCube") {
+            if (shapeName == "openCube" || shapeName == "star" || shapeName == "axes") {
                 mesh = new THREE.Line(geometry, material);
             } else {
                 mesh = new THREE.Mesh(geometry, material);
@@ -61,6 +104,7 @@ A three.js plugin to support 3d scatter plots.
             mesh.scale.z = scale;
             scene.add(mesh)
         }
+        return mesh;
     };
     THREE.scatter.example = function(element, shapeName) {
         debugger;
