@@ -3,3 +3,4 @@ traitlets>=4.0.0
 python-igraph>=0.7.1
 numpy>=1.9.2
 -e git://github.com/simonsfoundation/jp_svg_canvas#egg=jp_svg_canvas
+-e git://github.com/scikit-learn/scikit-learn#scikit_learn
