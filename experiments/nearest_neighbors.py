@@ -280,6 +280,78 @@ class Nearest(traitlets.HasTraits):
         self.draw_plot()
         display(self.assembly)
 
+class SVGScatterer:
+
+    side = 50
+
+    spacing = 10
+
+    border_color = "black"
+
+    epsilon = 0.00001
+
+    def __init__(self, dataset):
+        self.dataset = dataset
+
+    def plot_pair(self, svg_canvas, x_feature_index, y_feature_index, x0, y0):
+        dataset = self.dataset
+        data = dataset.data
+        target = dataset.target
+        datax = data[:, x_feature_index]
+        datay = data[:, y_feature_index]
+        x_min = datax.min()
+        x_max = datax.max()
+        y_min = datay.min()
+        y_max = datay.max()
+        epsilon = self.epsilon
+        side = self.side
+        x_adjusted = (datax - x_min) * side / (x_max - x_min + epsilon) + x0
+        y_adjusted = (datay - y_min) * side / (y_max - y_min + epsilon) + y0
+        svg_canvas.rect(None, x0, y0, side, side, "white", stroke=self.border_color)
+        for (i, x) in enumerate(x_adjusted):
+            y = y_adjusted[i]
+            t = target[i]
+            color = get_color(t, 0.2)
+            svg_canvas.circle(None, x, y, 2, color)
+
+    def plot_all(self, svg_canvas):
+        dataset = self.dataset
+        feature_names = list(dataset.feature_names)
+        nfeatures = len(feature_names)
+        rfeatures = range(nfeatures)
+        side = self.side
+        spacing = self.spacing
+        for x_feature_index in rfeatures:
+            x0 = x_feature_index * side
+            xfeature = feature_names[x_feature_index]
+            xt = x0 + side/2.0
+            yt = nfeatures * side + spacing
+            style = {"transform": "rotate(90, %s, %s)" % (xt, yt)}
+            if x_feature_index < nfeatures - 1:
+                svg_canvas.text(None, xt, yt, xfeature, **style)
+            if x_feature_index:
+                svg_canvas.text(None, x0 + side*0.5, xt, xfeature)
+            for y_feature_index in reversed(rfeatures):
+                if y_feature_index > x_feature_index:
+                    y0 = y_feature_index * side
+                    self.plot_pair(svg_canvas, x_feature_index, y_feature_index, x0, y0)
+
+    def widget(self):
+        from jp_svg_canvas import canvas
+        canvas.load_javascript_support(True)
+        svg_canvas = canvas.SVGCanvasWidget()
+        self.plot_all(svg_canvas)
+        svg_canvas.send_commands()
+        display(svg_canvas)
+        # fit must happen after display.
+        svg_canvas.fit()
+        svg_canvas.send_commands()
+        canvas_side = len(self.dataset.feature_names) * self.side
+        canvas_side = max(canvas_side, 500)
+        svg_canvas.width = canvas_side
+        svg_canvas.height = canvas_side
+        return svg_canvas
+
 def get_color(i, opacity="0.5"):
     [r,g,b] = std_colors[i]
     return "rgba(%s,%s,%s,%s)" % (r, g, b, opacity)
@@ -311,3 +383,4 @@ def show_bc():
     result = Nearest(bc)
     result.show()
     return result
+
