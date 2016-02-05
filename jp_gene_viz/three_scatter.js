@@ -2,10 +2,13 @@
 A three.js plugin to support 3d scatter plots.
 */
 
+// This leaks memory http://stackoverflow.com/questions/20997669/memory-leak-in-three-js
+
 (function (THREE, $) {
     // shared objects
     var wireboxGeometry = new THREE.BoxGeometry(2, 2, 2);
     var wireTetrahedronGeometry = new THREE.TetrahedronGeometry();
+    var sphereGeometry = new THREE.SphereGeometry(100, 5, 5);
     wireboxGeometry.shift_origin = -1;
     var wireframeMaterial = function (hexcolor) {
         return new THREE.MeshBasicMaterial( { color: hexcolor, wireframe: true } );
@@ -63,10 +66,15 @@ A three.js plugin to support 3d scatter plots.
     var lineMaterial = function (hexcolor) {
         return new THREE.LineBasicMaterial({color: hexcolor});
     };
+    var filledMaterial = function (hexcolor) {
+        return new THREE.MeshPhongMaterial( { color:hexcolor, shading: THREE.FlatShading } );
+    }
 
     THREE.scatter = function(scene, shapeName, centers, scale, hexcolor) {
+        debugger;
         var geometry;
         var material;
+        var use_line = false;
         if (shapeName == "wireBox") {
             geometry = wireboxGeometry;
             material = wireframeMaterial(hexcolor);
@@ -75,36 +83,47 @@ A three.js plugin to support 3d scatter plots.
             geometry = wireboxGeometry;
             //geometry = wireTetrahedronGeometry;
             material = wireframeMaterial(hexcolor);
+        } else if (shapeName == "wireSphere") {
+            geometry = sphereGeometry;
+            material = wireframeMaterial(hexcolor);
+            material = new THREE.MeshBasicMaterial( {color: 0xffff00} )
         } else if (shapeName == "openCube") {
+            use_line = true;
             geometry = openCubeGeometry;
             material = lineMaterial(hexcolor);
+        } else if (shapeName == "cube") {
+            geometry = wireboxGeometry;
+            material = filledMaterial(hexcolor);
         } else if (shapeName == "star") {
+            use_line = true;
             geometry = starGeometry;
             material = lineMaterial(hexcolor);
         } else if (shapeName == "axes") {
+            use_line = true;
             geometry = axesGeometry;
             material = lineMaterial(hexcolor);
         } else {
             throw "Unknown shape name for scatter " + shapeName;
         }
+        var shift = geometry.shift_origin || 0
         for (var i=0; i<centers.length; i++) {
             var center = centers[i];
             var mesh;
-            if (shapeName == "openCube" || shapeName == "star" || shapeName == "axes") {
+            if (use_line) {
                 mesh = new THREE.Line(geometry, material);
             } else {
                 mesh = new THREE.Mesh(geometry, material);
             }
-            var shift = geometry.shift_origin;
             mesh.position.x = center[0] + shift;
             mesh.position.y = center[1] + shift;
             mesh.position.z = center[2] + shift;
             mesh.scale.x = scale;
             mesh.scale.y = scale;
             mesh.scale.z = scale;
+            mesh.matrixWorldNeedsUpdate = true;
             scene.add(mesh)
         }
-        return mesh;
+        return material;
     };
     THREE.scatter.example = function(element, shapeName) {
         debugger;
@@ -123,6 +142,27 @@ A three.js plugin to support 3d scatter plots.
             centers.push([Math.sin(angle) * 350, Math.cos(angle) * 200, i * 10])
         }
         THREE.scatter(scene, shapeName, centers, 30.0, 0x00ff00);
+        // XXXXX temporary
+        var geometry = new THREE.SphereGeometry( 200, 6, 6 ); 
+        var material = new THREE.MeshBasicMaterial( {color: 0xffff00, wireframe:true} ); 
+        var sphere = new THREE.Mesh( geometry, material ); 
+        scene.add( sphere );
+
+        var light = new THREE.DirectionalLight( 0xffaaff );
+        light.position.set( 1000, 1000, 1000 );
+        scene.add( light );
+        light = new THREE.DirectionalLight( 0x00ffaa );
+        light.position.set( 1000, -1000, -1000 );
+        scene.add( light );
+        light = new THREE.DirectionalLight( 0xaa00ff );
+        light.position.set( -1000, 1000, -1000 );
+        scene.add( light );
+        light = new THREE.DirectionalLight( 0xabcdef);
+        light.position.set( -1000, -1000, 1000 );
+        scene.add( light );
+        light = new THREE.AmbientLight( 0x222222 );
+        scene.add(light)
+        
         var renderer = new THREE.WebGLRenderer();
         var animate = function() {
             theta += 0.01;

@@ -4,6 +4,7 @@ A three.js plugin to support rotation
 
 (function (THREE, $) {
     THREE.rotator = function (gamma, delta, radius, camera, renderer, scene, options) {
+        debugger;
         var settings = $.extend({
             "center": scene.position,
             "dtheta": 0.001,
@@ -13,7 +14,7 @@ A three.js plugin to support rotation
             "radius": radius,
             "do_rotation": true,
             //"offset": {"x": 0.0, "y": 0.0, "z": 1},
-        });
+        }, options);
         var animate = function () {
             settings.theta += settings.dtheta;
             var s = Math.sin(settings.theta);
@@ -29,10 +30,11 @@ A three.js plugin to support rotation
             camera_coordinate("y");
             camera_coordinate("z");
             camera.lookAt(settings.center);
-            renderer.render(scene, camera);
             if (settings.do_rotation) {
                 requestAnimationFrame(animate);
             }
+            // render after requesting animation in case render is slow.
+            renderer.render(scene, camera);
         };
         settings.go = function () {
             if (!settings.do_rotation) {
@@ -43,6 +45,12 @@ A three.js plugin to support rotation
         settings.stop = function () {
             settings.do_rotation = false;
         };
+        settings.destroy = function () {
+            debugger;
+            // release all references
+            settings = {};
+            settings.do_rotation = false;
+        }
         if (settings.do_rotation) {
             animate();
         }
@@ -54,8 +62,20 @@ A three.js plugin to support rotation
         var theta = 0.0;
         var scene = new THREE.Scene();
         var camera = new THREE.PerspectiveCamera(75, 1.0, 1, 100000);
-        var geometry = new THREE.SphereGeometry( 300, 6, 6 ); 
-        var material = new THREE.MeshBasicMaterial( {color: 0xffff00, wireframe:true} ); 
+        var geometry = new THREE.SphereGeometry( 300, 16, 16 ); 
+        //var material = new THREE.MeshBasicMaterial( {color: 0xffff00, wireframe:true} ); 
+        var material =  new THREE.MeshPhongMaterial( { color:0xffffff, shading: THREE.FlatShading } );
+        var light = new THREE.DirectionalLight( 0xaaaaff );
+        light.position.set( 1000, 1000, 1000 );
+        scene.add( light );
+        light = new THREE.DirectionalLight( 0xff00aa );
+        light.position.set( 1000, -1000, -1000 );
+        scene.add( light );
+        light = new THREE.DirectionalLight( 0x00ffaa );
+        light.position.set( -1000, 1000, -1000 );
+        scene.add( light );
+        light = new THREE.AmbientLight( 0x222222 );
+        scene.add(light)
         var sphere = new THREE.Mesh( geometry, material );
         sphere.position.x = 140; // put it off center a bit.
         scene.position.y = 3000;
