@@ -106,7 +106,7 @@ class Series3D(traitlets.HasTraits):
             marker_size1 = 1
         scaled_points = [view_scale_function(p).tolist() for p in self.points]
         three = widget.window().THREE
-        print "marker size", marker_size1
+        #print "marker size", marker_size1
         widget(three.scatter(scene, self.marker, scaled_points, marker_size1, self.color))
 
 def xyz_dict(x, y, z):

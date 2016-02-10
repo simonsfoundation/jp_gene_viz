@@ -30,8 +30,9 @@ load_font = """
 from jp_gene_viz import js_context
 js_context.load_if_not_loaded(["three.js"])
 js_context.load_if_not_loaded(["FontUtils.js"])
-time.sleep(0.1)
-display(HTML(load_font))
+#time.sleep(0.1)
+#display(HTML(load_font))
+js_context.load_if_not_loaded(["helvetiker_regular.typeface.js"])
 
 
 class Nearest(traitlets.HasTraits):
@@ -106,7 +107,7 @@ class Nearest(traitlets.HasTraits):
     def redraw(self, *args):
         self.draw_plot()
 
-    def draw_plot(self, width="700px", height="700px"):
+    def draw_plot(self, width="700px", height="700px", do_flush=False):
         # clean up first.
         if self.cleanup:
             self.cleanup()
@@ -270,7 +271,8 @@ class Nearest(traitlets.HasTraits):
             radius = 400
             options = {"dtheta": 0.003}
             sc.save("rotator", THREE.rotator(gamma, delta, radius, camera, renderer, scene, options))
-        sc.flush()
+        if do_flush:
+            sc.flush()
         # define a clean up action
         def cleanup():
             if self.rotate:
@@ -320,6 +322,13 @@ def show_iris():
     iris = datasets.load_iris()
     result = Nearest(iris)
     result.show()
+    return result
+
+def static_iris():
+    iris = datasets.load_iris()
+    result = Nearest(iris)
+    result.draw_plot(do_flush=False)
+    result.scatter_plot.embed(True, await=["THREE", "_typeface_js.faces['helvetiker']"])
     return result
 
 def show_bc():
