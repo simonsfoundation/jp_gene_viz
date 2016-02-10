@@ -147,12 +147,25 @@ HTML_EMBEDDING_TEMPLATE = u"""
     {debugger_string}
     var do_actions = function () {{
         var element = $("#{div_id}");
+        // define special functions...
+        element.New = function(klass, args) {{
+            var obj = Object.create(klass.prototype);
+            return klass.apply(obj, args) || obj;
+        }};
+        element.Fix = function () {{
+            // do nothing (not implemented.)
+        }}
         {actions};
     }};
     var wait_for_libraries = function () {{
         var names = {names};
         for (var i=0; i<names.length; i++) {{
-            var library = window[names[i]];
+            var library = undefined;
+            try {{
+                library = eval(names[i]);
+            }} catch (e) {{
+                // do nothing
+            }}
             if ((typeof library) == "undefined") {{
                 return window.setTimeout(wait_for_libraries, 500);
             }}
