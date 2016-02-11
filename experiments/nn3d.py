@@ -107,7 +107,7 @@ class Nearest(traitlets.HasTraits):
     def redraw(self, *args):
         self.draw_plot()
 
-    def draw_plot(self, width="700px", height="700px", do_flush=False):
+    def draw_plot(self, width="700px", height="700px", do_flush=True):
         # clean up first.
         if self.cleanup:
             self.cleanup()
