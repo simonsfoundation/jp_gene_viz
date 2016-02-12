@@ -114,6 +114,7 @@ import traitlets
 from jp_gene_viz import js_context
 import json
 import threading
+import types
 
 
 # In the IPython context get_ipython is a builtin.
@@ -210,10 +211,11 @@ class ProxyWidget(widgets.DOMWidget):
         self.on_trait_change(self.handle_results, "results")
         self.buffered_commands = []
 
-    def embedded_html(self, debugger=False, await=()):
+    def embedded_html(self, debugger=False, await=[]):
         """
         Translate buffered commands to static HTML.
         """
+        assert type(await) is list
         await_string = json.dumps(await)
         IDENTITY_COUNTER[0] += 1
         div_id = "jupyter_proxy_widget" + str(IDENTITY_COUNTER[0])
@@ -231,7 +233,7 @@ class ProxyWidget(widgets.DOMWidget):
             actions=command_string,
             names=await_string)
 
-    def embed(self, debugger=False, await=()):
+    def embed(self, debugger=False, await=[]):
         """
         Embed the buffered commands into the current notebook as static HTML.
         """
@@ -458,7 +460,17 @@ def to_javascript(thing, level=0):
     if isinstance(thing, CommandMaker):
         return thing.javascript(level)
     else:
-        json_value = json.dumps(thing, indent=4)
+        ty = type(thing)
+        json_value = None
+        if ty is dict:
+            L = {"%s: %s" % (to_javascript(key), to_javascript(thing[key]))
+                for key in thing.keys()}
+            json_value = "{%s}" % (",\n".join(L))
+        elif ty is list or ty is tuple:
+            L = [to_javascript(x) for x in thing]
+            json_value = "[%s]" % (",\n".join(L))
+        elif json_value is None:
+            json_value = json.dumps(thing, indent=4)
         return indent_string(json_value, level)
 
 
@@ -613,7 +625,7 @@ class CallMaker(CommandMaker):
             # This should never be executed, but the javascript
             # translation is useful for debugging.
             message = "Warning: External callable " + repr(self.args)
-            return "alert(%s)" % to_javascript(message)
+            return "function() {alert(%s);}" % to_javascript(message)
 
     def __call__(self, *args):
         """
