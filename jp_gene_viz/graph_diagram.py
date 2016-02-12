@@ -51,9 +51,12 @@ class GraphDiagramWidget(traitlets.HasTraits, JsonMixin):
         info = self.info_area = widgets.Textarea(description="status")
         info.visible = False
         top = widgets.HBox(children=[n, lt, ly, dl, sn])
-        a = self.assembly = widgets.VBox(children=[top, w, info])
+        hideable = widgets.VBox(children=[top, w, info])
+        hcb = widgets.Checkbox(description="view", value=True)
+        traitlets.link((hcb, "value"), (hideable, "visible"))
+        a = self.assembly = widgets.VBox(children=[hcb, hideable])
         # make the assembly big enough
-        a.height = 650
+        hideable.height = 650
 
     def show(self):
         display(self.assembly)
