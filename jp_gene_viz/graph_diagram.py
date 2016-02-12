@@ -39,13 +39,18 @@ class GraphDiagramWidget(traitlets.HasTraits, JsonMixin):
         lt = self.label_text = widgets.Text(value="")
         lt.on_trait_change(self.label_change, "value")
         n = self.new_button = widgets.Button(description="*")
+        ly = self.layout_button = widgets.Button(description="layout")
+        dl = self.delete_button = widgets.Button(description="X")
+        dl.on_click(self.delete_click)
+        dl.width = "50px"
         n.width = "50px"
         n.on_click(self.new_click)
+        ly.on_click(self.layout_click)
         info = self.info_area = widgets.Textarea(description="status")
-        top = widgets.HBox(children=[n, lt])
+        top = widgets.HBox(children=[n, lt, ly, dl])
         a = self.assembly = widgets.VBox(children=[top, w, info])
         # make the assembly big enough
-        a.height = 950
+        a.height = 650
 
     def show(self):
         display(self.assembly)
@@ -66,6 +71,19 @@ class GraphDiagramWidget(traitlets.HasTraits, JsonMixin):
         w(selected.data("label", new))
         w.flush()
 
+    def delete_click(self, b):
+        self.info_area.value = "delete " + str(self.label_id)
+        identifier = self.label_id
+        if identifier is None:
+            self.info_area.value = "nothing selected to delete "
+        w = self.widget
+        cy = self.cy
+        getter = self.getter
+        selector = "#" + identifier
+        selected = getter(selector)
+        w(cy.remove(selected))
+        w.flush()
+
     def new_click(self, b):
         # create a new node
         self.info_area.value = "new click " + str(self.count)
@@ -80,9 +98,30 @@ class GraphDiagramWidget(traitlets.HasTraits, JsonMixin):
         if selected:
             data["parent"] = selected
         D["data"] = data
+        return self.add(D)
+
+    def add(self, D):
         w = self.widget
         cy = self.cy
         w(cy.add(D))
+        return self.layout_click(None)
+
+    def add_edge(self, source, target):
+        D = {}
+        D["group"] = "edges"
+        self.count += 1
+        data = {}
+        data["id"] = self.label_id = str(self.count)
+        data["label"] = ""
+        data["source"] = source
+        data["target"] = target
+        self.label_text.value = ""
+        D["data"] = data
+        return self.add(D)
+
+    def layout_click(self, b):
+        w = self.widget
+        cy = self.cy
         w(cy.layout())
         w.flush()
 
@@ -117,7 +156,7 @@ class GraphDiagramWidget(traitlets.HasTraits, JsonMixin):
         jQuery = window.jQuery
         w(element._set("target", 
                    jQuery("<div></div>").
-                   height(800).
+                   height(600).
                    width(800).
                    #html("cytoscape target div").
                    appendTo(element)
@@ -133,7 +172,7 @@ class GraphDiagramWidget(traitlets.HasTraits, JsonMixin):
             "layout": {"name": "cose", "padding": 5}
         }
         w(element._set("cy", cytoscape(descriptor)))
-        w(element.height(800).width(800))
+        w(element.height(900).width(800))
         self.cy = cy = element.cy
         clickcallback = element.event_cb(w.callback(self.clickhandler, data="click", level=3))
         self.getter = cy._get("$")
@@ -152,10 +191,24 @@ class GraphDiagramWidget(traitlets.HasTraits, JsonMixin):
         source = arg0.get("source")
         target = arg0.get("target")
         typ = arg0.get("type")
+        selected = self.selected_node
         if isNode:
-            self.selected_node = identity
-        if isEdge:
+            if shiftKey and selected:
+                # add an edge
+                self.add_edge(selected, identity)
+            else:
+                self.selected_node = identity
+                self.label_id = identity
+                self.label_text.value = label
+                self.selected_edge = None
+        elif isEdge:
+            self.selected_node = None
             self.selected_edge = identity
+            self.label_id = identity
+            self.label_text.value = label
+        else:
+            self.selected_edge = None
+            self.selected_node = None
 
     def to_json_value(self):
         result = {}
@@ -211,8 +264,10 @@ STYLE = [
       "css": {
         'target-arrow-shape': 'triangle',
         #'source-arrow-shape': 'triangle',
+        'content': 'data(label)',
         "line-color": "red",
         'target-arrow-color': 'red',
+        'edge-text-rotation': 'autorotate',
       }
     },
     {
