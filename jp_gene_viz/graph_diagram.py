@@ -38,16 +38,19 @@ class GraphDiagramWidget(traitlets.HasTraits, JsonMixin):
         w = self.configure_widget()
         lt = self.label_text = widgets.Text(value="")
         lt.on_trait_change(self.label_change, "value")
-        n = self.new_button = widgets.Button(description="*")
+        n = self.new_button = widgets.Button(description="O")
         ly = self.layout_button = widgets.Button(description="layout")
         dl = self.delete_button = widgets.Button(description="X")
+        sn = self.snap_button = widgets.Button(description="snap")
+        sn.on_click(self.snap_click)
         dl.on_click(self.delete_click)
         dl.width = "50px"
         n.width = "50px"
         n.on_click(self.new_click)
         ly.on_click(self.layout_click)
         info = self.info_area = widgets.Textarea(description="status")
-        top = widgets.HBox(children=[n, lt, ly, dl])
+        info.visible = False
+        top = widgets.HBox(children=[n, lt, ly, dl, sn])
         a = self.assembly = widgets.VBox(children=[top, w, info])
         # make the assembly big enough
         a.height = 650
@@ -71,7 +74,53 @@ class GraphDiagramWidget(traitlets.HasTraits, JsonMixin):
         w(selected.data("label", new))
         w.flush()
 
-    def delete_click(self, b):
+    def snap_click(self, b=None):
+        w = self.widget
+        snap = js_proxy.ProxyWidget()
+        self.configure_widget(snap, layout="preset")
+        cy = self.cy
+        # dump the data from the viaualization
+        json = w.evaluate(cy.json(), level=5)
+        snap_cy = snap.element().cy_container
+        # Add the nodes
+        #import pprint
+        #pprint.pprint(json)
+        elements = json["elements"]
+        edges = elements.get("edges", ())
+        nodes = elements.get("nodes", ())
+        for node_desc in nodes:
+            data = node_desc["data"]
+            ident = data["id"]
+            label = data["label"]
+            position = node_desc["position"]
+            parent = data.get("parent")
+            D = {}
+            D["group"] = "nodes"
+            ddata = {}
+            ddata["id"] = ident
+            ddata["label"] = label
+            if parent is not None:
+                ddata["parent"] = parent
+            D["data"] = ddata
+            D["position"] = position
+            snap(snap_cy.add(D))
+            snap(snap_cy.layout())
+        # Add the edges
+        edge_attrs = "id label source target".split()
+        for edge_desc in edges:
+            data = edge_desc["data"]
+            ddata = {}
+            for attr in edge_attrs:
+                ddata[attr] = data[attr]
+            D = {}
+            D["data"] = ddata
+            D["group"] = "edges"
+            snap(snap_cy.add(D))
+        self.snap_commands = snap.buffered_commands
+        #print (snap.embedded_html())
+        snap.embed(True, await=["cytoscape"])
+
+    def delete_click(self, b=None):
         self.info_area.value = "delete " + str(self.label_id)
         identifier = self.label_id
         if identifier is None:
@@ -84,7 +133,7 @@ class GraphDiagramWidget(traitlets.HasTraits, JsonMixin):
         w(cy.remove(selected))
         w.flush()
 
-    def new_click(self, b):
+    def new_click(self, b=None):
         # create a new node
         self.info_area.value = "new click " + str(self.count)
         selected = self.selected_node
@@ -125,17 +174,17 @@ class GraphDiagramWidget(traitlets.HasTraits, JsonMixin):
         w(cy.layout())
         w.flush()
 
-    def configure_widget(self):
-        if self.widget is None:
+    def configure_widget(self, w=None, layout="cose"):
+        if w is None:
             self.widget = js_proxy.ProxyWidget()
-        w = self.widget
+            w = self.widget
         element = w.element()
         w(element.empty())
         # set up an event callback helper
         w.save_function("event_cb", ["callback"], """
-            debugger;
+            //debugger;
             return function(evt) {
-                debugger;
+                //debugger;
                 var cyTarget = evt.cyTarget;
                 if (cyTarget && cyTarget.data) {
                     var result = evt.cyTarget.data();
@@ -156,8 +205,8 @@ class GraphDiagramWidget(traitlets.HasTraits, JsonMixin):
         jQuery = window.jQuery
         w(element._set("target", 
                    jQuery("<div></div>").
-                   height(600).
-                   width(800).
+                   height("600px").
+                   width("800px").
                    #html("cytoscape target div").
                    appendTo(element)
                   ))
@@ -169,14 +218,16 @@ class GraphDiagramWidget(traitlets.HasTraits, JsonMixin):
             "container": element.target._get(0),
             "style": STYLE,
             "elements": elements,
-            "layout": {"name": "cose", "padding": 5}
+            "layout": {"name": layout, "padding": 5}
         }
-        w(element._set("cy", cytoscape(descriptor)))
-        w(element.height(900).width(800))
-        self.cy = cy = element.cy
+        w(element._set("cy_container", cytoscape(descriptor)))
+        w(element.height("600px").width("800px"))
+        self.cy = cy = element.cy_container
         clickcallback = element.event_cb(w.callback(self.clickhandler, data="click", level=3))
         self.getter = cy._get("$")
-        w(cy.on('click', clickcallback))
+        # only add events in live mode
+        if w == self.widget:
+            w(cy.on('click', clickcallback))
         return w
 
     def clickhandler(self, identifier, arguments):
