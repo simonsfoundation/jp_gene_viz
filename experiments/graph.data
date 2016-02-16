@@ -1,0 +1,1076 @@
+{
+    "Basic": {
+        "boxSelectionEnabled": false, 
+        "count": 10, 
+        "elements": {
+            "edges": [
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "7", 
+                        "isEdge": true, 
+                        "isNode": false, 
+                        "label": "socket", 
+                        "shiftKey": false, 
+                        "source": "5", 
+                        "target": "4", 
+                        "type": "click"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "edges", 
+                    "locked": false, 
+                    "position": {}, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "8", 
+                        "label": "", 
+                        "source": "4", 
+                        "target": "5"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "edges", 
+                    "locked": false, 
+                    "position": {}, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "9", 
+                        "label": "", 
+                        "source": "6", 
+                        "target": "5"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "edges", 
+                    "locked": false, 
+                    "position": {}, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "10", 
+                        "label": "", 
+                        "source": "5", 
+                        "target": "6"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "edges", 
+                    "locked": false, 
+                    "position": {}, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }
+            ], 
+            "nodes": [
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "1", 
+                        "isEdge": false, 
+                        "isNode": true, 
+                        "label": "Local Box", 
+                        "shiftKey": false, 
+                        "type": "click"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "nodes", 
+                    "locked": false, 
+                    "position": {
+                        "x": 364.59985173928874, 
+                        "y": 391.03727477799816
+                    }, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "2", 
+                        "isEdge": false, 
+                        "isNode": true, 
+                        "label": "Browser", 
+                        "parent": "1", 
+                        "shiftKey": false, 
+                        "type": "click"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "nodes", 
+                    "locked": false, 
+                    "position": {
+                        "x": 348.1786657508514, 
+                        "y": 332.80927082059213
+                    }, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "3", 
+                        "isEdge": false, 
+                        "isNode": true, 
+                        "label": "Jupyter server", 
+                        "parent": "1", 
+                        "shiftKey": false, 
+                        "type": "click"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "nodes", 
+                    "locked": false, 
+                    "position": {
+                        "x": 394.9088549345289, 
+                        "y": 432.3618553135742
+                    }, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": true
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "4", 
+                        "isEdge": false, 
+                        "isNode": true, 
+                        "label": "Javascript", 
+                        "parent": "2", 
+                        "shiftKey": false, 
+                        "type": "click"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "nodes", 
+                    "locked": false, 
+                    "position": {
+                        "x": 348.1786657508514, 
+                        "y": 332.80927082059213
+                    }, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "5", 
+                        "isEdge": false, 
+                        "isNode": true, 
+                        "label": "Nb process", 
+                        "parent": "3", 
+                        "shiftKey": false, 
+                        "type": "click"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "nodes", 
+                    "locked": false, 
+                    "position": {
+                        "x": 446.021037727726, 
+                        "y": 400.4584318917442
+                    }, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "6", 
+                        "isEdge": false, 
+                        "isNode": true, 
+                        "label": "Kernel", 
+                        "parent": "3", 
+                        "shiftKey": true, 
+                        "type": "click"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "nodes", 
+                    "locked": false, 
+                    "position": {
+                        "x": 336.7966721413317, 
+                        "y": 465.26527873540425
+                    }, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }
+            ]
+        }, 
+        "layout": {
+            "name": "cose", 
+            "padding": 5
+        }, 
+        "maxZoom": 1e+50, 
+        "minZoom": 1e-50, 
+        "pan": {
+            "x": -354.3908377218695, 
+            "y": -562.9710599573526
+        }, 
+        "panningEnabled": true, 
+        "renderer": {
+            "name": "canvas"
+        }, 
+        "style": [
+            {
+                "selector": "node", 
+                "style": {
+                    "background-color": "cyan", 
+                    "color": "white", 
+                    "content": "data(label)", 
+                    "text-halign": "center", 
+                    "text-max-width": "80px", 
+                    "text-outline-color": "#888", 
+                    "text-outline-width": "2px", 
+                    "text-valign": "center", 
+                    "text-wrap": "wrap"
+                }
+            }, 
+            {
+                "selector": "$node > node", 
+                "style": {
+                    "background-color": "#bbb", 
+                    "padding-bottom": "10px", 
+                    "padding-left": "10px", 
+                    "padding-right": "10px", 
+                    "padding-top": "10px", 
+                    "text-halign": "left", 
+                    "text-valign": "top"
+                }
+            }, 
+            {
+                "selector": "edge", 
+                "style": {
+                    "content": "data(label)", 
+                    "edge-text-rotation": "autorotate", 
+                    "line-color": "red", 
+                    "target-arrow-color": "red", 
+                    "target-arrow-shape": "triangle"
+                }
+            }, 
+            {
+                "selector": ":selected", 
+                "style": {
+                    "background-color": "black", 
+                    "line-color": "black", 
+                    "source-arrow-color": "black", 
+                    "target-arrow-color": "black"
+                }
+            }
+        ], 
+        "userPanningEnabled": true, 
+        "userZoomingEnabled": true, 
+        "zoom": 2.294361435051236, 
+        "zoomingEnabled": true
+    }, 
+    "Container": {
+        "boxSelectionEnabled": false, 
+        "count": 34, 
+        "elements": {
+            "edges": [
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "24", 
+                        "label": "", 
+                        "source": "4", 
+                        "target": "19"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "edges", 
+                    "locked": false, 
+                    "position": {}, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "25", 
+                        "label": "", 
+                        "source": "19", 
+                        "target": "4"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "edges", 
+                    "locked": false, 
+                    "position": {}, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "26", 
+                        "label": "", 
+                        "source": "19", 
+                        "target": "22"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "edges", 
+                    "locked": false, 
+                    "position": {}, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "27", 
+                        "label": "", 
+                        "source": "22", 
+                        "target": "19"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "edges", 
+                    "locked": false, 
+                    "position": {}, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "28", 
+                        "label": "", 
+                        "source": "22", 
+                        "target": "23"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "edges", 
+                    "locked": false, 
+                    "position": {}, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "29", 
+                        "label": "", 
+                        "source": "23", 
+                        "target": "22"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "edges", 
+                    "locked": false, 
+                    "position": {}, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "33", 
+                        "label": "", 
+                        "source": "32", 
+                        "target": "31"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "edges", 
+                    "locked": false, 
+                    "position": {}, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "34", 
+                        "label": "", 
+                        "source": "31", 
+                        "target": "32"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "edges", 
+                    "locked": false, 
+                    "position": {}, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }
+            ], 
+            "nodes": [
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "1", 
+                        "isEdge": false, 
+                        "isNode": true, 
+                        "label": "Local Box", 
+                        "shiftKey": false, 
+                        "type": "click"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "nodes", 
+                    "locked": false, 
+                    "position": {
+                        "x": 507.30796639310165, 
+                        "y": -43.477447035315635
+                    }, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "2", 
+                        "isEdge": false, 
+                        "isNode": true, 
+                        "label": "Browser", 
+                        "parent": "1", 
+                        "shiftKey": false, 
+                        "type": "click"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "nodes", 
+                    "locked": false, 
+                    "position": {
+                        "x": 536.8079663931017, 
+                        "y": -35.477447035315635
+                    }, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "4", 
+                        "isEdge": false, 
+                        "isNode": true, 
+                        "label": "Javascript", 
+                        "parent": "2", 
+                        "shiftKey": true, 
+                        "type": "click"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "nodes", 
+                    "locked": false, 
+                    "position": {
+                        "x": 536.8079663931017, 
+                        "y": -35.477447035315635
+                    }, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "11", 
+                        "isEdge": false, 
+                        "isNode": true, 
+                        "label": "Remote box", 
+                        "shiftKey": false, 
+                        "type": "click"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "nodes", 
+                    "locked": false, 
+                    "position": {
+                        "x": 234.71848281508306, 
+                        "y": 144.24905086867736
+                    }, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": true
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "19", 
+                        "isEdge": false, 
+                        "isNode": true, 
+                        "label": "hub server", 
+                        "parent": "11", 
+                        "shiftKey": true, 
+                        "type": "click"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "nodes", 
+                    "locked": false, 
+                    "position": {
+                        "x": 344.54921109984974, 
+                        "y": -16.471920517836736
+                    }, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "20", 
+                        "isEdge": false, 
+                        "isNode": true, 
+                        "label": "container", 
+                        "parent": "11", 
+                        "shiftKey": false, 
+                        "type": "click"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "nodes", 
+                    "locked": false, 
+                    "position": {
+                        "x": 265.9488878315725, 
+                        "y": 127.64546846788647
+                    }, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "21", 
+                        "isEdge": false, 
+                        "isNode": true, 
+                        "label": "Jupyter server", 
+                        "parent": "20", 
+                        "shiftKey": false, 
+                        "type": "click"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "nodes", 
+                    "locked": false, 
+                    "position": {
+                        "x": 294.4488878315725, 
+                        "y": 143.64546846788647
+                    }, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "22", 
+                        "isEdge": false, 
+                        "isNode": true, 
+                        "label": "nb process", 
+                        "parent": "21", 
+                        "shiftKey": true, 
+                        "type": "click"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "nodes", 
+                    "locked": false, 
+                    "position": {
+                        "x": 294.4488878315725, 
+                        "y": 107.54766743879478
+                    }, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "23", 
+                        "isEdge": false, 
+                        "isNode": true, 
+                        "label": "kernel", 
+                        "parent": "21", 
+                        "shiftKey": false, 
+                        "type": "click"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "nodes", 
+                    "locked": false, 
+                    "position": {
+                        "x": 286.4728294337613, 
+                        "y": 179.74326949697817
+                    }, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "30", 
+                        "isEdge": false, 
+                        "isNode": true, 
+                        "label": "container 2", 
+                        "parent": "11", 
+                        "shiftKey": false, 
+                        "type": "click"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "nodes", 
+                    "locked": false, 
+                    "position": {
+                        "x": 206.88775453031636, 
+                        "y": 293.97002225519145
+                    }, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "31", 
+                        "isEdge": false, 
+                        "isNode": true, 
+                        "label": "Jupyter server...", 
+                        "parent": "30", 
+                        "shiftKey": false, 
+                        "type": "click"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "nodes", 
+                    "locked": false, 
+                    "position": {
+                        "x": 206.88775453031636, 
+                        "y": 293.97002225519145
+                    }, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "32", 
+                        "isEdge": false, 
+                        "isNode": true, 
+                        "label": "Other local box", 
+                        "shiftKey": false, 
+                        "type": "click"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "nodes", 
+                    "locked": false, 
+                    "position": {
+                        "x": 235.37845632697312, 
+                        "y": 368.83023173765923
+                    }, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }
+            ]
+        }, 
+        "layout": {
+            "name": "cose", 
+            "padding": 5
+        }, 
+        "maxZoom": 1e+50, 
+        "minZoom": 1e-50, 
+        "pan": {
+            "x": -2.7122190316590604, 
+            "y": 110.67432170154667
+        }, 
+        "panningEnabled": true, 
+        "renderer": {
+            "name": "canvas"
+        }, 
+        "style": [
+            {
+                "selector": "node", 
+                "style": {
+                    "background-color": "cyan", 
+                    "color": "white", 
+                    "content": "data(label)", 
+                    "text-halign": "center", 
+                    "text-max-width": "80px", 
+                    "text-outline-color": "#888", 
+                    "text-outline-width": "2px", 
+                    "text-valign": "center", 
+                    "text-wrap": "wrap"
+                }
+            }, 
+            {
+                "selector": "$node > node", 
+                "style": {
+                    "background-color": "#bbb", 
+                    "padding-bottom": "10px", 
+                    "padding-left": "10px", 
+                    "padding-right": "10px", 
+                    "padding-top": "10px", 
+                    "text-halign": "left", 
+                    "text-valign": "top"
+                }
+            }, 
+            {
+                "selector": "edge", 
+                "style": {
+                    "content": "data(label)", 
+                    "edge-text-rotation": "autorotate", 
+                    "line-color": "red", 
+                    "target-arrow-color": "red", 
+                    "target-arrow-shape": "triangle"
+                }
+            }, 
+            {
+                "selector": ":selected", 
+                "style": {
+                    "background-color": "black", 
+                    "line-color": "black", 
+                    "source-arrow-color": "black", 
+                    "target-arrow-color": "black"
+                }
+            }
+        ], 
+        "userPanningEnabled": true, 
+        "userZoomingEnabled": true, 
+        "zoom": 1.0217060284987316, 
+        "zoomingEnabled": true
+    }, 
+    "Remote": {
+        "boxSelectionEnabled": false, 
+        "count": 18, 
+        "elements": {
+            "edges": [
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "15", 
+                        "isEdge": true, 
+                        "isNode": false, 
+                        "label": "socket", 
+                        "shiftKey": false, 
+                        "source": "4", 
+                        "target": "13", 
+                        "type": "click"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "edges", 
+                    "locked": false, 
+                    "position": {}, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "16", 
+                        "label": "", 
+                        "source": "13", 
+                        "target": "4"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "edges", 
+                    "locked": false, 
+                    "position": {}, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "17", 
+                        "label": "", 
+                        "source": "13", 
+                        "target": "14"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "edges", 
+                    "locked": false, 
+                    "position": {}, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "18", 
+                        "label": "", 
+                        "source": "14", 
+                        "target": "13"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "edges", 
+                    "locked": false, 
+                    "position": {}, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }
+            ], 
+            "nodes": [
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "1", 
+                        "isEdge": false, 
+                        "isNode": true, 
+                        "label": "Local Box", 
+                        "shiftKey": false, 
+                        "type": "click"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "nodes", 
+                    "locked": false, 
+                    "position": {
+                        "x": 386.6148859294625, 
+                        "y": 207.69701609352558
+                    }, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "2", 
+                        "isEdge": false, 
+                        "isNode": true, 
+                        "label": "Browser", 
+                        "parent": "1", 
+                        "shiftKey": false, 
+                        "type": "click"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "nodes", 
+                    "locked": false, 
+                    "position": {
+                        "x": 416.1148859294625, 
+                        "y": 215.69701609352558
+                    }, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "4", 
+                        "isEdge": false, 
+                        "isNode": true, 
+                        "label": "Javascript", 
+                        "parent": "2", 
+                        "shiftKey": true, 
+                        "type": "click"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "nodes", 
+                    "locked": false, 
+                    "position": {
+                        "x": 416.1148859294625, 
+                        "y": 215.69701609352558
+                    }, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "11", 
+                        "isEdge": false, 
+                        "isNode": true, 
+                        "label": "Remote box", 
+                        "shiftKey": false, 
+                        "type": "click"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "nodes", 
+                    "locked": false, 
+                    "position": {
+                        "x": 398.2143477630092, 
+                        "y": 365.96399436339385
+                    }, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": true
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "12", 
+                        "isEdge": false, 
+                        "isNode": true, 
+                        "label": "Jupyter server", 
+                        "parent": "11", 
+                        "shiftKey": false, 
+                        "type": "click"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "nodes", 
+                    "locked": false, 
+                    "position": {
+                        "x": 426.7143477630092, 
+                        "y": 381.96399436339385
+                    }, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "13", 
+                        "isEdge": false, 
+                        "isNode": true, 
+                        "label": "Nb process", 
+                        "parent": "12", 
+                        "shiftKey": true, 
+                        "type": "click"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "nodes", 
+                    "locked": false, 
+                    "position": {
+                        "x": 444.5528583055852, 
+                        "y": 360.88400746230406
+                    }, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "14", 
+                        "isEdge": false, 
+                        "isNode": true, 
+                        "label": "Kernel", 
+                        "parent": "12", 
+                        "shiftKey": false, 
+                        "type": "click"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "nodes", 
+                    "locked": false, 
+                    "position": {
+                        "x": 401.87583722043325, 
+                        "y": 404.04398126448365
+                    }, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }
+            ]
+        }, 
+        "layout": {
+            "name": "cose", 
+            "padding": 5
+        }, 
+        "maxZoom": 1e+50, 
+        "minZoom": 1e-50, 
+        "pan": {
+            "x": -353.1553281478, 
+            "y": -231.49709756864092
+        }, 
+        "panningEnabled": true, 
+        "renderer": {
+            "name": "canvas"
+        }, 
+        "style": [
+            {
+                "selector": "node", 
+                "style": {
+                    "background-color": "cyan", 
+                    "color": "white", 
+                    "content": "data(label)", 
+                    "text-halign": "center", 
+                    "text-max-width": "80px", 
+                    "text-outline-color": "#888", 
+                    "text-outline-width": "2px", 
+                    "text-valign": "center", 
+                    "text-wrap": "wrap"
+                }
+            }, 
+            {
+                "selector": "$node > node", 
+                "style": {
+                    "background-color": "#bbb", 
+                    "padding-bottom": "10px", 
+                    "padding-left": "10px", 
+                    "padding-right": "10px", 
+                    "padding-top": "10px", 
+                    "text-halign": "left", 
+                    "text-valign": "top"
+                }
+            }, 
+            {
+                "selector": "edge", 
+                "style": {
+                    "content": "data(label)", 
+                    "edge-text-rotation": "autorotate", 
+                    "line-color": "red", 
+                    "target-arrow-color": "red", 
+                    "target-arrow-shape": "triangle"
+                }
+            }, 
+            {
+                "selector": ":selected", 
+                "style": {
+                    "background-color": "black", 
+                    "line-color": "black", 
+                    "source-arrow-color": "black", 
+                    "target-arrow-color": "black"
+                }
+            }
+        ], 
+        "userPanningEnabled": true, 
+        "userZoomingEnabled": true, 
+        "zoom": 1.774121178285798, 
+        "zoomingEnabled": true
+    }
+}
