@@ -3,10 +3,11 @@ Experimental tool for creating a graph diagram
 """
 
 import os
+import copy
 
 from jp_gene_viz import js_proxy
 from jp_gene_viz import js_context
-from jp_gene_viz.json_mixin import JsonMixin
+#from jp_gene_viz.json_mixin import JsonMixin
 import traitlets
 import pprint
 
@@ -17,19 +18,21 @@ js_context.load_if_not_loaded(["cytoscape.js"])
 js_proxy.load_javascript_support()
 
 
-class GraphDiagramWidget(traitlets.HasTraits, JsonMixin):
+class GraphDiagramWidget(traitlets.HasTraits):
 
-    json_atts = []
+    #json_atts = []
 
-    json_objects = []
+    #json_objects = []
 
     filename = traitlets.Unicode("", sync=True)
 
     widget = None
 
-    def __init__(self, filename, *pargs, **kwargs):
+    def __init__(self, addenda, key, default_key=None, *pargs, **kwargs):
         super(GraphDiagramWidget, self).__init__(*pargs, **kwargs)
-        self.filename = filename
+        self.addenda = addenda
+        self.key = key
+        self.default_key = default_key
         self.history = []
         self.count = 0
         self.selected_edge = None
@@ -41,7 +44,11 @@ class GraphDiagramWidget(traitlets.HasTraits, JsonMixin):
         n = self.new_button = widgets.Button(description="O")
         ly = self.layout_button = widgets.Button(description="layout")
         dl = self.delete_button = widgets.Button(description="X")
+        sv = self.save_button = widgets.Button(description="save")
+        rv = self.revert_button = widgets.Button(description="revert")
         sn = self.snap_button = widgets.Button(description="snap")
+        sv.on_click(self.save_click)
+        rv.on_click(self.revert_click)
         sn.on_click(self.snap_click)
         dl.on_click(self.delete_click)
         dl.width = "50px"
@@ -50,13 +57,15 @@ class GraphDiagramWidget(traitlets.HasTraits, JsonMixin):
         ly.on_click(self.layout_click)
         info = self.info_area = widgets.Textarea(description="status")
         info.visible = False
-        top = widgets.HBox(children=[n, lt, ly, dl, sn])
+        top = widgets.HBox(children=[n, lt, ly, dl, sn, sv, rv])
         hideable = widgets.VBox(children=[top, w, info])
         hcb = widgets.Checkbox(description="view", value=True)
         traitlets.link((hcb, "value"), (hideable, "visible"))
         a = self.assembly = widgets.VBox(children=[hcb, hideable])
         # make the assembly big enough
         hideable.height = 650
+        # restore from addenda if archived
+        addenda.reset(self, key, default_key)
 
     def show(self):
         display(self.assembly)
@@ -77,50 +86,40 @@ class GraphDiagramWidget(traitlets.HasTraits, JsonMixin):
         w(selected.data("label", new))
         w.flush()
 
-    def snap_click(self, b=None):
+    def to_json_value(self):
         w = self.widget
-        snap = js_proxy.ProxyWidget()
-        self.configure_widget(snap, layout="preset")
         cy = self.cy
         # dump the data from the viaualization
-        json = w.evaluate(cy.json(), level=5)
-        snap_cy = snap.element().cy_container
-        # Add the nodes
-        #import pprint
-        #pprint.pprint(json)
-        elements = json["elements"]
-        edges = elements.get("edges", ())
-        nodes = elements.get("nodes", ())
-        for node_desc in nodes:
-            data = node_desc["data"]
-            ident = data["id"]
-            label = data["label"]
-            position = node_desc["position"]
-            parent = data.get("parent")
-            D = {}
-            D["group"] = "nodes"
-            ddata = {}
-            ddata["id"] = ident
-            ddata["label"] = label
-            if parent is not None:
-                ddata["parent"] = parent
-            D["data"] = ddata
-            D["position"] = position
-            snap(snap_cy.add(D))
-            snap(snap_cy.layout())
-        # Add the edges
-        edge_attrs = "id label source target".split()
-        for edge_desc in edges:
-            data = edge_desc["data"]
-            ddata = {}
-            for attr in edge_attrs:
-                ddata[attr] = data[attr]
-            D = {}
-            D["data"] = ddata
-            D["group"] = "edges"
-            snap(snap_cy.add(D))
-        self.snap_commands = snap.buffered_commands
-        #print (snap.embedded_html())
+        json_value = w.evaluate(cy.json(), level=5)
+        json_value["count"] = self.count
+        return json_value
+
+    def from_json_value(self, json_value):
+        self.count = json_value.get("count", 100)
+        self.configure_widget(self.widget, layout="cose", descriptor=json_value)
+
+    def save_click(self, b=None):
+        addenda = self.addenda
+        addenda.set(self.key, self)
+        addenda.save()
+        self.info_alert("saved " + self.addenda.path)
+
+    def info_alert(self, message):
+        self.label_id = None
+        self.label_text.value = message
+
+    def revert_click(self, b=None):
+        addenda = self.addenda
+        addenda.reset(self, self.key, self.default_key)
+        self.widget.flush()
+        self.info_alert("reverted")
+
+    def snap_click(self, b=None):
+        w = self.widget
+        cy = self.cy
+        json = self.to_json_value()
+        snap = js_proxy.ProxyWidget()
+        self.configure_widget(snap, layout="preset", descriptor=json)
         snap.embed(True, await=["cytoscape"])
 
     def delete_click(self, b=None):
@@ -177,7 +176,7 @@ class GraphDiagramWidget(traitlets.HasTraits, JsonMixin):
         w(cy.layout())
         w.flush()
 
-    def configure_widget(self, w=None, layout="cose"):
+    def configure_widget(self, w=None, layout="cose", descriptor=None):
         if w is None:
             self.widget = js_proxy.ProxyWidget()
             w = self.widget
@@ -214,15 +213,20 @@ class GraphDiagramWidget(traitlets.HasTraits, JsonMixin):
                    appendTo(element)
                   ))
         #nodes = [{"data": {"id": "n", "label": "cytoscape"}}]
-        nodes = []
-        edges = []
-        elements = {"nodes": nodes, "edges": edges}
-        descriptor = {
-            "container": element.target._get(0),
-            "style": STYLE,
-            "elements": elements,
-            "layout": {"name": layout, "padding": 5}
-        }
+        if descriptor is None:
+            nodes = []
+            edges = []
+            elements = {"nodes": nodes, "edges": edges}
+            descriptor = {
+                "container": element.target._get(0),
+                "style": STYLE,
+                "elements": elements,
+                "layout": {"name": layout, "padding": 5}
+            }
+        else:
+            descriptor = copy.deepcopy(descriptor)
+            descriptor["container"] = element.target._get(0)
+            descriptor["layout"]["name"] = layout
         w(element._set("cy_container", cytoscape(descriptor)))
         w(element.height("600px").width("800px"))
         self.cy = cy = element.cy_container
@@ -263,16 +267,6 @@ class GraphDiagramWidget(traitlets.HasTraits, JsonMixin):
         else:
             self.selected_edge = None
             self.selected_node = None
-
-    def to_json_value(self):
-        result = {}
-        result["history"] = [item.to_json_value() for item in self.history]
-        result["count"] = self.count
-        return result
-
-    def from_json_value(self, json_value):
-        self.history = json_value.get("history", [])
-        self.count = json_value.get("count", 0)
 
     def save(self):
         f = open(self.filename, "w")
