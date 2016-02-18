@@ -505,6 +505,9 @@ class CommandMaker(object):
     # for parallelism to _set
     _get = __getattr__
 
+    # in javascript these are essentially the same thing.
+    __getitem__ = __getattr__
+
     def _set(self, name, value):
         "Proxy to set a property of a JS object."
         return SetMaker(self, name, value)
