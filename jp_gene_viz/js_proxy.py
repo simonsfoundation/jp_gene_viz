@@ -179,7 +179,7 @@ HTML_EMBEDDING_TEMPLATE = u"""
 """
 
 # For creating unique DOM identities for embedded objects
-IDENTITY_COUNTER = [0]
+IDENTITY_COUNTER = [time.time()]
 
 class ProxyWidget(widgets.DOMWidget):
 
