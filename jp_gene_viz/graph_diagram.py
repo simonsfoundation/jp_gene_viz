@@ -67,7 +67,7 @@ class GraphDiagramWidget(traitlets.HasTraits):
         lfs = self.label_font_size = widgets.IntSlider(description="font size",
             value=0, min=0, max=50, width="50px")
         lal = self.label_align = widgets.Dropdown(description="align",
-            options=["", "top", "cemter", "bottom"], value="")
+            options=["", "top", "center", "bottom"], value="")
         # edge details
         edc = self.edge_color = widgets.Text(description="edge color", width="200px")
         eds = self.edge_style = widgets.Dropdown(description="edge style",
@@ -242,7 +242,6 @@ class GraphDiagramWidget(traitlets.HasTraits):
         return self.layout_click(None)
 
     def add_edge(self, source, target):
-        print "add edge", source, target
         D = {}
         D["group"] = "edges"
         self.count += 1
