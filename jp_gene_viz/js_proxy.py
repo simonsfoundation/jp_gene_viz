@@ -179,7 +179,7 @@ HTML_EMBEDDING_TEMPLATE = u"""
 """
 
 # For creating unique DOM identities for embedded objects
-IDENTITY_COUNTER = [0]
+IDENTITY_COUNTER = [int(time.time()) % 10000000]
 
 class ProxyWidget(widgets.DOMWidget):
 
@@ -504,6 +504,9 @@ class CommandMaker(object):
 
     # for parallelism to _set
     _get = __getattr__
+
+    # in javascript these are essentially the same thing.
+    __getitem__ = __getattr__
 
     def _set(self, name, value):
         "Proxy to set a property of a JS object."

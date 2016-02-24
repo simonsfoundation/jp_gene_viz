@@ -4,6 +4,7 @@ Experimental tool for creating a graph diagram
 
 import os
 import copy
+import time
 
 from jp_gene_viz import js_proxy
 from jp_gene_viz import js_context
@@ -39,7 +40,7 @@ class GraphDiagramWidget(traitlets.HasTraits):
         self.selected_node = None
         self.label_id = None
         w = self.configure_widget()
-        lt = self.label_text = widgets.Text(value="")
+        lt = self.label_text = widgets.Text(value="", width="200px")
         lt.on_trait_change(self.label_change, "value")
         n = self.new_button = widgets.Button(description="O")
         ly = self.layout_button = widgets.Button(description="layout")
@@ -57,8 +58,36 @@ class GraphDiagramWidget(traitlets.HasTraits):
         ly.on_click(self.layout_click)
         info = self.info_area = widgets.Textarea(description="status")
         info.visible = False
-        top = widgets.HBox(children=[n, lt, ly, dl, sn, sv, rv])
-        hideable = widgets.VBox(children=[top, w, info])
+        # node details
+        ns = self.node_shape = widgets.Dropdown(description="shape", options=SHAPES, value="")
+        nbc = self.node_background_color = widgets.Text(description="color", width="200px")
+        nbi = self.node_background_image = widgets.Text(description="image", width="200px")
+        # label details
+        lbc = self.label_color = widgets.Text(description="label color", width="200px")
+        lfs = self.label_font_size = widgets.IntSlider(description="font size",
+            value=0, min=0, max=50, width="50px")
+        lal = self.label_align = widgets.Dropdown(description="align",
+            options=["", "top", "center", "bottom"], value="")
+        # edge details
+        edc = self.edge_color = widgets.Text(description="edge color", width="200px")
+        eds = self.edge_style = widgets.Dropdown(description="edge style",
+            options=["", "solid", "dotted", "dashed"], value="")
+        # detail control buttons
+        applyb = self.apply_button = widgets.Button(description="apply")
+        resetb = self.reset_button = widgets.Button(description="reset")
+        resetb.on_click(self.reset_inputs)
+        applyb.on_click(self.apply_click)
+        # scaffolding
+        dcb = self.details_checkbox = widgets.Checkbox(description="details", value=False)
+        top = widgets.HBox(children=[n, lt, ly, dl, sn, sv, rv, dcb])
+        dlabel = widgets.VBox(children=[lbc, lfs, lal])
+        dnode = widgets.VBox(children=[ns, nbc, nbi])
+        dedge = widgets.VBox(children=[edc, eds])
+        detail = widgets.VBox(children=[dlabel, dnode, dedge, applyb, resetb])
+        detail.visible = False
+        traitlets.link((detail, "visible"), (dcb, "value"))
+        middle = widgets.HBox(children=[w, detail])
+        hideable = widgets.VBox(children=[top, middle, info])
         hcb = widgets.Checkbox(description="view", value=True)
         traitlets.link((hcb, "value"), (hideable, "visible"))
         a = self.assembly = widgets.VBox(children=[hcb, hideable])
@@ -66,6 +95,59 @@ class GraphDiagramWidget(traitlets.HasTraits):
         hideable.height = 650
         # restore from addenda if archived
         addenda.reset(self, key, default_key)
+
+    def reset_inputs(self, b=None):
+        self.edge_style.value = ""
+        self.edge_color.value = ""
+        self.label_font_size.value = 0
+        # Don't reset the label text
+        #self.label_text.value = ""
+        self.node_shape.value = ""
+        self.node_background_color.value = ""
+        self.node_background_image.value = ""
+        self.label_color.value = ""
+        self.label_align.value = ""
+
+    def apply_click(self, b=None):
+        self.info_area.value = "apply click"
+        identifier = self.label_id
+        if identifier is None:
+            self.info_area.value = "nothing selected to apply " + repr((old, new))
+            return
+        return self.apply_details(identifier)
+
+    def apply_details(self, identifier):
+        # really should only apply pertinent styles to edges, nodes
+        style = {}
+        if self.label_align.value:
+            style["text-valign"] = self.label_align.value
+        if self.label_color.value:
+            style["color"] = self.label_color.value
+        if self.node_background_image.value:
+            style["background-image"] = self.node_background_image.value
+        if self.node_background_color.value:
+            style["background-color"] = self.node_background_color.value
+        if self.node_shape.value:
+            style["shape"] = self.node_shape.value
+        if self.label_font_size.value:
+            style["font-size"] = self.label_font_size.value
+        if self.edge_color.value:
+            color = self.edge_color.value
+            style["line-color"] = color
+            style["target-arrow-color"] = color
+        if self.edge_style.value:
+            style["line-style"] = self.edge_style.value
+        if style:
+            selector = "#" + str(identifier)
+            return self.set_style(selector, style)
+        else:
+            self.info_area.value = "No style options to apply"
+
+    def set_style(self, selector, style):
+        w = self.widget
+        cy = self.cy
+        w(cy.style().selector(selector).css(style).update())
+        w.flush()
 
     def show(self):
         display(self.assembly)
@@ -143,18 +225,20 @@ class GraphDiagramWidget(traitlets.HasTraits):
         D["group"] = "nodes"
         data = {}
         self.count += 1
-        data["id"] = self.label_id = str(self.count)
+        identifier = data["id"] = self.label_id = str(self.count)
         data["label"] = ""
         self.label_text.value = ""
         if selected:
             data["parent"] = selected
         D["data"] = data
-        return self.add(D)
+        return self.add(D, identifier)
 
-    def add(self, D):
+    def add(self, D, identifier=None):
         w = self.widget
         cy = self.cy
         w(cy.add(D))
+        if identifier is not None:
+            self.apply_details(identifier)
         return self.layout_click(None)
 
     def add_edge(self, source, target):
@@ -162,13 +246,29 @@ class GraphDiagramWidget(traitlets.HasTraits):
         D["group"] = "edges"
         self.count += 1
         data = {}
-        data["id"] = self.label_id = str(self.count)
+        identifier = data["id"] = self.label_id = str(self.count)
         data["label"] = ""
         data["source"] = source
         data["target"] = target
         self.label_text.value = ""
         D["data"] = data
-        return self.add(D)
+        return self.add(D, identifier)
+
+    def link_labels(self, source_label, target_label):
+        source = self.get_identity_by_label(source_label)
+        target = self.get_identity_by_label(target_label)
+        #source = "1"
+        #target = "2"
+        self.add_edge(source, target)
+
+    def get_identity_by_label(self, label):
+        selector = "[label='%s']" % label
+        w = self.widget
+        cy = self.cy
+        identity = w.evaluate(cy["$"](selector).data()["id"])
+        # hack for testing
+        time.sleep(0.1)
+        return identity
 
     def layout_click(self, b):
         w = self.widget
@@ -289,10 +389,11 @@ STYLE = [
         'text-wrap': 'wrap',
         'text-max-width': 80,
         'text-valign': 'center',
-        'color': 'white',
-        'text-outline-width': 2,
-        'text-outline-color': '#888',
-            "background-color": "cyan"
+        'color': '#aaa',
+        #'text-outline-width': 2,
+        #'text-outline-color': '#888',
+            "background-color": "cyan",
+            "background-fit": "cover"
       }
     },
     {
@@ -303,7 +404,7 @@ STYLE = [
         'padding-bottom': '10px',
         'padding-right': '10px',
         'text-valign': 'top',
-        'text-halign': 'left',
+        'text-halign': 'center',
         'background-color': '#bbb'
       }
     },
@@ -324,7 +425,11 @@ STYLE = [
         'background-color': 'black',
         'line-color': 'black',
         'target-arrow-color': 'black',
-        'source-arrow-color': 'black'
+        'source-arrow-color': 'black',
+        'background-blacken': 0.5,
       }
     }]
 
+SHAPES = [""] + ("""
+rectangle roundrectangle ellipse triangle pentagon hexagon 
+heptagon octagon star diamond vee rhomboid""").split()
