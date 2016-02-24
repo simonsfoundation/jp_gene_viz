@@ -283,6 +283,151 @@
         "zoom": 2.294361435051236, 
         "zoomingEnabled": true
     }, 
+    "Basic1": {
+        "boxSelectionEnabled": false, 
+        "count": 3, 
+        "elements": {
+            "nodes": [
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "1", 
+                        "isEdge": false, 
+                        "isNode": true, 
+                        "label": "abc", 
+                        "shiftKey": false, 
+                        "type": "click"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "nodes", 
+                    "locked": false, 
+                    "position": {
+                        "x": 365.54086980873393, 
+                        "y": 362.81526765654536
+                    }, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": true
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "2", 
+                        "isEdge": false, 
+                        "isNode": true, 
+                        "label": "", 
+                        "shiftKey": false, 
+                        "type": "click"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "nodes", 
+                    "locked": false, 
+                    "position": {
+                        "x": 416.935745795875, 
+                        "y": 418.27530674630947
+                    }, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }, 
+                {
+                    "classes": "", 
+                    "data": {
+                        "id": "3", 
+                        "label": "jhgkjg", 
+                        "parent": "1"
+                    }, 
+                    "grabbable": true, 
+                    "grabbed": false, 
+                    "group": "nodes", 
+                    "locked": false, 
+                    "position": {
+                        "x": 365.54086980873393, 
+                        "y": 362.81526765654536
+                    }, 
+                    "removed": false, 
+                    "selectable": true, 
+                    "selected": false
+                }
+            ]
+        }, 
+        "layout": {
+            "name": "cose", 
+            "padding": 5
+        }, 
+        "maxZoom": 1e+50, 
+        "minZoom": 1e-50, 
+        "pan": {
+            "x": -1559.8109186686984, 
+            "y": -1698.4895148785076
+        }, 
+        "panningEnabled": true, 
+        "renderer": {
+            "name": "canvas"
+        }, 
+        "style": [
+            {
+                "selector": "node", 
+                "style": {
+                    "background-color": "cyan", 
+                    "background-fit": "cover", 
+                    "background-image": "https://farm7.staticflickr.com/6098/6224655456_f4c3c98589_b.jpg", 
+                    "color": "white", 
+                    "content": "data(label)", 
+                    "text-halign": "center", 
+                    "text-max-width": "80px", 
+                    "text-outline-color": "#888", 
+                    "text-outline-width": "2px", 
+                    "text-valign": "center", 
+                    "text-wrap": "wrap"
+                }
+            }, 
+            {
+                "selector": "$node > node", 
+                "style": {
+                    "background-color": "#bbb", 
+                    "padding-bottom": "10px", 
+                    "padding-left": "10px", 
+                    "padding-right": "10px", 
+                    "padding-top": "10px", 
+                    "text-halign": "left", 
+                    "text-valign": "top"
+                }
+            }, 
+            {
+                "selector": "edge", 
+                "style": {
+                    "content": "data(label)", 
+                    "edge-text-rotation": "autorotate", 
+                    "line-color": "red", 
+                    "target-arrow-color": "red", 
+                    "target-arrow-shape": "triangle"
+                }
+            }, 
+            {
+                "selector": ":selected", 
+                "style": {
+                    "background-color": "black", 
+                    "line-color": "black", 
+                    "source-arrow-color": "black", 
+                    "target-arrow-color": "black"
+                }
+            }, 
+            {
+                "selector": "#1", 
+                "style": {
+                    "background-color": "pink", 
+                    "background-image": "https://farm6.staticflickr.com/5109/5817854163_eaccd688f5_b.jpg"
+                }
+            }
+        ], 
+        "userPanningEnabled": true, 
+        "userZoomingEnabled": true, 
+        "zoom": 5.293376934174989, 
+        "zoomingEnabled": true
+    }, 
     "Container": {
         "boxSelectionEnabled": false, 
         "count": 34, 
