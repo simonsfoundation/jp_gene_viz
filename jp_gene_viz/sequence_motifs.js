@@ -110,7 +110,7 @@ Structure follows: https://learn.jquery.com/plugins/basic-plugin-creation/
     // example usage and test case: jQuery.fn.sequence_motif.example($("#canvas"))
     $.fn.sequence_motif.example = function (element) {
         debugger;
-        var newcanvas = $('<canvas width="300", height="300"/>'); //.width("110px").height("110px");
+        var newcanvas = $('<canvas width="300" height="300"/>'); //.width("110px").height("110px");
         var options = {
             "ylabel": "count",
             "x": 10,
