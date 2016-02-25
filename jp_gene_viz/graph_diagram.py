@@ -174,11 +174,15 @@ class GraphDiagramWidget(traitlets.HasTraits):
         # dump the data from the viaualization
         json_value = w.evaluate(cy.json(), level=5)
         json_value["count"] = self.count
+        json_value["layout"] = {
+            "name": "preset", 
+            "padding": 5
+        }
         return json_value
 
     def from_json_value(self, json_value):
         self.count = json_value.get("count", 100)
-        self.configure_widget(self.widget, layout="cose", descriptor=json_value)
+        self.configure_widget(self.widget, layout="preset", descriptor=json_value)
 
     def save_click(self, b=None):
         addenda = self.addenda
@@ -233,13 +237,17 @@ class GraphDiagramWidget(traitlets.HasTraits):
         D["data"] = data
         return self.add(D, identifier)
 
-    def add(self, D, identifier=None):
+    def add(self, D, identifier=None, layout=True):
         w = self.widget
         cy = self.cy
         w(cy.add(D))
         if identifier is not None:
             self.apply_details(identifier)
-        return self.layout_click(None)
+        if layout:
+            self.layout_click(None)
+        else:
+            w(cy.forceRender())
+            w.flush()
 
     def add_edge(self, source, target):
         D = {}
@@ -252,7 +260,7 @@ class GraphDiagramWidget(traitlets.HasTraits):
         data["target"] = target
         self.label_text.value = ""
         D["data"] = data
-        return self.add(D, identifier)
+        return self.add(D, identifier, layout=False)
 
     def link_labels(self, source_label, target_label):
         source = self.get_identity_by_label(source_label)
@@ -273,7 +281,11 @@ class GraphDiagramWidget(traitlets.HasTraits):
     def layout_click(self, b):
         w = self.widget
         cy = self.cy
-        w(cy.layout())
+        options = {
+            "name": "cose", 
+            "padding": 5
+        }
+        w(cy.layout(options))
         w.flush()
 
     def configure_widget(self, w=None, layout="cose", descriptor=None):
