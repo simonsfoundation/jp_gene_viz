@@ -88,9 +88,9 @@ class GraphDiagramWidget(traitlets.HasTraits):
         traitlets.link((detail, "visible"), (dcb, "value"))
         middle = widgets.HBox(children=[w, detail])
         hideable = widgets.VBox(children=[top, middle, info])
-        hcb = widgets.Checkbox(description="view", value=True)
-        traitlets.link((hcb, "value"), (hideable, "visible"))
-        a = self.assembly = widgets.VBox(children=[hcb, hideable])
+        self.view_checkbox = vcb = widgets.Checkbox(description="view", value=True)
+        traitlets.link((vcb, "value"), (hideable, "visible"))
+        a = self.assembly = widgets.VBox(children=[vcb, hideable])
         # make the assembly big enough
         hideable.height = 650
         # restore from addenda if archived
