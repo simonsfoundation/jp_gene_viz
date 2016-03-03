@@ -536,7 +536,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
                     if node in overrides:
                         (x, y) = overrides[node]
                     style = style0.copy()
-                    if node in sources:
+                    if node in sources and tf_font_size > font_size:
                         style["font-size"] = tf_font_size
                     lname = self.label_name(node)
                     color = color_overrides.get(lname, "black")
