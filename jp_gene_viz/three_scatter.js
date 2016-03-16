@@ -121,7 +121,7 @@ A three.js plugin to support 3d scatter plots.
             mesh.scale.y = scale;
             mesh.scale.z = scale;
             mesh.matrixWorldNeedsUpdate = true;
-            scene.add(mesh)
+            scene.add(mesh);
         }
         return material;
     };
