@@ -3,6 +3,7 @@ Experiments in compositional geometry (Aitchison geometry).
 """
 
 import numpy as np
+import math
 import traitlets
 from jp_gene_viz import js_proxy
 import traitlets
@@ -101,6 +102,35 @@ def xygridlines(minimum, maximum, nlines, npoints, z):
         result.append(yp)
     return result
 
+def great_circles(offset, radius, n=100):
+    angles = np.linspace(0, 2 * math.pi, n)
+    sines = offset + radius * np.sin(angles)
+    cosines = offset + radius * np.cos(angles)
+    result = []
+    for (i, j) in [(0, 1), (1, 2), (2, 0)]:
+        a = np.zeros((n, 3))
+        a[:] = offset
+        a[:, i] = sines
+        a[:, j] = cosines
+        result.append(a)
+    return result
+
+def globe(offset, radius, n=50, m=8):
+    result = []
+    angles = np.linspace(0, 2*math.pi, n)
+    sines = np.sin(angles)
+    cosines = np.cos(angles)
+    zangles = np.linspace(0, math.pi, m+2)
+    for zangle in zangles[1:-1]:
+        z = math.cos(zangle) * radius + offset
+        subradius = radius * math.sin(zangle)
+        a = np.zeros((n, 3))
+        a[:, 2] = z
+        a[:, 0] = subradius * sines + offset
+        a[:, 1] = subradius * cosines + offset
+        result.append(a)
+    return result
+
 class Diagram(traitlets.HasTraits):
 
     cleanup = None
@@ -135,13 +165,13 @@ class Diagram(traitlets.HasTraits):
         import time
         theta = 0
         while True:
-            theta += 0.5
+            theta += 0.02
             self.do_draw = False
-            self.xz_rotation = np.cos(theta)/3
-            self.xy_rotation = np.sin(theta*1.1)/2
+            self.xz_rotation = np.cos(theta)*0.4
+            self.xy_rotation = np.sin(theta*1.1)*0.4
             self.do_draw = True
-            self.yz_rotation = np.sin(theta*0.4)*0.77
-            time.sleep(0.2)
+            self.yz_rotation = np.sin(theta*0.4)*0.4
+            time.sleep(0.1)
 
     def draw_diagram(self):
         if not self.do_draw:
@@ -154,9 +184,9 @@ class Diagram(traitlets.HasTraits):
         THREE = window.THREE
         new = d.save_new
         scene = new("scene", THREE.Scene, [])
-        camera = new("camera", THREE.PerspectiveCamera, [75, 1.0, 1, 100000])
-        offset = 3.0
-        d(camera.position._set("x", offset)._set("y", offset)._set("z", offset))
+        camera = new("camera", THREE.PerspectiveCamera, [55, 1.0, 1, 100000])
+        offset = 4.0
+        d(camera.position._set("x", offset*2/3.)._set("y", offset)._set("z", offset*3/2.))
         d(camera.lookAt(scene.position))
         renderer = new("renderer", THREE.WebGLRenderer, [])
         d(renderer.setSize(800, 800))
@@ -168,7 +198,9 @@ class Diagram(traitlets.HasTraits):
             d(THREE.simple_curve(scene, [origin, next], 0xdddddd))
             d(THREE.simple_curve(scene, [last, next], 0xff0000))
             last = next
-        lines = xygridlines(0.1, 1.5, 10, 20, 1.5)
+        #lines = xygridlines(0.1, 1.5, 10, 20, 1.5)
+        #lines = great_circles(1.2, 1.1)
+        lines = globe(2, 1)
         for line in lines:
             line = xzrotations(line, self.xz_rotation)
             line = xyrotations(line, self.xy_rotation)
