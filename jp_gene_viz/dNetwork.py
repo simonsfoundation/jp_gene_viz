@@ -82,6 +82,9 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
     manipulating the network.
     """
 
+    maximize = traitlets.Bool(True)
+    svg_width = traitlets.Int(500)
+
     json_atts = "threshhold label_position_overrides".split()
 
     json_objects = {
@@ -131,11 +134,12 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.dialog = self.make_dialog()
         self.settings_assembly.visible = False
         svg = self.svg = canvas.SVGCanvasWidget()
-        sslider = self.size_slider = widgets.FloatSlider(value=500, min=500, max=2000, step=10,
+        sslider = self.size_slider = widgets.FloatSlider(value=500, min=100, max=2000, step=10,
             readout=False, width="150px")
         self.depth_slider = widgets.IntSlider(
             description="depth", value=0, min=0, max=5, width="50px")
         # Adjust the width and height of the svg when the size slider changes.
+        traitlets.directional_link((self, "svg_width"), (sslider, "value"))
         traitlets.directional_link((sslider, "value"), (svg, "width"))
         traitlets.directional_link((sslider, "value"), (svg, "height"))
         # Adjust the svg view box when the bounding box changes.
@@ -143,13 +147,13 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         svg.add_style("background-color", "white")
         svg.watch_event = "click mousedown mouseup mousemove mouseover"
         svg.default_event_callback = self.svg_callback
-        left_panel = [self.title_html,
-                      self.svg, 
-                      self.threshhold_assembly, 
-                      self.pattern_assembly,
-                      self.info_area,
-                      self.settings_assembly]
-        self.vertical = widgets.VBox(children=left_panel)
+        hr = self.hideable_right = widgets.VBox(
+            children=[self.threshhold_assembly, self.pattern_assembly, self.info_area, self.settings_assembly])
+        traitlets.directional_link((self, "maximize"), (hr, "visible"))
+        right_panel = [self.title_html,
+                      self.svg,
+                      self.hideable_right]
+        self.vertical = widgets.VBox(children=right_panel)
         buttons = [self.zoom_button,
                    self.focus_button,
                    self.ignore_button,
@@ -171,6 +175,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
                    #self.settings_assembly,
                    ]
         self.inputs = widgets.VBox(children=buttons)
+        traitlets.directional_link((self, "maximize"), (self.inputs, "visible"))
         dummy = self.dummy_widget = js_proxy.ProxyWidget()
         # Note: dummy widget has the entire assembly as its parent.
         #    So code can modify the parent using d.element().parent().
