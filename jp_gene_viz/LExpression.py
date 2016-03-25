@@ -19,6 +19,9 @@ class LinkedExpressionNetwork(traitlets.HasTraits):
     Widget implementing a network display bound to an expression heatmap.
     """
 
+    maximize = traitlets.Bool(True)
+    svg_width = traitlets.Int(500)
+
     def __init__(self, *args, **kwargs):
         super(LinkedExpressionNetwork, self).__init__(*args, **kwargs)
         self.network = dNetwork.NetworkDisplay()
@@ -28,9 +31,11 @@ class LinkedExpressionNetwork(traitlets.HasTraits):
                                                  self.condition_click)
         buttons = [self.gene_button, self.condition_button]
         horizontal = widgets.HBox(children=buttons)
-        self.assembly = widgets.VBox(children=[self.network.assembly,
-                                               horizontal,
-                                               self.expression.assembly])
+        hideable = widgets.VBox(children=[horizontal, self.expression.assembly])
+        traitlets.directional_link((self, "maximize"), (hideable, "visible"))
+        traitlets.directional_link((self, "maximize"), (self.network, "maximize"))
+        traitlets.directional_link((self, "svg_width"), (self.network, "svg_width"))
+        self.assembly = widgets.VBox(children=[self.network.assembly, hideable])
 
     def show(self):
         display(self.assembly)
