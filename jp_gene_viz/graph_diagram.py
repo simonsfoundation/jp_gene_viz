@@ -14,9 +14,11 @@ import pprint
 
 import ipywidgets as widgets
 from IPython.display import display
+from jp_gene_viz import color_widget
 
 js_context.load_if_not_loaded(["cytoscape.js"])
 js_proxy.load_javascript_support()
+color_widget.load_javascript_support()
 
 
 class GraphDiagramWidget(traitlets.HasTraits):
@@ -60,16 +62,25 @@ class GraphDiagramWidget(traitlets.HasTraits):
         info.visible = False
         # node details
         ns = self.node_shape = widgets.Dropdown(description="shape", options=SHAPES, value="")
-        nbc = self.node_background_color = widgets.Text(description="color", width="200px")
+        #nbc = self.node_background_color = widgets.Text(description="color", width="200px")
+        nbc_html = widgets.HTML("node color")
+        nbc = self.node_background_color = color_widget.ColorPicker()
+        nbc.draw()
         nbi = self.node_background_image = widgets.Text(description="image", width="200px")
         # label details
-        lbc = self.label_color = widgets.Text(description="label color", width="200px")
+        #lbc = self.label_color = widgets.Text(description="label color", width="200px")
+        lbc_html = widgets.HTML("label color")
+        lbc = self.label_color = color_widget.ColorPicker()
+        lbc.draw()
         lfs = self.label_font_size = widgets.IntSlider(description="font size",
             value=0, min=0, max=50, width="50px")
         lal = self.label_align = widgets.Dropdown(description="align",
             options=["", "top", "center", "bottom"], value="")
         # edge details
-        edc = self.edge_color = widgets.Text(description="edge color", width="200px")
+        #edc = self.edge_color = widgets.Text(description="edge color", width="200px")
+        edc_html = widgets.HTML("edge color")
+        edc = self.edge_color = color_widget.ColorPicker()
+        edc.draw()
         eds = self.edge_style = widgets.Dropdown(description="edge style",
             options=["", "solid", "dotted", "dashed"], value="")
         # detail control buttons
@@ -80,9 +91,9 @@ class GraphDiagramWidget(traitlets.HasTraits):
         # scaffolding
         dcb = self.details_checkbox = widgets.Checkbox(description="details", value=False)
         top = widgets.HBox(children=[n, lt, ly, dl, sn, sv, rv, dcb])
-        dlabel = widgets.VBox(children=[lbc, lfs, lal])
-        dnode = widgets.VBox(children=[ns, nbc, nbi])
-        dedge = widgets.VBox(children=[edc, eds])
+        dlabel = widgets.VBox(children=[lbc_html, lbc.svg, lfs, lal])
+        dnode = widgets.VBox(children=[ns, nbc_html, nbc.svg, nbi])
+        dedge = widgets.VBox(children=[edc_html, edc.svg, eds])
         detail = widgets.VBox(children=[dlabel, dnode, dedge, applyb, resetb])
         detail.visible = False
         traitlets.link((detail, "visible"), (dcb, "value"))
@@ -98,14 +109,14 @@ class GraphDiagramWidget(traitlets.HasTraits):
 
     def reset_inputs(self, b=None):
         self.edge_style.value = ""
-        self.edge_color.value = ""
+        self.edge_color.color = ""
         self.label_font_size.value = 0
         # Don't reset the label text
         #self.label_text.value = ""
         self.node_shape.value = ""
-        self.node_background_color.value = ""
+        self.node_background_color.color = ""
         self.node_background_image.value = ""
-        self.label_color.value = ""
+        self.label_color.color = ""
         self.label_align.value = ""
 
     def apply_click(self, b=None):
@@ -121,18 +132,18 @@ class GraphDiagramWidget(traitlets.HasTraits):
         style = {}
         if self.label_align.value:
             style["text-valign"] = self.label_align.value
-        if self.label_color.value:
-            style["color"] = self.label_color.value
+        if self.label_color.color:
+            style["color"] = self.label_color.color
         if self.node_background_image.value:
             style["background-image"] = self.node_background_image.value
-        if self.node_background_color.value:
-            style["background-color"] = self.node_background_color.value
+        if self.node_background_color.color:
+            style["background-color"] = self.node_background_color.color
         if self.node_shape.value:
             style["shape"] = self.node_shape.value
         if self.label_font_size.value:
             style["font-size"] = self.label_font_size.value
-        if self.edge_color.value:
-            color = self.edge_color.value
+        if self.edge_color.color:
+            color = self.edge_color.color
             style["line-color"] = color
             style["target-arrow-color"] = color
         if self.edge_style.value:

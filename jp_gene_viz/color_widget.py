@@ -34,7 +34,8 @@ class ColorPicker(traitlets.HasTraits, ColorMixin):
         svg.set_view_box(0, 0, svg.width, svg.height)
         svg.watch_event = "click"
         svg.default_event_callback = self.svg_callback
-        self.color = color = color_scale.color(color_scale.color64(0, 0))
+        #self.color = color_scale.color(color_scale.color64(0, 0))
+        self.on_trait_change(self.show_color_choice, "color")
 
     def svg_callback(self, info):
         name = info.get("name", "")
@@ -52,20 +53,28 @@ class ColorPicker(traitlets.HasTraits, ColorMixin):
         svg.empty()
         self.draw_colors(svg)
         self.show_color_choice()
-        svg.send_commands()
+        #svg.send_commands()
 
     def show_color_choice(self):
         color = self.color
+        #print "show color choice", color
         svg = self.svg
         marker = "color_choice"
         tmarker = "color_text"
         # display the color
         atts = {"stroke-width": 2, "stroke": "rgb(100,100,100)"}
         svg.delete_names([marker, tmarker])
-        svg.rect(marker, 0, self.palette_side + self.dy, self.palette_side, self.dy, color, **atts)
-        svg.text(tmarker, 0, self.palette_side + self.dy, self.color, "black")
+        if color:
+            choice = color
+        else:
+            choice = "no choice"
+        if color:
+            svg.rect(marker, 0, self.palette_side + self.dy, self.palette_side, self.dy, color, **atts)
+        svg.text(tmarker, 0, self.palette_side + self.dy, choice, "black")
         # outline the chosen element of the palette
-        svg.change_element("R_" + color, atts)
+        if color:
+            svg.change_element("R_" + color, atts)
+        svg.send_commands()
 
     def unshow_color_choice(self, color):
         svg = self.svg
