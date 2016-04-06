@@ -192,6 +192,10 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.svg_origin = dGraph.pos(0, 0)
         # svg name to color override dictionary
         self.color_overrides = {}
+        # node weight override mapping
+        self.override_node_weights = None
+        # node color mapper override
+        self.override_node_colors = None
         self.reset_interactive_bookkeeping()
 
     def colorize_cursor(self, color):
@@ -332,6 +336,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
 
     def uncolorize_click(self, *args):
         self.color_overrides = {}
+        self.reset_node_weights()
         self.draw()
 
     def colorize_click(self, *args):
@@ -474,6 +479,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
                 ewG[e] = w
         G.edge_weights = ewG
         self.display_graph = G
+        self.set_node_weights()
 
     def load_data(self, graph, positions=None):
         "Load and draw a graph and positions to the network display."
@@ -485,6 +491,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.display_positions = positions.copy()
         self.data_graph = graph
         self.display_graph = graph.clone()
+        self.override_node_colors = None
+        self.override_node_weights = None
         ew = graph.edge_weights
         maxw = max(abs(ew[e]) for e in ew) + 1.0
         self.threshhold_slider.max = maxw
@@ -585,6 +593,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         (Gfocus, Pfocus) = self.select_nodes(selected_nodes,
             self.data_graph, self.data_positions)
         self.display_graph = Gfocus
+        self.set_node_weights()
         self.display_positions = Pfocus
         self.reset_interactive_bookkeeping()
         self.do_threshhold()
@@ -680,6 +689,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         for n in nodes:
             if n not in dP and n in P:
                 dP[n] = P[n]
+        self.set_node_weights()
         self.svg.empty()
         self.draw()
 
@@ -738,6 +748,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         P = self.display_positions
         (Gfocus, Pfocus) = self.select_nodes(nodes, G, P)
         self.display_graph = Gfocus
+        self.set_node_weights()
         self.svg.empty()
         self.draw()
 
@@ -781,6 +792,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             for e in edge_weights if e in keep_edges)
         dG.node_weights = dict((n, node_weights[n])
             for n in node_weights if n in keep_nodes)
+        self.set_node_weights()
         self.draw()
 
     def visible_edges(self):
@@ -828,6 +840,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             self.info_area.value = "Cannot trim: no graph loaded."
             return
         self.display_graph = dGraph.trim_leaves(G)
+        self.set_node_weights()
         self.svg.empty()
         self.draw()
 
@@ -1118,12 +1131,27 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.zoom_button.disabled = True
         self.selecting = False
 
-    def set_node_weights(self, weights, colors):
-        nw = self.display_graph.node_weights
-        for node in list(nw):
-            nw[node] = weights.get(node, 0)
+    def set_node_weights(self, weights=None, colors=None):
+        if weights is None:
+            weights = self.override_node_weights
+        else:
+            self.override_node_weights = weights
+        if colors is None:
+            colors = self.override_node_colors
+        else:
+            self.override_node_colors = colors
+        if weights is not None:
+            nw = self.display_graph.node_weights
+            for node in list(nw):
+                nw[node] = weights.get(node, 0)
         self.display_graph.reset_colorization()
-        self.display_graph.set_node_color_interpolator(colors)
+        if colors is not None:
+            self.display_graph.set_node_color_interpolator(colors)
+
+    def reset_node_weights(self, weights=None, colors=None):
+        self.override_node_weights = None
+        self.override_node_colors = None
+        self.set_node_weights()
 
     def handle_bounding_box_change(self, att_name, old, new):
         "Adjust the svg view box to include the bounding box for the network."
