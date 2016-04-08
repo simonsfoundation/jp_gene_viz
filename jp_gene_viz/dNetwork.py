@@ -723,6 +723,10 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
                     selected.add(node)
         return selected
 
+    def alert_no_selection(self, operation):
+        self.info_area.value = "no selection for " + operation
+        self.alert("Please shift-click then click to select region for " + operation)
+
     def focus_click(self, b):
         "View network restricted to nodes under the selection."
         self.info_area.value = "focus clicked"
@@ -730,7 +734,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         if selected is not None:
             self.select_and_draw(selected)
         else:
-            self.info_area.value = "no selection for focus"
+            self.alert_no_selection("focus")
 
     def ignore_click(self, b):
         "Remove selected nodes from view."
@@ -741,7 +745,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             unselected = list(set(G.node_weights.keys()) - selected)
             self.select_and_draw(unselected)
         else:
-            self.info_area.value = "no selection to ignore."
+            self.alert_no_selection("ignore")
 
     def select_and_draw(self, nodes):
         G = self.display_graph
@@ -819,7 +823,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             self.info_area.value = "set_view_box" + repr((minx, miny, maxdiff, maxdiff))
             svg.send_commands()
         else:
-            self.info_area.value = "no selection for zoom"
+            self.alert_no_selection("zoom")
         # Don't cancel the selection in case the user really wants to focus instead.
         #self.cancel_selection()
 
