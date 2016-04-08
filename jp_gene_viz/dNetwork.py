@@ -126,6 +126,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.motifs_button.visible = False
         self.motifs_button.value = True
         self.draw_button = self.make_button("draw", self.draw_click)
+        self.tf_only_button = self.make_button("TF only", self.tf_only_click)
+        self.connected_only_button = self.make_button("connected only", self.connected_only_click)
         # Assemble the layout
         self.threshhold_assembly = self.make_threshhold_assembly()
         self.pattern_assembly = self.make_pattern_assembly()
@@ -168,6 +170,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
                    self.labels_button,
                    self.restore_button,
                    self.size_slider,
+                   self.tf_only_button,
+                   self.connected_only_button,
                    self.draw_button,
                    self.depth_slider,
                    self.motifs_button,
@@ -351,7 +355,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             self.edge_color_chooser.svg.visible = True
             self.uncolorize_cursor()
 
-    def filename_click(self, b):
+    def filename_click(self, b=None):
         # XXXX this may leak memory? Does it matter?
         self.info_area.value = "filename click"
         chooser = file_chooser_widget.FileChooser(
@@ -360,7 +364,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         traitlets.directional_link((chooser, "file_path"), (fn, "value"))
         chooser.show()
 
-    def snapshot_click(self, b):
+    def snapshot_click(self, b=None):
         from jp_svg_canvas import fake_svg
         self.info_area.value = "snapshot click"
         title = self.snapshot_filename_text.value
@@ -381,7 +385,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         #open("embedding.js", "w").write(fsvg.embedding())
         fsvg.embed(preview=preview)
 
-    def save_click(self, b):
+    def save_click(self, b=None):
         self.info_area.value = "save click"
         filename = self.filename_text.value
         try:
@@ -395,7 +399,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         msg = "saved %s bytes as zipped JSON to %s" % (len(zjson), repr(filename))
         self.alert(msg)
 
-    def load_click(self, b):
+    def load_click(self, b=None):
         self.info_area.value = "restore click"
         filename = self.filename_text.value
         try:
@@ -422,7 +426,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.alert(msg)
         self.info_area.value = msg
 
-    def upload_click(self, b):
+    def upload_click(self, b=None):
         # XXXX this may leak memory? Does it matter?
         self.info_area.value = "upload click"
         chooser = file_chooser_widget.FileChooser(
@@ -430,18 +434,18 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         chooser.enable_downloads()
         chooser.show()
 
-    def draw_click(self, b):
+    def draw_click(self, b=None):
         self.svg.empty()
         self.draw()
 
-    def apply_click(self, b):
+    def apply_click(self, b=None):
         "Apply threshhold value to the viewable network."
         self.reset_interactive_bookkeeping()
         self.do_threshhold()
         self.svg.empty()
         self.draw()
 
-    def nodes_click(self, b):
+    def nodes_click(self, b=None):
         "display nodes information in the info area."
         nw = self.display_graph.node_weights
         L = []
@@ -449,7 +453,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             L.append("\t".join([n, str(w)]))
         self.info_area.value = "NODES\n" + "\n".join(L)
 
-    def edges_click(self, b):
+    def edges_click(self, b=None):
         ew = self.display_graph.edge_weights
         L = []
         for ((f,t), w) in sorted(ew.items()):
@@ -577,7 +581,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         "Show the network widget."
         display(self.assembly)
 
-    def match_click(self, b):
+    def match_click(self, b=None):
         "Restrict viewable graph to nodes matching text input."
         self.info_area.value = "match click"
         patterns = self.pattern_text.value.split()
@@ -600,23 +604,23 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.svg.empty()
         self.draw()
 
-    def labels_click(self, b):
+    def labels_click(self, b=None):
         "Label button click: toggle drawing of labels."
         self.info_area.value = "labels click " + repr(self.labels_button.value)
         self.svg.empty()
         self.draw()
 
-    def settings_click(self, b):
+    def settings_click(self, b=None):
         self.settings_assembly.visible = self.settings_button.value
         self.svg.empty()
         self.draw()
         self.info_area.value = "settings " + repr(self.settings_button.value)
 
-    def show_motifs(self, b):
+    def show_motifs(self, b=None):
         # do nothing
         pass
 
-    def layout_click(self, b):
+    def layout_click(self, b=None):
         "Apply the current layout to the viewable graph."
         self.reset_interactive_bookkeeping()
         self.info_area.value = "layout clicked"
@@ -636,10 +640,10 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             self.svg.empty()
             self.draw()
 
-    def regulates_click(self, b):
+    def regulates_click(self, b=None):
         return self.expand_click(b, incoming=False, outgoing=True, crosslink=False)
 
-    def targeted_click(self, b):
+    def targeted_click(self, b=None):
         return self.expand_click(b, incoming=True, outgoing=False, crosslink=False)
 
     def expand_click(self, b, incoming=True, outgoing=True, crosslink=True):
@@ -727,7 +731,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.info_area.value = "no selection for " + operation
         self.alert("Please shift-click then click to select region for " + operation)
 
-    def focus_click(self, b):
+    def focus_click(self, b=None):
         "View network restricted to nodes under the selection."
         self.info_area.value = "focus clicked"
         selected = self.nodes_in_selection()
@@ -736,7 +740,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         else:
             self.alert_no_selection("focus")
 
-    def ignore_click(self, b):
+    def ignore_click(self, b=None):
         "Remove selected nodes from view."
         self.info_area.value = "ignore clicked"
         selected = self.nodes_in_selection()
@@ -746,6 +750,32 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             self.select_and_draw(unselected)
         else:
             self.alert_no_selection("ignore")
+
+    def tf_only_click(self, b=None):
+        "restrict nodes the transcription factors (nodes with outgoing edges, visible or not)."
+        dG = self.data_graph
+        G = self.display_graph
+        sources = set(dG.get_node_to_descendants())
+        visible = set(G.node_weights)
+        visible_tfs = sources & visible
+        if not visible_tfs:
+            self.alert("no transcription factors are visible")
+        else:
+            self.select_and_draw(list(visible_tfs))
+
+    def connected_only_click(self, b=None):
+        "remove from view nodess not connected to any other visible node"
+        G = self.display_graph
+        n2d = G.get_node_to_descendants()
+        sources = set(n2d)
+        destinations = set()
+        for node in n2d:
+            destinations.update(n2d[node])
+        connected = destinations | sources
+        if not connected:
+            self.alert("no connected nodes are visible")
+        else:
+            self.select_and_draw(list(connected))
 
     def select_and_draw(self, nodes):
         G = self.display_graph
@@ -811,7 +841,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.svg.empty()
         self.draw()
 
-    def zoom_click(self, b):
+    def zoom_click(self, b=None):
         "Zoom button click: fit view to selection region."
         #print "zoom"
         self.info_area.value = "zoom clicked"
@@ -827,7 +857,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         # Don't cancel the selection in case the user really wants to focus instead.
         #self.cancel_selection()
 
-    def restore_click(self, b):
+    def restore_click(self, b=None):
         "Restore button click: restore data to loaded state."
         self.display_graph = self.data_graph.clone()
         self.display_positions = self.data_positions.copy()
@@ -835,7 +865,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.svg.empty()
         self.draw()
 
-    def trim_click(self, b):
+    def trim_click(self, b=None):
         "Trim button click: delete nodes without outgoing edges."
         #print "trim"
         self.info_area.value = "trim clicked"
