@@ -136,12 +136,12 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.dialog = self.make_dialog()
         self.settings_assembly.visible = False
         svg = self.svg = canvas.SVGCanvasWidget()
-        sslider = self.size_slider = widgets.FloatSlider(value=500, min=100, max=2000, step=10,
+        sslider = self.size_slider = widgets.IntSlider(value=500, min=100, max=2000, step=10,
             readout=False, width="150px")
         self.depth_slider = widgets.IntSlider(
             description="depth", value=0, min=0, max=5, width="50px")
         # Adjust the width and height of the svg when the size slider changes.
-        traitlets.directional_link((self, "svg_width"), (sslider, "value"))
+        traitlets.link((self, "svg_width"), (sslider, "value"))
         traitlets.directional_link((sslider, "value"), (svg, "width"))
         traitlets.directional_link((sslider, "value"), (svg, "height"))
         # Adjust the svg view box when the bounding box changes.
