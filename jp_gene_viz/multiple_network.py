@@ -65,11 +65,14 @@ class NetworkHolder(traitlets.HasTraits):
         db = self.diff_button = self.make_button(u"\u2296", self.diff_all, "difference with all")
         ib = self.int_button = self.make_button(u"\u2227", self.intersect_all, "intersect all")
         sb = self.sync_button = self.make_button(u"\u22A8", self.sync_all, "sync all")
+        self.width_slider = s = widgets.IntSlider(value=200, min=100, max=2000, step=10,
+            readout=False, width="150px")
         self.make_linkages()
-        buttons = widgets.HBox(children=[db, ib, sb, mcb])
+        buttons = widgets.HBox(children=[db, ib, sb, s, mcb])
         self.assembly = widgets.VBox(children=[buttons, network.assembly])
 
     def make_linkages(self):
+        traitlets.link((self.width_slider, "value"), (self.network, "svg_width"))
         traitlets.directional_link((self.parent, "svg_width"), (self.network, "svg_width"))
         traitlets.directional_link((self.maximize_cb, "value"), (self.network, "maximize"))
 
