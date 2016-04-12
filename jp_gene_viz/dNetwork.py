@@ -341,6 +341,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
     def uncolorize_click(self, *args):
         self.color_overrides = {}
         self.reset_node_weights()
+        self.display_graph.reset_colorization()
         self.draw()
 
     def colorize_click(self, *args):
@@ -793,7 +794,10 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
     def select_nodes(self, nodes, from_graph, from_positions):
         "Get network restricted to nodes list and positions for nodes."
         nodes = set(nodes)
-        Gfocus = dGraph.WGraph()
+        if self.display_graph is None:
+            Gfocus = dGraph.WGraph()
+        else:
+            Gfocus = self.display_graph.same_colors()
         Pfocus = {}
         ew = from_graph.edge_weights
         nw = from_graph.node_weights
@@ -859,7 +863,9 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
 
     def restore_click(self, b=None):
         "Restore button click: restore data to loaded state."
-        self.display_graph = self.data_graph.clone()
+        new_display_graph = self.data_graph.clone()
+        new_display_graph.reset_colorization(self.display_graph)
+        self.display_graph = new_display_graph
         self.display_positions = self.data_positions.copy()
         self.do_threshhold()
         self.svg.empty()
@@ -1178,13 +1184,14 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             nw = self.display_graph.node_weights
             for node in list(nw):
                 nw[node] = weights.get(node, 0)
-        self.display_graph.reset_colorization()
+        #self.display_graph.reset_colorization()
         if colors is not None:
             self.display_graph.set_node_color_interpolator(colors)
 
     def reset_node_weights(self, weights=None, colors=None):
         self.override_node_weights = None
         self.override_node_colors = None
+        #self.display_graph.reset_colorization()
         self.set_node_weights()
 
     def handle_bounding_box_change(self, att_name, old, new):

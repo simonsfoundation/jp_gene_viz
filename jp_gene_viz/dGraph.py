@@ -7,7 +7,8 @@ from jp_gene_viz import color_scale
 from jp_gene_viz.json_mixin import JsonMixin
 
 def trim_leaves(Gin):
-    Gout = WGraph()
+    #Gout = WGraph()
+    Gout = Gin.same_colors()
     ew = Gin.edge_weights
     sources = set([a for (a,b) in ew])
     for e in ew:
@@ -19,7 +20,8 @@ def trim_leaves(Gin):
 
 
 def primary_influence(Gin, connect=False, connect_weight=1):
-    Gout = WGraph()
+    #Gout = WGraph()
+    Gout = Gin.same_colors()
     nw = Gin.node_weights
     ew = Gin.edge_weights
     influences = {}
@@ -97,12 +99,17 @@ class edgeDictConverter(object):
 
 class WGraph(JsonMixin):
     
-    def __init__(self):
+    def __init__(self, node_color_interpolator=None, edge_color_interpolator=None):
         self.edge_weights = {}
         self.node_weights = {}
         self.edge_attributes = {}
         # populate on demand
         self._node_to_descendents = None
+        self._edge_color_interpolator = edge_color_interpolator
+        self._node_color_interpolator = node_color_interpolator
+
+    def same_colors(self):
+        return WGraph(self._node_color_interpolator, self._edge_color_interpolator)
 
     json_atts = ["node_weights"]
     json_objects = {
@@ -131,6 +138,7 @@ class WGraph(JsonMixin):
         result.node_weights = self.node_weights.copy()
         # share edge attributes for now
         result.edge_attributes = self.edge_attributes
+        result.reset_colorization(self)
         return result
         
     def unordered_weight(self, a, b):
@@ -221,9 +229,13 @@ class WGraph(JsonMixin):
             self._node_color_interpolator = result
         return result
 
-    def reset_colorization(self):
-        self._node_color_interpolator = None
-        self._edge_color_interpolator = None
+    def reset_colorization(self, fromGraph=None):
+        if fromGraph is None:
+            self._node_color_interpolator = None
+            self._edge_color_interpolator = None
+        else:
+            self._node_color_interpolator = fromGraph._node_color_interpolator
+            self._edge_color_interpolator = fromGraph._edge_color_interpolator
 
     def set_node_color_interpolator(self, color_interpolator):
         # probably should clone XXXX
