@@ -2,6 +2,7 @@
 Experiments in compositional geometry (Aitchison geometry).
 """
 
+
 import numpy as np
 import math
 import traitlets
