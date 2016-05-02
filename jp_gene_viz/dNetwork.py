@@ -716,6 +716,9 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         if extrema is None:
             return None  # no selection
         (minx, miny, maxx, maxy, maxdiff) = extrema
+        # use square area
+        maxx = minx + maxdiff
+        maxy = miny + maxdiff
         P = self.display_positions
         G = self.display_graph
         selected = set()
