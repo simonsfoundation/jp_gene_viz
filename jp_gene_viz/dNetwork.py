@@ -273,13 +273,17 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
     def make_threshhold_assembly(self):
         "Create widget area related to thresholding."
         self.threshhold_slider = widgets.FloatSlider(value=-0.1, min=-0.1, max=100.0,
-                                                    step=0.1, width="300px")
+                                                    step=0.1, width="200px")
         #self.apply_button = widgets.Button(description="threshhold")
         #self.apply_button.on_click(self.apply_click)
         # makd the local variable "threshhold" an alias for the slider valut
         traitlets.link((self.threshhold_slider, "value"), (self, "threshhold"))
         self.apply_button = self.make_button("threshhold", self.apply_click)
-        assembly = widgets.HBox(children=[self.apply_button, self.threshhold_slider])
+        sign_options = ["+- all", "- only", "+ only"]
+        sign_default = sign_options[0]
+        self.threshhold_sign_dropdown = widgets.Dropdown(options=sign_options, value=sign_default, width="50px")
+        assembly = widgets.HBox(
+            children=[self.apply_button, self.threshhold_slider, self.threshhold_sign_dropdown])
         return assembly
 
     def make_settings_assembly(self):
@@ -462,9 +466,15 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.info_area.value = "EDGES\n" + "\n".join(L)
 
     def do_threshhold(self, value=None):
-        "Restrict viewable edges to have abs(weight) greater than value."
+        "Restrict viewable edges to have abs(weight) greater than value (respect sign dropdown)."
         if value is None:
             value = self.threshhold_slider.value
+        add_positives = add_negatives = True
+        sign_dropdown_value = self.threshhold_sign_dropdown.value
+        if "+" not in sign_dropdown_value:
+            add_positives = False
+        elif "-" not in sign_dropdown_value:
+            add_negatives = False
         # negative value means no threshhold
         if value < 0:
             return
@@ -475,10 +485,14 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         G = self.display_graph.clone()
         ew = dG.edge_weights
         nw = G.node_weights
-        # find edges between viewable nodes that satisfy threshhold.
+        # find edges between viewable nodes that satisfy threshhold and sign constraint.
         ewG = {}
         for e in ew:
             w = ew[e]
+            if w > 0 and not add_positives:
+                continue
+            if w < 0 and not add_negatives:
+                continue
             (f, t) = e
             if f in nw and t in nw and abs(w) >= value:
                 ewG[e] = w
@@ -653,7 +667,6 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         if not self.loaded():
             self.info_area.value = "Cannot expand: no graph loaded."
             return
-        threshhold = self.threshhold_slider.value
         dG = self.display_graph
         ew = self.data_graph.edge_weights
         dew = dG.edge_weights.copy()
@@ -663,9 +676,6 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         for e in ew:
             # observe threshhold
             w = ew[e]
-            if threshhold > 0:
-                if abs(w) < threshhold:
-                    continue
             if not e in dew:
                 (f, t) = e
                 addit = False
@@ -685,8 +695,6 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
                     if f in nodes and t in nodes:
                         w = ew[e]
                         # observe threshhold
-                        if threshhold > 0 and abs(w) < threshhold:
-                            continue
                         dG.add_edge(f, t, w)
         # position new nodes
         P = self.data_positions
@@ -695,6 +703,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             if n not in dP and n in P:
                 dP[n] = P[n]
         self.set_node_weights()
+        self.do_threshhold()
         self.svg.empty()
         self.draw()
 
