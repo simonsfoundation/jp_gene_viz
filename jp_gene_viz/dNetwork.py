@@ -667,7 +667,6 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         if not self.loaded():
             self.info_area.value = "Cannot expand: no graph loaded."
             return
-        threshhold = self.threshhold_slider.value
         dG = self.display_graph
         ew = self.data_graph.edge_weights
         dew = dG.edge_weights.copy()
@@ -677,9 +676,6 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         for e in ew:
             # observe threshhold
             w = ew[e]
-            if threshhold > 0:
-                if abs(w) < threshhold:
-                    continue
             if not e in dew:
                 (f, t) = e
                 addit = False
@@ -699,8 +695,6 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
                     if f in nodes and t in nodes:
                         w = ew[e]
                         # observe threshhold
-                        if threshhold > 0 and abs(w) < threshhold:
-                            continue
                         dG.add_edge(f, t, w)
         # position new nodes
         P = self.data_positions
@@ -709,6 +703,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             if n not in dP and n in P:
                 dP[n] = P[n]
         self.set_node_weights()
+        self.do_threshhold()
         self.svg.empty()
         self.draw()
 
