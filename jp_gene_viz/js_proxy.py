@@ -187,7 +187,8 @@ class ProxyWidget(widgets.DOMWidget):
     Proxy connection to an arbitrary javascript component.
     """
 
-    _view_name = traitlets.Unicode("JSProxyView", sync=True)
+    _view_name = traitlets.Unicode("JSProxyView").tag(sync=True)
+    _view_module = traitlets.Unicode("JSProxy").tag(sync=True)
 
     # traitlet port to use for sending commends to javascript
     commands = traitlets.List([], sync=True)
