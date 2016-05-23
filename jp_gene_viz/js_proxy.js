@@ -15,7 +15,6 @@ define("JSProxy", ["jupyter-js-widgets"], function(widgets) {
     var JSProxyView = widgets.DOMWidgetView.extend({
 
         render: function() {
-            debugger;
             var that = this;
             that.on("displayed", function() {
                 that.update();
