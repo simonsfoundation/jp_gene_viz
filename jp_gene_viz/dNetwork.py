@@ -153,8 +153,11 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         svg = self.svg = canvas.SVGCanvasWidget()
         sslider = self.size_slider = widgets.IntSlider(value=500, min=100, max=2000, step=10,
             readout=False, width="150px")
+        sslider.layout.width = "150px"
         self.depth_slider = widgets.IntSlider(
-            description="depth", value=0, min=0, max=5, width="50px")
+            description="depth", value=0, min=0, max=5, width="200px")
+        # XXX make this smaller without making the slider vanish...
+        self.depth_slider.layout.width = "200px"
         # Adjust the width and height of the svg when the size slider changes.
         traitlets.link((self, "svg_width"), (sslider, "value"))
         traitlets.directional_link((sslider, "value"), (svg, "svg_width"))
@@ -276,6 +279,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         value = "fruchterman_reingold"
         assert value in options
         w = widgets.Dropdown(options=options, value=value)
+        w.layout.width = "150px"
         return w
 
     def make_button(self, description, on_click, disabled=False, width="150px"):
@@ -283,13 +287,14 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         result = widgets.Button(description=description)
         result.on_click(on_click)
         result.disabled = disabled
-        result.width = width
+        result.layout.width = width
         return result
 
     def make_threshhold_assembly(self):
         "Create widget area related to thresholding."
         self.threshhold_slider = widgets.FloatSlider(value=-0.1, min=-0.1, max=100.0,
                                                     step=0.1, width="200px")
+        self.threshhold_slider.layout.width = "200px"
         #self.apply_button = widgets.Button(description="threshhold")
         #self.apply_button.on_click(self.apply_click)
         # makd the local variable "threshhold" an alias for the slider valut
@@ -298,6 +303,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         sign_options = ["+- all", "- only", "+ only"]
         sign_default = sign_options[0]
         self.threshhold_sign_dropdown = widgets.Dropdown(options=sign_options, value=sign_default, width="50px")
+        self.threshhold_sign_dropdown.layout.width = "50px"
         assembly = widgets.HBox(
             children=[self.apply_button, self.threshhold_slider, self.threshhold_sign_dropdown])
         return assembly
@@ -310,6 +316,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         font_fsl = self.tf_font_size_slider = widgets.IntSlider(
             description="tf labels",
             value=5, min=5, max=20, width="50px")
+        font_sl.layout.width = "200px"
+        font_fsl.layout.width = "200px"
         # colorize area
         cb = self.colorize_checkbox = self.make_checkbox("manual colorize", self.colorize_click)
         cp = self.color_picker = color_widget.ColorPicker()
@@ -335,6 +343,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         labels_sliders = widgets.HBox(children=[font_sl, font_fsl])
         color_choosers = widgets.HBox(children=[ncc.svg, ecc.svg, colorize_area])
         fmt = self.format_dropdown = widgets.Dropdown(options=["PNG", "TIFF"], value="PNG")
+        fmt.layout.width = "50px"
         iss = self.image_side_slider = widgets.IntSlider(
             description="side", value=1000, min=500, max=4000, width="100px")
         sfn = self.snapshot_filename_text = widgets.Text(
