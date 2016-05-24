@@ -142,8 +142,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             description="depth", value=0, min=0, max=5, width="50px")
         # Adjust the width and height of the svg when the size slider changes.
         traitlets.link((self, "svg_width"), (sslider, "value"))
-        traitlets.directional_link((sslider, "value"), (svg, "width"))
-        traitlets.directional_link((sslider, "value"), (svg, "height"))
+        traitlets.directional_link((sslider, "value"), (svg, "svg_width"))
+        traitlets.directional_link((sslider, "value"), (svg, "svg_height"))
         # Adjust the svg view box when the bounding box changes.
         svg.on_trait_change(self.handle_bounding_box_change, "boundingBox")
         svg.add_style("background-color", "white")
