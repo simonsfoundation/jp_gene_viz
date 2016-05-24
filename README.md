@@ -12,4 +12,4 @@ click the image link below:
 
 Note: We are upgrading the repository to work with the latest ipywidgets and iPython
 releases.  If you have problems installing the package please post an issue at
-[https://github.com/simonsfoundation/jp_svg_canvas](https://github.com/simonsfoundation/jp_svg_canvas).
+[https://github.com/simonsfoundation/jp_gene_viz](https://github.com/simonsfoundation/jp_gene_viz).
