@@ -120,8 +120,8 @@ class WigData(traitlets.HasTraits):
             end_location = self.end_position
         else:
             self.end_position = end_location
-        svg_width = int(svg_width or svg.width)
-        svg_height = int(svg_height or svg.height)
+        svg_width = int(svg_width or svg.svg_width)
+        svg_height = int(svg_height or svg.svg_height)
         svg.empty()
         color = self.color
         maxheight = self.maximum(start_location, end_location)
@@ -164,8 +164,8 @@ def canvas_test(filename="ex2.wig.gz", width=500, height=100):
     canvas.load_javascript_support()
     svg = canvas.SVGCanvasWidget()
     svg.add_style("background-color", "cyan")
-    svg.width = width
-    svg.height = height
+    svg.svg_width = width
+    svg.svg_height = height
     svg.set_view_box(0, 0, width, height)
     W = WigData()
     print ("loading: " + repr(filename))
