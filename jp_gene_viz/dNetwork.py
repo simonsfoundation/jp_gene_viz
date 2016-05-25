@@ -15,6 +15,7 @@ from jp_gene_viz import color_widget
 from jp_gene_viz import js_context
 from jp_gene_viz.json_mixin import JsonMixin
 from jp_gene_viz import file_chooser_widget
+from jp_gene_viz.widget_utils import set_visibility, is_visible
 import fnmatch
 import igraph
 import json
@@ -24,19 +25,6 @@ import time
 import zlib
 
 SELECTION = "SELECTION"
-
-def set_visibility(element, visible):
-    # hack: store the old display -- we want to restore it to the same value later...
-    old_display = element.layout.display
-    if old_display != "none" and not hasattr(element, "save_display"):
-        element.save_display = old_display
-    display = "none"
-    if visible:
-        display = getattr(element, "save_display", "") # reset to previous value
-    element.layout.display = display
-
-def is_visible(element):
-    return element.layout.display != "none"
 
 # This function should be called once in a notebook before creating a display.
 #from jp_svg_canvas.canvas import load_javascript_support
