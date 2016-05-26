@@ -57,7 +57,7 @@ class PairedLinks(traitlets.HasTraits):
         result = widgets.Button(description=description)
         result.on_click(on_click)
         result.disabled = disabled
-        result.width = width
+        result.layout.width = width
         return result
 
     def right_sync_click(self, b):
