@@ -91,6 +91,7 @@ class GraphDiagramWidget(traitlets.HasTraits):
         edc.draw()
         eds = self.edge_style = widgets.Dropdown(description="edge style",
             options=["", "solid", "dotted", "dashed"], value="solid")
+        eds.width = "150px"
         # detail control buttons
         applyb = self.apply_button = widgets.Button(description="apply")
         resetb = self.reset_button = widgets.Button(description="reset")
@@ -113,7 +114,7 @@ class GraphDiagramWidget(traitlets.HasTraits):
         # make the assembly big enough
         hideable.height = 650
         # restore from addenda if archived
-        addenda.reset(self, key, default_key)
+        #addenda.reset(self, key, default_key)
 
     def reset_inputs(self, b=None):
         self.edge_style.value = ""
@@ -170,7 +171,7 @@ class GraphDiagramWidget(traitlets.HasTraits):
 
     def show(self):
         display(self.assembly)
-        self.widget.flush()
+        self.revert_click(None)
 
     def label_change(self, att_name, old, new):
         # change the label of the currently selected object.
