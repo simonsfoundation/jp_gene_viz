@@ -16,9 +16,11 @@ import ipywidgets as widgets
 from IPython.display import display
 from jp_gene_viz import color_widget
 
-js_context.load_if_not_loaded(["cytoscape.js"])
-js_proxy.load_javascript_support()
-color_widget.load_javascript_support()
+
+def initialize():
+    js_context.load_if_not_loaded(["cytoscape.js"])
+    js_proxy.load_javascript_support()
+    color_widget.load_javascript_support()
 
 
 class GraphDiagramWidget(traitlets.HasTraits):
@@ -33,6 +35,7 @@ class GraphDiagramWidget(traitlets.HasTraits):
 
     def __init__(self, addenda, key, default_key=None, *pargs, **kwargs):
         super(GraphDiagramWidget, self).__init__(*pargs, **kwargs)
+        initialize()
         self.addenda = addenda
         self.key = key
         self.default_key = default_key
@@ -61,7 +64,7 @@ class GraphDiagramWidget(traitlets.HasTraits):
         info = self.info_area = widgets.Textarea(description="status")
         info.visible = False
         # node details
-        ns = self.node_shape = widgets.Dropdown(description="shape", options=SHAPES, value="")
+        ns = self.node_shape = widgets.Dropdown(description="shape", options=SHAPES, value="ellipse")
         #nbc = self.node_background_color = widgets.Text(description="color", width="200px")
         nbc_html = widgets.HTML("node color")
         nbc = self.node_background_color = color_widget.ColorPicker()
@@ -75,14 +78,14 @@ class GraphDiagramWidget(traitlets.HasTraits):
         lfs = self.label_font_size = widgets.IntSlider(description="font size",
             value=0, min=0, max=50, width="50px")
         lal = self.label_align = widgets.Dropdown(description="align",
-            options=["", "top", "center", "bottom"], value="")
+            options=["", "top", "center", "bottom"], value="center")
         # edge details
         #edc = self.edge_color = widgets.Text(description="edge color", width="200px")
         edc_html = widgets.HTML("edge color")
         edc = self.edge_color = color_widget.ColorPicker()
         edc.draw()
         eds = self.edge_style = widgets.Dropdown(description="edge style",
-            options=["", "solid", "dotted", "dashed"], value="")
+            options=["", "solid", "dotted", "dashed"], value="solid")
         # detail control buttons
         applyb = self.apply_button = widgets.Button(description="apply")
         resetb = self.reset_button = widgets.Button(description="reset")
