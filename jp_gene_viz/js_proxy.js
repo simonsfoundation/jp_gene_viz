@@ -19,9 +19,11 @@ define("JSProxy", ["jupyter-js-widgets"], function(widgets) {
             that.on("displayed", function() {
                 that.update();
             });
+            // Wrap $el as a proper jQuery object
+            that.$$el = $(that.$el);
             // "new" keyword emulation
             // http://stackoverflow.com/questions/17342497/dynamically-control-arguments-while-creating-objects-in-javascript
-            that.$el.New = function(klass, args) {
+            that.$$el.New = function(klass, args) {
                 var obj = Object.create(klass.prototype);
                 return klass.apply(obj, args) || obj;
             };
@@ -29,7 +31,7 @@ define("JSProxy", ["jupyter-js-widgets"], function(widgets) {
             // fix key bindings for wayward element.
             // XXXX This is a bit of a hack that may not be needed in future
             // Jupyter releases.
-            that.$el.Fix = function(element) {
+            that.$$el.Fix = function(element) {
                 debugger;
                 that.model.widget_manager.keyboard_manager.register_events(element);
             };
