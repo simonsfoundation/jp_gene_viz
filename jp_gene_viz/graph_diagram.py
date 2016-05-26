@@ -46,6 +46,7 @@ class GraphDiagramWidget(traitlets.HasTraits):
         self.label_id = None
         w = self.configure_widget()
         lt = self.label_text = widgets.Text(value="", width="200px")
+        lt.layout.width = "200px"
         lt.on_trait_change(self.label_change, "value")
         n = self.new_button = widgets.Button(description="O")
         ly = self.layout_button = widgets.Button(description="layout")
@@ -57,19 +58,21 @@ class GraphDiagramWidget(traitlets.HasTraits):
         rv.on_click(self.revert_click)
         sn.on_click(self.snap_click)
         dl.on_click(self.delete_click)
-        dl.width = "50px"
-        n.width = "50px"
+        dl.layout.width = "50px"
+        n.layout.width = "50px"
         n.on_click(self.new_click)
         ly.on_click(self.layout_click)
         info = self.info_area = widgets.Textarea(description="status")
         info.visible = False
         # node details
         ns = self.node_shape = widgets.Dropdown(description="shape", options=SHAPES, value="ellipse")
+        ns.layout.width = "100px"
         #nbc = self.node_background_color = widgets.Text(description="color", width="200px")
         nbc_html = widgets.HTML("node color")
         nbc = self.node_background_color = color_widget.ColorPicker()
         nbc.draw()
         nbi = self.node_background_image = widgets.Text(description="image", width="200px")
+        nbi.layout.width = "200px"
         # label details
         #lbc = self.label_color = widgets.Text(description="label color", width="200px")
         lbc_html = widgets.HTML("label color")
@@ -77,8 +80,10 @@ class GraphDiagramWidget(traitlets.HasTraits):
         lbc.draw()
         lfs = self.label_font_size = widgets.IntSlider(description="font size",
             value=0, min=0, max=50, width="50px")
+        lfs.layout.width = "150px"
         lal = self.label_align = widgets.Dropdown(description="align",
             options=["", "top", "center", "bottom"], value="center")
+        lal.layout.width = "150px"
         # edge details
         #edc = self.edge_color = widgets.Text(description="edge color", width="200px")
         edc_html = widgets.HTML("edge color")
