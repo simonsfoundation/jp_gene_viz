@@ -3,6 +3,7 @@ import pprint
 import ipywidgets as widgets
 from IPython.display import display
 from jp_svg_canvas import canvas
+from jp_gene_viz.widget_utils import set_visibility, is_visible
 import traitlets
 import fnmatch
 import color_scale
@@ -19,12 +20,13 @@ class ExpressionDisplay(traitlets.HasTraits):
         super(ExpressionDisplay, self).__init__(*args, **kwargs)
         svg = self.svg = canvas.SVGCanvasWidget()
         svg.add_style("background-color", "cornsilk")
-        svg.width = 550
-        svg.height = 550
+        svg.svg_width = 550
+        svg.svg_height = 550
         svg.watch_event = "click mousemove"
         svg.default_event_callback = self.svg_callback
         cc = self.color_chooser = color_widget.ColorChooser()
-        cc.svg.visible = False   # default
+        #cc.svg.visible = False   # default
+        set_visibility(cc.svg, False)
 
         self.text_assembly = self.make_text_displays()
         self.match_assembly = self.make_match_assembly()
@@ -72,22 +74,26 @@ class ExpressionDisplay(traitlets.HasTraits):
 
     def make_text_displays(self):
         self.row_text = widgets.Text(description="row", value="")
-        self.row_text.width = "100px"
+        self.row_text.layout.width = "100px"
         self.col_text = widgets.Text(description="col", value="")
-        self.col_text.width = "100px"
+        self.col_text.layout.width = "100px"
         sslider = self.size_slider = widgets.FloatSlider(value=550, min=550, max=3000,
             step=10, readout=False, width="100px")
+        sslider.layout.width = "150px"
         svg = self.svg
-        traitlets.directional_link((sslider, "value"), (svg, "width"))
-        traitlets.directional_link((sslider, "value"), (svg, "height"))
+        traitlets.directional_link((sslider, "value"), (svg, "svg_width"))
+        traitlets.directional_link((sslider, "value"), (svg, "svg_height"))
         assembly = widgets.HBox(children=[self.row_text, self.col_text, sslider])
         return assembly
 
     def make_match_assembly(self):
         b = self.match_button = widgets.Button(description="match", width="50px")
+        b.layout.width = "50px"
         b.on_click(self.match_click)
         t = self.match_text = widgets.Text(width="300px")
+        t.layout.width = "300px"
         d = self.draw_button = widgets.Button(description="draw", width="50px")
+        d.layout.width = "50px"
         d.on_click(self.draw_click)
         c = self.color_checkbox = widgets.Checkbox(description="colors", value=False)
         c.on_trait_change(self.colors_click, "value")
@@ -95,7 +101,8 @@ class ExpressionDisplay(traitlets.HasTraits):
         return assembly
 
     def colors_click(self, b):
-        self.color_chooser.svg.visible = self.color_checkbox.value
+        #self.color_chooser.svg.visible = self.color_checkbox.value
+        set_visibility(self.color_chooser.svg, self.color_checkbox.value)
         self.draw()
 
     def draw_click(self, b):
@@ -160,7 +167,7 @@ class ExpressionDisplay(traitlets.HasTraits):
         svg.empty()
         heat_map.draw(svg, self.dx, self.dy, self.labels_space)
         cc = self.color_chooser
-        if cc.svg.visible:
+        if is_visible(cc.svg):
             self.info_area.value = "displaying color chooser."
             cc.scale = heat_map.get_color_interpolator()
             cc.count_values(heat_map.data.flatten())
