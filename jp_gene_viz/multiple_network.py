@@ -67,6 +67,7 @@ class NetworkHolder(traitlets.HasTraits):
         sb = self.sync_button = self.make_button(u"\u22A8", self.sync_all, "sync all")
         self.width_slider = s = widgets.IntSlider(value=200, min=100, max=2000, step=10,
             readout=False, width="150px")
+        s.layout.width = "150px"
         self.make_linkages()
         buttons = widgets.HBox(children=[db, ib, sb, s, mcb])
         self.assembly = widgets.VBox(children=[buttons, network.assembly])
@@ -80,7 +81,7 @@ class NetworkHolder(traitlets.HasTraits):
         "Create a button."
         result = widgets.Button(description=description, tooltip=tooltip)
         result.on_click(on_click)
-        result.width = width
+        result.layout.width = width
         return result
 
     def get_network(self):
