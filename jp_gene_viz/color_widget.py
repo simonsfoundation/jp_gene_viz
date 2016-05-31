@@ -29,9 +29,9 @@ class ColorPicker(traitlets.HasTraits, ColorMixin):
     def __init__(self, *args, **kwargs):
         super(ColorPicker, self).__init__(*args, **kwargs)
         svg = self.svg = canvas.SVGCanvasWidget()
-        svg.height = self.palette_side + 2 * self.dy
-        svg.width = self.palette_side
-        svg.set_view_box(0, 0, svg.width, svg.height)
+        svg.svg_height = self.palette_side + 2 * self.dy
+        svg.svg_width = self.palette_side
+        svg.set_view_box(0, 0, svg.svg_width, svg.svg_height)
         svg.watch_event = "click"
         svg.default_event_callback = self.svg_callback
         #self.color = color_scale.color(color_scale.color64(0, 0))
@@ -103,9 +103,9 @@ class ColorChooser(traitlets.HasTraits, ColorMixin):
     def __init__(self, *args, **kwargs):
         super(ColorChooser, self).__init__(*args, **kwargs)
         svg = self.svg = canvas.SVGCanvasWidget()
-        svg.width = self.margin * 2 + self.palette_side
+        svg.svg_width = self.margin * 2 + self.palette_side
         middle = self.palette_side + self.histogram_region + self.bar_region
-        svg.height = self.margin * 2 + middle
+        svg.svg_height = self.margin * 2 + middle
         svg.set_view_box(- self.margin,
                          - self.margin,
                          self.palette_side + 2 * self.margin,

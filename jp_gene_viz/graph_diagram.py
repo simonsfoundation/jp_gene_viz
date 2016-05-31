@@ -16,9 +16,11 @@ import ipywidgets as widgets
 from IPython.display import display
 from jp_gene_viz import color_widget
 
-js_context.load_if_not_loaded(["cytoscape.js"])
-js_proxy.load_javascript_support()
-color_widget.load_javascript_support()
+
+def initialize():
+    js_context.load_if_not_loaded(["cytoscape.js"])
+    js_proxy.load_javascript_support()
+    color_widget.load_javascript_support()
 
 
 class GraphDiagramWidget(traitlets.HasTraits):
@@ -33,6 +35,7 @@ class GraphDiagramWidget(traitlets.HasTraits):
 
     def __init__(self, addenda, key, default_key=None, *pargs, **kwargs):
         super(GraphDiagramWidget, self).__init__(*pargs, **kwargs)
+        initialize()
         self.addenda = addenda
         self.key = key
         self.default_key = default_key
@@ -43,6 +46,7 @@ class GraphDiagramWidget(traitlets.HasTraits):
         self.label_id = None
         w = self.configure_widget()
         lt = self.label_text = widgets.Text(value="", width="200px")
+        lt.layout.width = "200px"
         lt.on_trait_change(self.label_change, "value")
         n = self.new_button = widgets.Button(description="O")
         ly = self.layout_button = widgets.Button(description="layout")
@@ -54,19 +58,21 @@ class GraphDiagramWidget(traitlets.HasTraits):
         rv.on_click(self.revert_click)
         sn.on_click(self.snap_click)
         dl.on_click(self.delete_click)
-        dl.width = "50px"
-        n.width = "50px"
+        dl.layout.width = "50px"
+        n.layout.width = "50px"
         n.on_click(self.new_click)
         ly.on_click(self.layout_click)
         info = self.info_area = widgets.Textarea(description="status")
         info.visible = False
         # node details
-        ns = self.node_shape = widgets.Dropdown(description="shape", options=SHAPES, value="")
+        ns = self.node_shape = widgets.Dropdown(description="shape", options=SHAPES, value="ellipse")
+        ns.layout.width = "100px"
         #nbc = self.node_background_color = widgets.Text(description="color", width="200px")
         nbc_html = widgets.HTML("node color")
         nbc = self.node_background_color = color_widget.ColorPicker()
         nbc.draw()
         nbi = self.node_background_image = widgets.Text(description="image", width="200px")
+        nbi.layout.width = "200px"
         # label details
         #lbc = self.label_color = widgets.Text(description="label color", width="200px")
         lbc_html = widgets.HTML("label color")
@@ -74,15 +80,18 @@ class GraphDiagramWidget(traitlets.HasTraits):
         lbc.draw()
         lfs = self.label_font_size = widgets.IntSlider(description="font size",
             value=0, min=0, max=50, width="50px")
+        lfs.layout.width = "150px"
         lal = self.label_align = widgets.Dropdown(description="align",
-            options=["", "top", "center", "bottom"], value="")
+            options=["", "top", "center", "bottom"], value="center")
+        lal.layout.width = "150px"
         # edge details
         #edc = self.edge_color = widgets.Text(description="edge color", width="200px")
         edc_html = widgets.HTML("edge color")
         edc = self.edge_color = color_widget.ColorPicker()
         edc.draw()
         eds = self.edge_style = widgets.Dropdown(description="edge style",
-            options=["", "solid", "dotted", "dashed"], value="")
+            options=["", "solid", "dotted", "dashed"], value="solid")
+        eds.width = "150px"
         # detail control buttons
         applyb = self.apply_button = widgets.Button(description="apply")
         resetb = self.reset_button = widgets.Button(description="reset")
@@ -105,7 +114,7 @@ class GraphDiagramWidget(traitlets.HasTraits):
         # make the assembly big enough
         hideable.height = 650
         # restore from addenda if archived
-        addenda.reset(self, key, default_key)
+        #addenda.reset(self, key, default_key)
 
     def reset_inputs(self, b=None):
         self.edge_style.value = ""
@@ -162,7 +171,7 @@ class GraphDiagramWidget(traitlets.HasTraits):
 
     def show(self):
         display(self.assembly)
-        self.widget.flush()
+        self.revert_click(None)
 
     def label_change(self, att_name, old, new):
         # change the label of the currently selected object.

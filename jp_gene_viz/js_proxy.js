@@ -1,21 +1,29 @@
 
 // This is the javascript side to match js_proxy.py.
 // See js_proxy.py for an explanation of the command transfer
-// protocol.
+// protocol
 
-require(["widgets/js/widget", "widgets/js/manager", "underscore", "jquery"
-], function(widget, manager, _, $) {
+// imitating ipywidgets/docs/source/examples/Custom Widget - Hello World.ipynb
 
-    var JSProxyView = widget.DOMWidgetView.extend({
+//require(["widgets/js/widget", "widgets/js/manager", "underscore", "jquery"
+//], function(widget, manager, _, $) {
+
+require.undef("JSProxy");
+
+define("JSProxy", ["jupyter-js-widgets"], function(widgets) {
+
+    var JSProxyView = widgets.DOMWidgetView.extend({
 
         render: function() {
             var that = this;
             that.on("displayed", function() {
                 that.update();
             });
+            // Wrap $el as a proper jQuery object
+            that.$$el = $(that.$el);
             // "new" keyword emulation
             // http://stackoverflow.com/questions/17342497/dynamically-control-arguments-while-creating-objects-in-javascript
-            that.$el.New = function(klass, args) {
+            that.$$el.New = function(klass, args) {
                 var obj = Object.create(klass.prototype);
                 return klass.apply(obj, args) || obj;
             };
@@ -23,7 +31,7 @@ require(["widgets/js/widget", "widgets/js/manager", "underscore", "jquery"
             // fix key bindings for wayward element.
             // XXXX This is a bit of a hack that may not be needed in future
             // Jupyter releases.
-            that.$el.Fix = function(element) {
+            that.$$el.Fix = function(element) {
                 debugger;
                 that.model.widget_manager.keyboard_manager.register_events(element);
             };
@@ -56,7 +64,11 @@ require(["widgets/js/widget", "widgets/js/manager", "underscore", "jquery"
                 var remainder = command.slice();
                 remainder.shift();
                 if (indicator == "element") {
-                    result = that.$el;
+                    // Make sure the element is wrapped as a proper JQuery(UI) object
+                    if (!that.$$el) {
+                        that.$$el = $(that.$el);
+                    }
+                    result = that.$$el;
                 } else if (indicator == "window") {
                     result = window;
                 } else if (indicator == "method") {
@@ -99,7 +111,11 @@ require(["widgets/js/widget", "widgets/js/manager", "underscore", "jquery"
                     var target_desc = remainder.shift();
                     var target = that.execute_command(target_desc);
                     var name = remainder.shift();
-                    result = target[name];
+                    try {
+                        result = target[name];
+                    } catch(err) {
+                        result = "failed to get "+name+" from "+target+" :: "+err;
+                    }
                 } else if (indicator == "set") {
                     var target_desc = remainder.shift();
                     var target = that.execute_command(target_desc);
@@ -178,5 +194,8 @@ require(["widgets/js/widget", "widgets/js/manager", "underscore", "jquery"
 
     });
 
-    manager.WidgetManager.register_widget_view('JSProxyView', JSProxyView);
+    //manager.WidgetManager.register_widget_view('JSProxyView', JSProxyView);
+    return {
+        JSProxyView: JSProxyView
+    }
 });
