@@ -74,9 +74,9 @@ class ExpressionDisplay(traitlets.HasTraits):
 
     def make_text_displays(self):
         self.row_text = widgets.Text(description="row", value="")
-        self.row_text.layout.width = "100px"
+        self.row_text.layout.width = "200px"
         self.col_text = widgets.Text(description="col", value="")
-        self.col_text.layout.width = "100px"
+        self.col_text.layout.width = "200px"
         sslider = self.size_slider = widgets.FloatSlider(value=550, min=550, max=3000,
             step=10, readout=False, width="100px")
         sslider.layout.width = "150px"
