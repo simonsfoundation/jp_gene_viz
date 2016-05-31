@@ -43,7 +43,7 @@ def explore_directory(directory):
     from IPython.display import display, HTML
     js_proxy.load_javascript_support()
     load_highcharts = """
-    <script src="http://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
     """
     display(HTML(load_highcharts))
     widget = js_proxy.ProxyWidget()
