@@ -14,9 +14,13 @@ from IPython.display import display
 #display(HTML(load_three))
 from jp_gene_viz import js_context
 
-js_context.load_if_not_loaded(["three.js"])
-js_context.load_if_not_loaded(["three_curve.js"])
-js_proxy.load_javascript_support()
+def initialize(loaded=[False]):
+    if not loaded[0]:
+        print "loading javascript"
+        js_context.load_if_not_loaded(["three.js"])
+        js_context.load_if_not_loaded(["three_curve.js"])
+        js_proxy.load_javascript_support()
+    loaded[0] = True
 
 def closure(vector):
     return vector / (1.0*vector.sum(0))
@@ -169,6 +173,7 @@ class Diagram(traitlets.HasTraits):
 
     def __init__(self, *args, **kwargs):
         super(Diagram, self).__init__(*args, **kwargs)
+        initialize()
         mx = self.max_angle * 2
         d = self.diagram = js_proxy.ProxyWidget()
         xy = self.xy_slider = widgets.FloatSlider(
