@@ -15,9 +15,10 @@ from sklearn.cross_validation import train_test_split
 
 
 def load_javascript_support():
+    print "loading highcharts javascript"
     js_proxy.load_javascript_support()
     load_highcharts = """
-    <script src="http://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
     """
     display(HTML(load_highcharts))
     load_modules = """

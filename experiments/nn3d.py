@@ -28,11 +28,15 @@ load_font = """
 """
 #display(HTML(load_three))
 from jp_gene_viz import js_context
-js_context.load_if_not_loaded(["three.js"])
-js_context.load_if_not_loaded(["FontUtils.js"])
-#time.sleep(0.1)
-#display(HTML(load_font))
-js_context.load_if_not_loaded(["helvetiker_regular.typeface.js"])
+
+def initialize():
+    print "loading javascript"
+    js_proxy.load_javascript_support()
+    js_context.load_if_not_loaded(["three.js"])
+    js_context.load_if_not_loaded(["FontUtils.js"])
+    #time.sleep(0.1)
+    #display(HTML(load_font))
+    js_context.load_if_not_loaded(["helvetiker_regular.typeface.js"])
 
 
 class Nearest(traitlets.HasTraits):
@@ -66,6 +70,7 @@ class Nearest(traitlets.HasTraits):
 
     def __init__(self, dataset, *args, **kwargs):
         super(Nearest, self).__init__(*args, **kwargs)
+        initialize()
         self.dataset = dataset
         feature_names = list(dataset.feature_names)
         self.x_name = feature_names[0]
