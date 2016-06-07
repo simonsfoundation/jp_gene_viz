@@ -108,6 +108,7 @@ PASSED TO PYTHON: None
 """
 
 import time
+import IPython
 from IPython.display import display, HTML
 import ipywidgets as widgets
 import traitlets
@@ -119,7 +120,7 @@ import types
 
 # In the IPython context get_ipython is a builtin.
 # get a reference to the IPython notebook object.
-ip = get_ipython()
+ip = IPython.get_ipython()
 
 def delay_in_thread(callable):
     """
@@ -187,7 +188,8 @@ class ProxyWidget(widgets.DOMWidget):
     Proxy connection to an arbitrary javascript component.
     """
 
-    _view_name = traitlets.Unicode("JSProxyView", sync=True)
+    _view_name = traitlets.Unicode("JSProxyView").tag(sync=True)
+    _view_module = traitlets.Unicode("JSProxy").tag(sync=True)
 
     # traitlet port to use for sending commends to javascript
     commands = traitlets.List([], sync=True)

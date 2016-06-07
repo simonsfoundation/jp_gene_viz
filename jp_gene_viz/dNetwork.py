@@ -15,6 +15,7 @@ from jp_gene_viz import color_widget
 from jp_gene_viz import js_context
 from jp_gene_viz.json_mixin import JsonMixin
 from jp_gene_viz import file_chooser_widget
+from jp_gene_viz.widget_utils import set_visibility, is_visible
 import fnmatch
 import igraph
 import json
@@ -123,7 +124,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.labels_button = self.make_checkbox("labels", self.labels_click)
         self.settings_button = self.make_checkbox("settings", self.settings_click)
         self.motifs_button = self.make_checkbox("show motifs", self.show_motifs)
-        self.motifs_button.visible = False
+        #self.motifs_button.visible = False
+        set_visibility(self.motifs_button, False)
         self.motifs_button.value = True
         self.draw_button = self.make_button("draw", self.draw_click)
         self.tf_only_button = self.make_button("TF only", self.tf_only_click)
@@ -134,16 +136,20 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.info_area = widgets.Textarea(description="status")
         self.settings_assembly = self.make_settings_assembly()
         self.dialog = self.make_dialog()
-        self.settings_assembly.visible = False
+        #self.settings_assembly.visible = False
+        set_visibility(self.settings_assembly, False)
         svg = self.svg = canvas.SVGCanvasWidget()
         sslider = self.size_slider = widgets.IntSlider(value=500, min=100, max=2000, step=10,
             readout=False, width="150px")
+        sslider.layout.width = "150px"
         self.depth_slider = widgets.IntSlider(
-            description="depth", value=0, min=0, max=5, width="50px")
+            description="depth", value=0, min=0, max=5, width="200px")
+        # XXX make this smaller without making the slider vanish...
+        self.depth_slider.layout.width = "200px"
         # Adjust the width and height of the svg when the size slider changes.
         traitlets.link((self, "svg_width"), (sslider, "value"))
-        traitlets.directional_link((sslider, "value"), (svg, "width"))
-        traitlets.directional_link((sslider, "value"), (svg, "height"))
+        traitlets.directional_link((sslider, "value"), (svg, "svg_width"))
+        traitlets.directional_link((sslider, "value"), (svg, "svg_height"))
         # Adjust the svg view box when the bounding box changes.
         svg.on_trait_change(self.handle_bounding_box_change, "boundingBox")
         svg.add_style("background-color", "white")
@@ -151,7 +157,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         svg.default_event_callback = self.svg_callback
         hr = self.hideable_right = widgets.VBox(
             children=[self.threshhold_assembly, self.pattern_assembly, self.info_area, self.settings_assembly])
-        traitlets.directional_link((self, "maximize"), (hr, "visible"))
+        #traitlets.directional_link((self, "maximize"), (hr, "visible"))
+        self.on_trait_change(self.handle_maximize_change, "maximize")
         right_panel = [self.title_html,
                       self.svg,
                       self.hideable_right]
@@ -179,7 +186,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
                    #self.settings_assembly,
                    ]
         self.inputs = widgets.VBox(children=buttons)
-        traitlets.directional_link((self, "maximize"), (self.inputs, "visible"))
+        #traitlets.directional_link((self, "maximize"), (self.inputs, "visible"))
         dummy = self.dummy_widget = js_proxy.ProxyWidget()
         # Note: dummy widget has the entire assembly as its parent.
         #    So code can modify the parent using d.element().parent().
@@ -260,6 +267,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         value = "fruchterman_reingold"
         assert value in options
         w = widgets.Dropdown(options=options, value=value)
+        w.layout.width = "150px"
         return w
 
     def make_button(self, description, on_click, disabled=False, width="150px"):
@@ -267,13 +275,14 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         result = widgets.Button(description=description)
         result.on_click(on_click)
         result.disabled = disabled
-        result.width = width
+        result.layout.width = width
         return result
 
     def make_threshhold_assembly(self):
         "Create widget area related to thresholding."
         self.threshhold_slider = widgets.FloatSlider(value=-0.1, min=-0.1, max=100.0,
                                                     step=0.1, width="200px")
+        self.threshhold_slider.layout.width = "200px"
         #self.apply_button = widgets.Button(description="threshhold")
         #self.apply_button.on_click(self.apply_click)
         # makd the local variable "threshhold" an alias for the slider valut
@@ -282,6 +291,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         sign_options = ["+- all", "- only", "+ only"]
         sign_default = sign_options[0]
         self.threshhold_sign_dropdown = widgets.Dropdown(options=sign_options, value=sign_default, width="50px")
+        self.threshhold_sign_dropdown.layout.width = "50px"
         assembly = widgets.HBox(
             children=[self.apply_button, self.threshhold_slider, self.threshhold_sign_dropdown])
         return assembly
@@ -294,12 +304,15 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         font_fsl = self.tf_font_size_slider = widgets.IntSlider(
             description="tf labels",
             value=5, min=5, max=20, width="50px")
+        font_sl.layout.width = "200px"
+        font_fsl.layout.width = "200px"
         # colorize area
         cb = self.colorize_checkbox = self.make_checkbox("manual colorize", self.colorize_click)
         cp = self.color_picker = color_widget.ColorPicker()
         uc = self.undo_colorize_button = self.make_button("reset default", self.uncolorize_click)
         cp.draw()
-        cp.svg.visible = False
+        #cp.svg.visible = False
+        set_visibility(cp.svg, False)
         #traitlets.directional_link((cb, "value"), (cp.svg, "visible"))
         cp.on_trait_change(self.colorize_click, "color")
         colorize_area = widgets.VBox(children=[cb, cp.svg, uc])
@@ -318,6 +331,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         labels_sliders = widgets.HBox(children=[font_sl, font_fsl])
         color_choosers = widgets.HBox(children=[ncc.svg, ecc.svg, colorize_area])
         fmt = self.format_dropdown = widgets.Dropdown(options=["PNG", "TIFF"], value="PNG")
+        fmt.layout.width = "50px"
         iss = self.image_side_slider = widgets.IntSlider(
             description="side", value=1000, min=500, max=4000, width="100px")
         sfn = self.snapshot_filename_text = widgets.Text(
@@ -339,7 +353,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             snap_file_area,
             snapshot_area])
         #assembly = widgets.VBox(children=[font_sl, font_fsl, ncc.svg, ecc.svg])
-        assembly.visible = False # default
+        #assembly.visible = False # default
+        set_visibility(assembly, False)
         return assembly
 
     def uncolorize_click(self, *args):
@@ -349,15 +364,19 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.draw()
 
     def colorize_click(self, *args):
-        if self.colorize_checkbox.value:
-            self.color_picker.svg.visible = True
-            self.node_color_chooser.svg.visible = False
-            self.edge_color_chooser.svg.visible = False
+        checked = self.colorize_checkbox.value
+        set_visibility(self.color_picker.svg, checked)
+        set_visibility(self.node_color_chooser.svg, not checked)
+        set_visibility(self.edge_color_chooser.svg, not checked)
+        if checked:
+            #self.color_picker.svg.visible = True
+            #self.node_color_chooser.svg.visible = False
+            #self.edge_color_chooser.svg.visible = False
             self.colorize_cursor(self.color_picker.color)
         else:
-            self.color_picker.svg.visible = False
-            self.node_color_chooser.svg.visible = True
-            self.edge_color_chooser.svg.visible = True
+            #self.color_picker.svg.visible = False
+            #self.node_color_chooser.svg.visible = True
+            #self.edge_color_chooser.svg.visible = True
             self.uncolorize_cursor()
 
     def filename_click(self, b=None):
@@ -580,7 +599,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
                 svg.fit(False)
             svg.send_commands()
             self.info_area.value = "Labels added."
-        if self.settings_assembly.visible:
+        if is_visible(self.settings_assembly):
             #G.reset_colorization()
             self.info_area.value = "Displaying color choosers."
             ecc = self.edge_color_chooser
@@ -626,10 +645,11 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.draw()
 
     def settings_click(self, b=None):
-        self.settings_assembly.visible = self.settings_button.value
+        checked = self.settings_button.value
+        set_visibility(self.settings_assembly, checked)
         self.svg.empty()
         self.draw()
-        self.info_area.value = "settings " + repr(self.settings_button.value)
+        self.info_area.value = "settings " + repr(checked)
 
     def show_motifs(self, b=None):
         # do nothing
@@ -956,7 +976,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         # Only show the dialog if a motif collection is attached to the network.
         if self.motif_collection is None:
             return
-        self.motifs_button.visible = True
+        #self.motifs_button.visible = True
+        set_visibility(self.motifs_button, True)
         if not self.motifs_button.value:
             return
         edge = tuple(edge)
@@ -1216,6 +1237,11 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             y = new["y"]
             hw = max(100, h, w) + 10
             svg.set_view_box(x - 5, y - 5, hw, hw)
+
+    def handle_maximize_change(self, att_name, old, new):
+        set_visibility(self.hideable_right, self.maximize)
+        set_visibility(self.inputs, self.maximize)
+
 
 def display_network(filename, N=None, threshhold=20.0, save_layout=True, show=True):
     from jp_gene_viz import dLayout

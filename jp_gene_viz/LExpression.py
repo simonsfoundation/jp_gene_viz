@@ -47,7 +47,7 @@ class LinkedExpressionNetwork(traitlets.HasTraits):
         result = widgets.Button(description=description)
         result.on_click(on_click)
         result.disabled = disabled
-        result.width = width
+        result.layout.width = width
         return result
 
     def gene_click(self, b):
