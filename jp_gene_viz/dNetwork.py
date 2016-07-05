@@ -692,10 +692,13 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         dew = dG.edge_weights.copy()
         dnw = dG.node_weights.copy()
         nodes = set(dnw)
+        threshhold = self.threshhold_slider.value
         # find nodes for expansion
         for e in ew:
             # observe threshhold
             w = ew[e]
+            if abs(w) < threshhold:
+                continue
             if not e in dew:
                 (f, t) = e
                 addit = False
