@@ -287,7 +287,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         #self.apply_button.on_click(self.apply_click)
         # makd the local variable "threshhold" an alias for the slider valut
         traitlets.link((self.threshhold_slider, "value"), (self, "threshhold"))
-        self.apply_button = self.make_button("threshhold", self.apply_click)
+        self.apply_button = self.make_button("threshold", self.apply_click)
         sign_options = ["+- all", "- only", "+ only"]
         sign_default = sign_options[0]
         self.threshhold_sign_dropdown = widgets.Dropdown(options=sign_options, value=sign_default, width="50px")
