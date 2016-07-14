@@ -618,7 +618,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
     def match_click(self, b=None):
         "Restrict viewable graph to nodes matching text input."
         self.info_area.value = "match click"
-        patterns = self.pattern_text.value.split()
+        patterns = self.pattern_text.value.lower().split()
         #print ("patterns", patterns)
         if not patterns:
             self.info_area.value = "No patterns to match."

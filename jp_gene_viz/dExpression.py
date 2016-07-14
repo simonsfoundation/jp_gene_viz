@@ -8,7 +8,7 @@ import traitlets
 import fnmatch
 import color_scale
 import color_widget
-
+from jp_svg_canvas.canvas import load_javascript_support
 
 class ExpressionDisplay(traitlets.HasTraits):
 
@@ -30,11 +30,13 @@ class ExpressionDisplay(traitlets.HasTraits):
 
         self.text_assembly = self.make_text_displays()
         self.match_assembly = self.make_match_assembly()
+        self.genes_assembly = self.make_genes_assembly()
         self.info_area = widgets.Textarea(description="status")
         self.assembly = widgets.VBox(children=[self.text_assembly,
                                                self.svg,
                                                self.color_chooser.svg,
                                                self.match_assembly,
+                                               self.genes_assembly,
                                                self.info_area])
         self.dx = 10
         self.dy = 2
@@ -43,12 +45,13 @@ class ExpressionDisplay(traitlets.HasTraits):
         self.row = self.col = None
         self.drawing = False
 
-    def load_data(self, heat_map, side_length):
+    def load_data(self, heat_map, side_length=None):
         self.data_heat_map = heat_map
         # project to at most 200 rows and columns
         rows = heat_map.row_names[:200]
         cols = heat_map.col_names[:200]
-        self.side_length = side_length
+        if side_length is not None:
+            self.side_length = side_length
         self.display_data(rows, cols, side_length)
 
     def display_data(self, rows, cols, side_length=None):
@@ -87,8 +90,8 @@ class ExpressionDisplay(traitlets.HasTraits):
         return assembly
 
     def make_match_assembly(self):
-        b = self.match_button = widgets.Button(description="match", width="50px")
-        b.layout.width = "50px"
+        b = self.match_button = widgets.Button(description="conditions", width="50px")
+        b.layout.width = "90px"
         b.on_click(self.match_click)
         t = self.match_text = widgets.Text(width="300px")
         t.layout.width = "300px"
@@ -100,15 +103,43 @@ class ExpressionDisplay(traitlets.HasTraits):
         assembly = widgets.HBox(children=[b, t, d, c])
         return assembly
 
-    def colors_click(self, b):
+    def make_genes_assembly(self):
+        b = self.genes_button = widgets.Button(description="genes", width="50px")
+        b.layout.width = "70px"
+        b.on_click(self.genes_click)
+        t = self.genes_text = widgets.Text(width="300px")
+        t.layout.width = "300px"
+        r = self.reset_button = widgets.Button(description="reset")
+        r.layout.width = "50px"
+        r.on_click(self.reset_click)
+        assembly = widgets.HBox(children=[b, t, r])
+        return assembly
+
+    def reset_click(self, b=None):
+        self.load_data(self.data_heat_map)
+
+    def colors_click(self, b=None):
         #self.color_chooser.svg.visible = self.color_checkbox.value
         set_visibility(self.color_chooser.svg, self.color_checkbox.value)
         self.draw()
 
-    def draw_click(self, b):
+    def draw_click(self, b=None):
         self.draw()
 
-    def match_click(self, b):
+    def genes_click(self, b=None):
+        patterns = self.genes_text.value.lower().split()
+        row_set = set()
+        rows = self.data_heat_map.row_names
+        for pattern in patterns:
+            row_set.update(fnmatch.filter(rows, pattern))
+        if not row_set:
+            self.info_area.value = "No rows selected"
+        else:
+            rows = sorted(row_set)[:200]
+            columns = self.display_heat_map.col_names
+            self.display_data(rows, columns)
+
+    def match_click(self, b=None):
         patterns = self.match_text.value.split()
         column_set = set()
         columns = self.data_heat_map.col_names
@@ -182,7 +213,7 @@ class ExpressionDisplay(traitlets.HasTraits):
         display(self.assembly)
 
 
-def display_heat_map(filename, dexpr=None, side_length=550):
+def display_heat_map(filename, dexpr=None, side_length=550, show=False):
     from jp_gene_viz import getData
     H = HMap.HeatMap()
     (r, c, d) = getData.read_tsv(filename)
@@ -190,3 +221,6 @@ def display_heat_map(filename, dexpr=None, side_length=550):
     if dexpr is None:
         dexpr = ExpressionDisplay()
     dexpr.load_data(H, side_length=side_length)
+    if show:
+        dexpr.show()
+    return dexpr
