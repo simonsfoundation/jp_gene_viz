@@ -10,7 +10,8 @@ from ipywidgets import widgets
 import traitlets
 
 # Call this once.
-from dNetwork import load_javascript_support
+from jp_gene_viz.dNetwork import load_javascript_support
+from jp_gene_viz.widget_utils import set_visibility
 
 
 class LinkedExpressionNetwork(traitlets.HasTraits):
@@ -31,11 +32,16 @@ class LinkedExpressionNetwork(traitlets.HasTraits):
                                                  self.condition_click)
         buttons = [self.gene_button, self.condition_button]
         horizontal = widgets.HBox(children=buttons)
-        hideable = widgets.VBox(children=[horizontal, self.expression.assembly])
-        traitlets.directional_link((self, "maximize"), (hideable, "visible"))
-        traitlets.directional_link((self, "maximize"), (self.network, "maximize"))
+        self.hideable = widgets.VBox(children=[horizontal, self.expression.assembly])
+        #traitlets.directional_link((self, "maximize"), (hideable, "visible"))
+        #traitlets.directional_link((self, "maximize"), (self.network, "maximize"))
+        self.on_trait_change(self.maximize_changed, "maximize")
         traitlets.directional_link((self, "svg_width"), (self.network, "svg_width"))
-        self.assembly = widgets.VBox(children=[self.network.assembly, hideable])
+        self.assembly = widgets.VBox(children=[self.network.assembly, self.hideable])
+
+    def maximize_changed(self, att_name, old, new):
+        set_visibility(self.hideable, new)
+        self.network.maximize = new
 
     def show(self):
         display(self.assembly)
