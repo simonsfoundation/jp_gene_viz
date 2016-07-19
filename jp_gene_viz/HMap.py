@@ -108,11 +108,15 @@ class HeatMap(object):
         return self.display_data
 
     def transform_data(self, array_transform):
+        save_data = self.display_data
         if array_transform is None:
             self.display_data = self.data
         else:
             self.display_data = array_transform(self.data)
-        self._color_interpolator = None
+        # reset color interpolation if data has changed.
+        if (save_data.shape != self.display_data.shape or
+            not numpy.allclose(save_data, self.display_data)):
+            self._color_interpolator = None
 
     def rectName(self, i, j):
         """
