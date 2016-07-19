@@ -80,7 +80,7 @@ class HeatMap(object):
         """
         rows = self.row_names
         cols = self.col_names
-        data = self.data
+        data = self.display_data
         col_index = cols.index(col_name)
         result = {}
         for (row_index, row) in enumerate(rows):
@@ -102,6 +102,17 @@ class HeatMap(object):
             (self.nrows, self.ncols) = A.shape
         assert self.nrows == len(self.row_names)
         assert self.ncols == len(self.col_names)
+        self.display_data = self.data
+
+    def visible_array(self):
+        return self.display_data
+
+    def transform_data(self, array_transform):
+        if array_transform is None:
+            self.display_data = self.data
+        else:
+            self.display_data = array_transform(self.data)
+        self._color_interpolator = None
 
     def rectName(self, i, j):
         """
@@ -136,7 +147,7 @@ class HeatMap(object):
     def get_color_interpolator(self):
         result = self._color_interpolator
         if result is None:
-            v = self.data.flatten()
+            v = self.display_data.flatten()
             M = 1.0
             m = 0.0
             if len(v) > 0:
@@ -158,7 +169,7 @@ class HeatMap(object):
         ci = self.get_color_interpolator()
         for rowi in range(self.nrows):
             for colj in range(self.ncols):
-                dataij = self.data[rowi, colj]
+                dataij = self.display_data[rowi, colj]
                 nameij = self.rectName(rowi, colj)
                 colorij = ci.interpolate_color(dataij)
                 canvas.rect(nameij, colj*dx, rowi*dy, dx, dy, colorij)
