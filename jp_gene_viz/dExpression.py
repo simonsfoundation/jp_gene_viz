@@ -141,7 +141,10 @@ class ExpressionDisplay(traitlets.HasTraits):
     def apply_tranform(self):
         transform_text = self.transform_dropdown.value
         transform = TRANSFORM_MAP.get(transform_text)
-        self.display_heat_map.transform_data(transform)
+        try:
+            self.display_heat_map.transform_data(transform)
+        except array_transforms.TransformError:
+            self.info_area.value = "Invalid values for transform " + repr(transform_text)
 
     def draw_click(self, b=None):
         self.draw()
