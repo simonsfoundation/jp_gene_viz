@@ -9,6 +9,16 @@ import fnmatch
 import color_scale
 import color_widget
 from jp_svg_canvas.canvas import load_javascript_support
+from . import array_transforms
+
+NO_TRANSFORM = "no transform"
+LOG2_TRANSFORM = 'log 2 fold change'
+ZSCORE_TRANSFOMR = "Z score"
+TRANSFORM_TEXTS = [NO_TRANSFORM, LOG2_TRANSFORM, ZSCORE_TRANSFOMR]
+TRANSFORM_MAP = {
+    LOG2_TRANSFORM: array_transforms.log_2_fold_change_rt_mean,
+    ZSCORE_TRANSFOMR: array_transforms.z_score,
+}
 
 class ExpressionDisplay(traitlets.HasTraits):
 
@@ -27,10 +37,15 @@ class ExpressionDisplay(traitlets.HasTraits):
         cc = self.color_chooser = color_widget.ColorChooser()
         #cc.svg.visible = False   # default
         set_visibility(cc.svg, False)
-
+        tdd = self.transform_dropdown = widgets.Dropdown(
+            options=TRANSFORM_TEXTS,
+            value=NO_TRANSFORM
+        )
+        tdd.on_trait_change(self.draw_click, "value")
+        tdd.layout.width = "100px"
         self.text_assembly = self.make_text_displays()
         self.match_assembly = self.make_match_assembly()
-        self.genes_assembly = self.make_genes_assembly()
+        self.genes_assembly = self.make_genes_assembly(tdd)
         self.info_area = widgets.Textarea(description="status")
         self.assembly = widgets.VBox(children=[self.text_assembly,
                                                self.svg,
@@ -103,7 +118,7 @@ class ExpressionDisplay(traitlets.HasTraits):
         assembly = widgets.HBox(children=[b, t, d, c])
         return assembly
 
-    def make_genes_assembly(self):
+    def make_genes_assembly(self, transform_dropdown):
         b = self.genes_button = widgets.Button(description="genes", width="50px")
         b.layout.width = "70px"
         b.on_click(self.genes_click)
@@ -112,7 +127,7 @@ class ExpressionDisplay(traitlets.HasTraits):
         r = self.reset_button = widgets.Button(description="reset")
         r.layout.width = "50px"
         r.on_click(self.reset_click)
-        assembly = widgets.HBox(children=[b, t, r])
+        assembly = widgets.HBox(children=[b, t, r, transform_dropdown])
         return assembly
 
     def reset_click(self, b=None):
@@ -122,6 +137,11 @@ class ExpressionDisplay(traitlets.HasTraits):
         #self.color_chooser.svg.visible = self.color_checkbox.value
         set_visibility(self.color_chooser.svg, self.color_checkbox.value)
         self.draw()
+
+    def apply_tranform(self):
+        transform_text = self.transform_dropdown.value
+        transform = TRANSFORM_MAP.get(transform_text)
+        self.display_heat_map.transform_data(transform)
 
     def draw_click(self, b=None):
         self.draw()
@@ -177,7 +197,7 @@ class ExpressionDisplay(traitlets.HasTraits):
             except IndexError:
                 pass  # XXXX Shouldn't happen, but does.
             else:
-                intensity = heat_map.data[i, j]
+                intensity = heat_map.visible_array()[i, j]
                 self.info_area.value = "%s :: %s, %s -> %s" % (name, r, c, intensity)
                 if typ == "click":
                     heat_map.unhighlight(svg)
@@ -190,6 +210,7 @@ class ExpressionDisplay(traitlets.HasTraits):
     def draw(self):
         if self.drawing:
             raise ValueError, "too many draws"
+        self.apply_tranform()
         self.drawing = True
         heat_map = self.display_heat_map
         if heat_map is None:
@@ -201,7 +222,7 @@ class ExpressionDisplay(traitlets.HasTraits):
         if is_visible(cc.svg):
             self.info_area.value = "displaying color chooser."
             cc.scale = heat_map.get_color_interpolator()
-            cc.count_values(heat_map.data.flatten())
+            cc.count_values(heat_map.visible_array().flatten())
             cc.draw()
         svg.send_commands()
         self.drawing = False
