@@ -165,11 +165,19 @@ class HeatMap(object):
             self._color_interpolator = result
         return result
 
+    def fix_data(self, default_value=0):
+        "Replace invalid data values in display data."
+        data = self.display_data
+        for check in (numpy.isinf, numpy.isnan):
+            check_indices = numpy.where(check(data))
+            data[check_indices] = default_value
+
     def draw(self, canvas, dx, dy, labels_space=None, fit=True):
         """
         Draw the heat map on an SVG canvas.
         """
         canvas.empty()
+        self.fix_data()
         ci = self.get_color_interpolator()
         for rowi in range(self.nrows):
             for colj in range(self.ncols):
