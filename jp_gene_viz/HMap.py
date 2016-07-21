@@ -2,6 +2,7 @@
 import numpy
 from jp_gene_viz import dGraph
 from jp_gene_viz import color_scale
+from scipy.cluster.hierarchy import linkage, leaves_list
 
 
 def checked_names(subset, superset, strict=False):
@@ -117,6 +118,13 @@ class HeatMap(object):
         if (save_data.shape != self.display_data.shape or
             not numpy.allclose(save_data, self.display_data)):
             self._color_interpolator = None
+
+    def cluster_rows(self, method="ward"):
+        Z = linkage(self.display_data, method)
+        ordering = leaves_list(Z)
+        row_names = [self.row_names[i] for i in ordering]
+        self.row_names = row_names
+        self.display_data = self.display_data[ordering]
 
     def rectName(self, i, j):
         """
