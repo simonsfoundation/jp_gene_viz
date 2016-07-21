@@ -43,11 +43,13 @@ class ExpressionDisplay(traitlets.HasTraits):
         )
         tdd.on_trait_change(self.draw_click, "value")
         tdd.layout.width = "100px"
+        self.title_html = widgets.HTML("Expression Heat Map")
         self.text_assembly = self.make_text_displays()
         self.match_assembly = self.make_match_assembly()
         self.genes_assembly = self.make_genes_assembly(tdd)
         self.info_area = widgets.Textarea(description="status")
-        self.assembly = widgets.VBox(children=[self.text_assembly,
+        self.assembly = widgets.VBox(children=[self.title_html,
+                                               self.text_assembly,
                                                self.svg,
                                                self.color_chooser.svg,
                                                self.match_assembly,
