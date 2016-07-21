@@ -108,7 +108,7 @@ class ExpressionDisplay(traitlets.HasTraits):
 
     def make_match_assembly(self):
         b = self.match_button = widgets.Button(description="conditions", width="50px")
-        b.layout.width = "90px"
+        b.layout.width = "80px"
         b.on_click(self.match_click)
         t = self.match_text = widgets.Text(width="300px")
         t.layout.width = "300px"
@@ -117,7 +117,9 @@ class ExpressionDisplay(traitlets.HasTraits):
         d.on_click(self.draw_click)
         c = self.color_checkbox = widgets.Checkbox(description="colors", value=False)
         c.on_trait_change(self.colors_click, "value")
-        assembly = widgets.HBox(children=[b, t, d, c])
+        cl = self.cluster_checkbox = widgets.Checkbox(description="cluster", value=True)
+        cl.on_trait_change(self.colors_click, "value")
+        assembly = widgets.HBox(children=[b, t, d, c, cl])
         return assembly
 
     def make_genes_assembly(self, transform_dropdown):
@@ -140,7 +142,7 @@ class ExpressionDisplay(traitlets.HasTraits):
         set_visibility(self.color_chooser.svg, self.color_checkbox.value)
         self.draw()
 
-    def apply_tranform(self):
+    def apply_transform(self):
         transform_text = self.transform_dropdown.value
         transform = TRANSFORM_MAP.get(transform_text)
         try:
@@ -215,9 +217,11 @@ class ExpressionDisplay(traitlets.HasTraits):
     def draw(self):
         if self.drawing:
             raise ValueError, "too many draws"
-        self.apply_tranform()
+        self.apply_transform()
         self.drawing = True
         heat_map = self.display_heat_map
+        if self.cluster_checkbox.value:
+            heat_map.cluster_rows()
         if heat_map is None:
             return
         svg = self.svg

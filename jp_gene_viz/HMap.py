@@ -2,6 +2,7 @@
 import numpy
 from jp_gene_viz import dGraph
 from jp_gene_viz import color_scale
+from scipy.cluster.hierarchy import linkage, leaves_list
 
 
 def checked_names(subset, superset, strict=False):
@@ -103,6 +104,7 @@ class HeatMap(object):
         assert self.nrows == len(self.row_names)
         assert self.ncols == len(self.col_names)
         self.display_data = self.data
+        self.row_order = None
 
     def visible_array(self):
         return self.display_data
@@ -117,6 +119,11 @@ class HeatMap(object):
         if (save_data.shape != self.display_data.shape or
             not numpy.allclose(save_data, self.display_data)):
             self._color_interpolator = None
+        self.row_order = None
+
+    def cluster_rows(self, method="ward"):
+        Z = linkage(self.display_data, method)
+        self.row_order = leaves_list(Z)
 
     def rectName(self, i, j):
         """
@@ -182,12 +189,15 @@ class HeatMap(object):
         canvas.empty()
         self.fix_data()
         ci = self.get_color_interpolator()
-        for rowi in range(self.nrows):
+        row_order = self.row_order
+        if row_order is None:
+            row_order = list(range(self.nrows))
+        for (rowp, rowi) in enumerate(row_order):
             for colj in range(self.ncols):
                 dataij = self.display_data[rowi, colj]
                 nameij = self.rectName(rowi, colj)
                 colorij = ci.interpolate_color(dataij)
-                canvas.rect(nameij, colj*dx, rowi*dy, dx, dy, colorij)
+                canvas.rect(nameij, colj*dx, rowp*dy, dx, dy, colorij)
         if labels_space is not None:
             label_color = "black"
             col_end = self.ncols * dx
@@ -196,9 +206,9 @@ class HeatMap(object):
                 "text-anchor": "start",
                 "alignment-baseline": "middle"
                 }
-            for rowi in range(self.nrows):
+            for (rowp, rowi) in enumerate(row_order):
                 row_name = self.row_names[rowi]
-                y = (rowi + 0.5) * dy
+                y = (rowp + 0.5) * dy
                 canvas.text(None, col_end, y,
                             row_name, label_color, **style)
             row_end = self.nrows * dy
