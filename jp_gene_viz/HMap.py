@@ -157,6 +157,9 @@ class HeatMap(object):
             if len(v) > 0:
                 M = numpy.max(v)
                 m = numpy.min(v)
+            # If min and max are same then do something arbitrary
+            if M == m:
+                M = m + 1
             mc = self.min_clr
             Mc = self.max_clr
             result = color_scale.ColorInterpolator(mc, Mc, m, M)
