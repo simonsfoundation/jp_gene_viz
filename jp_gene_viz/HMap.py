@@ -124,6 +124,7 @@ class HeatMap(object):
         self.row_order = None
 
     def cluster_rows(self, method="ward"):
+        self.display_data[numpy.isnan(self.display_data)] == 0
         Z = linkage(self.display_data, method)
         self.row_order = leaves_list(Z)
 
