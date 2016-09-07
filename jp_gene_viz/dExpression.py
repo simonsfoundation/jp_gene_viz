@@ -13,11 +13,11 @@ from . import array_transforms
 
 NO_TRANSFORM = "no transform"
 LOG2_TRANSFORM = 'log 2 fold change'
-ZSCORE_TRANSFOMR = "Z score"
-TRANSFORM_TEXTS = [NO_TRANSFORM, LOG2_TRANSFORM, ZSCORE_TRANSFOMR]
+ZSCORE_TRANSFORM = "Z score"
+TRANSFORM_TEXTS = [NO_TRANSFORM, LOG2_TRANSFORM, ZSCORE_TRANSFORM]
 TRANSFORM_MAP = {
     LOG2_TRANSFORM: array_transforms.log_2_fold_change_rt_mean,
-    ZSCORE_TRANSFOMR: array_transforms.z_score,
+    ZSCORE_TRANSFORM: array_transforms.z_score,
 }
 
 class ExpressionDisplay(traitlets.HasTraits):
