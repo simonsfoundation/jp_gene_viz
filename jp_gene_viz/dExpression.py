@@ -90,7 +90,7 @@ class ExpressionDisplay(traitlets.HasTraits):
     def column_weights(self):
         if self.col is None:
             return None
-        return self.data_heat_map.column_weights(self.col)
+        return self.display_heat_map.column_weights(self.col)
 
     def make_text_displays(self):
         self.row_text = widgets.Text(description="row", value="")
