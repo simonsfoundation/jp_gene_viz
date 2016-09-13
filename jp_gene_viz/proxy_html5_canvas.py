@@ -7,6 +7,7 @@ visualizations with better performance than SVGCanvasWidget can.
 """
 
 from jp_gene_viz import js_proxy
+import traitlets
 import math
 # this loads the proxy widget javascript "view" implementation
 js_proxy.load_javascript_support()
@@ -16,12 +17,23 @@ js_proxy.load_javascript_support()
 ASSIGN = 'A'
 CALL = 'C'
 PI2 = 6.29
+SIDE_DEFAULT = 500.0
 
-class HTML5CanvasProxy(object):
+class HTML5CanvasProxy(traitlets.HasTraits):
 
-    def __init__(self, viewBox, dimension=800.0):
+    # Canvas width
+    svg_width = traitlets.Float(SIDE_DEFAULT, sync=True)
+    
+    # Canvas height
+    svg_height = traitlets.Float(SIDE_DEFAULT, sync=True)
+
+    def __init__(self, viewBox="0 0 500 500", dimension=SIDE_DEFAULT, *pargs, **kwargs):
+        super(HTML5CanvasProxy, self).__init__(*pargs, **kwargs)
         self.viewBox = viewBox
-        self.dimension = dimension
+        self.svg_width = dimension
+        self.svg_height = dimension
+        self.on_trait_change(self.change_dimensions, "svg_width")
+        self.on_trait_change(self.change_dimensions, "svg_height")
         self.font = "Arial"  # default
         self.font_size = 10
         self.operations = []
@@ -30,11 +42,25 @@ class HTML5CanvasProxy(object):
         self.element = w.element()
         self.empty()
 
+    def set_view_box(self, x, y, w, h):
+        self.viewBox = "%s %s %s %s" % (x, y, w, h)
+
+    def change_dimensions(self):
+        # XXXX this clears the canvas for now!
+        self.empty()
+
     def empty(self):
         self.operations = []
         self.assignments = {}
-        self.element.empty()
+        w = self.widget
+        elt = self.element
+        w(elt.empty())
+        w(elt.width(self.svg_width).height(self.svg_height))
+        w.flush()
         self.is_empty = True
+
+    def fit(self, *args):
+        pass  # ???
 
     def _add(self, command, *args):
         self.operations.append(self.call_cmd(command, *args))
@@ -60,11 +86,12 @@ class HTML5CanvasProxy(object):
         if self.is_empty:
             # Initialize the canvas
             [x0, y0, width, height] = map(float, self.viewBox.split())
-            dimension = self.dimension
+            #dimension = self.dimension
             minside = min(width, height)
-            scale = dimension * 1.0/minside
-            swidth = scale * width
-            sheight = scale * height
+            wscale = self.svg_width * 1.0/minside
+            swidth = wscale * width
+            hscale = self.svg_height * 1.0/minside
+            sheight = hscale * height
             window = w.window()
             jQuery = window.jQuery
             tag = '<canvas width="%s" height="%s" style="border:1px solid #d3d3d3;"/>' % (
@@ -91,7 +118,7 @@ class HTML5CanvasProxy(object):
                     }
                 }
                 """ % (CALL, ASSIGN))
-            command_prefix.append(self.call_cmd("scale", scale, scale))
+            command_prefix.append(self.call_cmd("scale", wscale, hscale))
             command_prefix.append(self.call_cmd("translate", -x0, -y0))
         self.is_empty = False
         all_commands = command_prefix + self.operations
