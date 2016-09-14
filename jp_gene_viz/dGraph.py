@@ -241,7 +241,7 @@ class WGraph(JsonMixin):
         # probably should clone XXXX
         self._node_color_interpolator = color_interpolator
     
-    def draw(self, canvas, positions, edgewidth=1, nodesize=3, fit=True, color_overrides=None):
+    def draw(self, canvas, positions, edgewidth=1, nodesize=3, fit=True, color_overrides=None, send=True):
         if color_overrides is None:
             color_overrides = {}
         (Me, me, Mn, mn) = self.weights_extrema()
@@ -310,7 +310,8 @@ class WGraph(JsonMixin):
                 ncol = color_overrides.get(name, ncol)
                 degree = min(outdegree.get(n, 1) - 1, 4)
                 canvas.circle(name, x, y, nodesize + degree, ncol) 
-        canvas.send_commands()
+        if send:
+            canvas.send_commands()
         # adjust the viewBox
         (minx, miny) = map(int, minimum)
         (maxx, maxy) = map(int, maximum)
