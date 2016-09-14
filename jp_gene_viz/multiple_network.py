@@ -18,6 +18,7 @@ class MultipleNetworks(traitlets.HasTraits):
     def __init__(self, members, *args, **kwargs):
         super(MultipleNetworks, self).__init__(*args, **kwargs)
         self.members = members
+        self.member_list = []
         self.holders = []
         self.width_slider = s = widgets.IntSlider(value=self.svg_width, min=100, max=2000, step=10)
         traitlets.directional_link((s, "value"), (self, "svg_width"))
@@ -36,12 +37,16 @@ class MultipleNetworks(traitlets.HasTraits):
             else:
                 holder = self.make_holder(member)
                 component = holder.assembly
+                if member not in self.member_list:
+                    self.member_list.append(member)
             components.append(component)
         return klass(children=components)
 
     def show(self):
         "Show the network widget."
         display(self.assembly)
+        for member in self.member_list:
+            member.draw()
 
     def make_holder(self, member):
         ty = type(member)
