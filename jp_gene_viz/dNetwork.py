@@ -235,15 +235,17 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         choice = self.container_dropdown.value
         chose_svg = True
         if choice == SVG:
-            pass
+            self.svg.viewBox = self.canvas.viewBox
         elif choice == CANVAS:
             chose_svg = False
+            self.canvas.viewBox = self.svg.viewBox
         else:
             raise ValueError("invalid container choice " + repr(choice))
         set_visibility(self.svg, chose_svg)
         set_visibility(self.canvas.widget, not chose_svg)
         for widget in self.requires_SVG:
             set_visibility(widget, chose_svg)
+        self.draw()
 
     def chosen_container(self):
         choice = self.container_dropdown.value
@@ -564,7 +566,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.display_graph = G
         self.set_node_weights()
 
-    def load_data(self, graph, positions=None):
+    def load_data(self, graph, positions=None, draw=True):
         "Load and draw a graph and positions to the network display."
         if positions is None:
             self.info_area.value = "Computing default layout: " + repr(graph.sizes())
@@ -581,7 +583,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.threshhold_slider.max = maxw
         self.do_threshhold()
         self.reset_interactive_bookkeeping()
-        self.draw()
+        if draw:
+            self.draw()
 
     def fit_heuristic(self, graph):
         "Guess an edge size for fitting network layout."
@@ -611,7 +614,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             svg = self.chosen_container()
             svg.empty()
         self.svg_origin = G.draw(svg, P, 
-            fit=fit, color_overrides=color_overrides)
+            fit=fit, color_overrides=color_overrides, send=False)
         self.cancel_selection()
         self.info_area.value = "Done drawing: " + repr((G.sizes(), len(P)))
         font_size = self.font_size_slider.value
@@ -643,8 +646,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             if fit:
                 # async: get svg bounding box
                 svg.fit(False)
-            svg.send_commands()
             self.info_area.value = "Labels added."
+        svg.send_commands()
         if is_visible(self.settings_assembly):
             #G.reset_colorization()
             self.info_area.value = "Displaying color choosers."
@@ -1312,7 +1315,7 @@ def display_network(filename, N=None, threshhold=20.0, save_layout=True, show=Tr
         N = NetworkDisplay()
     if threshhold:
         N.threshhold_slider.value = threshhold
-    N.load_data(G, layout)
+    N.load_data(G, layout, draw=show)
     if show:
         N.show()
     return N
