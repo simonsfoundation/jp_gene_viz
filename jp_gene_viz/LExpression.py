@@ -39,6 +39,10 @@ class LinkedExpressionNetwork(traitlets.HasTraits):
         traitlets.directional_link((self, "svg_width"), (self.network, "svg_width"))
         self.assembly = widgets.VBox(children=[self.network.assembly, self.hideable])
 
+    def draw(self):
+        self.expression.draw()
+        self.network.draw()
+
     def maximize_changed(self, att_name, old, new):
         set_visibility(self.hideable, new)
         self.network.maximize = new
