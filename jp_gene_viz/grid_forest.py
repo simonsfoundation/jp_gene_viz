@@ -21,7 +21,10 @@ def split_position(position):
     return (np.array([x+cx, y+cy, ddx, ddy]), np.array([x-cx, y-cy, ddx, ddy]))
 
 class GridForestLayout(object):
-
+    """
+    Heuristic to combine nodes into binary tree based on shared greatest influence.
+    Layout the binary tree using penalty heuristic.
+    """
     def __init__(self, G, side_length=500.0):
         self.G = G
         self.side_length = side_length
@@ -127,17 +130,11 @@ class GridForestLayout(object):
             result[nto].add(nfrom)
         return result
 
-    def combine(self, nodes, edge_weights):
-        "Pair up related nodes."
-        not_combined = set(nodes)
-        combined_nodes = set()
-        level_mapping = {}
-        combined_edge_weights = {}
+    def strength_stats(self, nodes, edge_weights):
         greatest_weight = {node: 0 for node in nodes}
         strongest_factor = {}
         strongest_count = {node: 0 for node in nodes}
         strongest_factor_inv = {node: set() for node in nodes}
-        members = self.members
         connected = set()
         for edge in edge_weights:
             weight = edge_weights[edge]
@@ -150,6 +147,17 @@ class GridForestLayout(object):
                 connected.add(nfrom)
                 connected.add(nto)
         isolated = set(nodes) - connected
+        return (greatest_weight, strongest_factor, strongest_factor_inv, strongest_count, connected, isolated)
+
+    def combine(self, nodes, edge_weights):
+        "Pair up related nodes."
+        members = self.members
+        not_combined = set(nodes)
+        combined_nodes = set()
+        level_mapping = {}
+        combined_edge_weights = {}
+        (greatest_weight, strongest_factor, strongest_factor_inv, strongest_count, connected, isolated) = \
+            self.strength_stats(nodes, edge_weights)
         node_strength = sorted((strongest_count[n], n) for n in nodes if n not in isolated)
         def pair_up_list(spoke_order):
             spoke_order = list(spoke_order)
@@ -206,69 +214,7 @@ class GridForestLayout(object):
         #self.parent.update(level_mapping)
         return (combined_nodes, combined_edge_weights)
 
-def layout(G, side_length=500):
-    # Build binary tree with nodes at leaves.
-    node_weights = {}
-    edge_weights = {}
-    #children = {}
-    parent = {}
-    members = {}
-    neighbors = {}
-    for node in G.node_weights:
-        node_weights[node] = 0  # ignore input weights.
-        members[node] = frozenset([node])
-        neighbors[node] = set()
-    ew = G.edge_weights
-    for e in G.edge_weights:
-        (n1, n2) = e
-        w = abs(ew[e])
-        node_weights[n1] += w
-        node_weights[n2] += w
-        edge_weights[e] = w
-        edge_weights[(n2, n1)] = w
-        neighbors(n1).add(n2)
-        neighbors(n2).add(n1)
-    # repeat until all nodes are merged into a single tree
-    while len(node_weights) > 1:
-        next_node_weights = {}
-        next_edge_weights = {}
-        level_map = {}
-        unpaired = set(node_weights)
-        ascending_weights = sorted((node_weights(n), n) for n in node_weights)
-        descending_weights = list(reversed(ascending_weights))
-        while len(unpaired) > 1:
-            # find lowest weight unpaired node.
-            (w, n) = descending_weights.pop()
-            while w not in unpaired:
-                (w, n) = descending_weights.pop()
-            # find highest weight incident edge from node
-            weighted_edges = []
-            for neighbor in neighbors[n]:
-                if neighbor not in unpaired:
-                    edge = (n, neighbor)
-                    weighted_edges.append((edge_weights[edge], edge))
-            if weighted_edges:
-                (edge_weight, edge) = max(weighted_edges)
-                n2 = edge[1]
-                w2 = node_weights[n2]
-            else:
-                # chose next least weighted node as default
-                (w2, n2) = descending_weights.pop()
-                while w2 not in unpaired:
-                    (w2, n2) = descending_weights.pop()
-            # pair the chosen nodes
-            pair = (n, n2)
-            next_node_weights[pair] = w + w2
-            for node in pair:
-                level_map[node] = pair
-                unpaired.remove(node)
-        if len(unpaired) == 1:
-            # handle unpaired remaining node
-            (w, n) = descending_weights[0]
-            while w not in unpaired:
-                (w, n) = descending_weights.pop()
-            next_node_weights[n] = w
-            level_map[n] = n
-        else:
-            assert len(unpaired) == 0
-        # compute combined edge_weights for the new level
+class SpokeTreeLayout(GridForestLayout):
+    """
+    Create subtrees based on shared greatest influence.
+    """
