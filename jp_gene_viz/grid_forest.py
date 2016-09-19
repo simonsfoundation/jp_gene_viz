@@ -3,6 +3,11 @@ Grid forest layout.
 """
 
 import numpy as np
+from numpy.linalg import norm
+
+def forest_layout(G, side_length=1000):
+    GF = GridForestLayout(G, side_length)
+    return GF.compute_positions()
 
 def split_position(position):
     (x, y, dx, dy) = position
@@ -26,6 +31,7 @@ class GridForestLayout(object):
         self.levels = []
 
     def compute_positions(self):
+        G = self.G
         self.get_tree()
         positions = self.assign_positions()
         result = {node: positions[node][:2] for node in G.node_weights}
@@ -44,12 +50,17 @@ class GridForestLayout(object):
         assert len(nodes) > 0
         self.levels.append((nodes, edge_weights))  # leaf level
         while len(nodes) > 1:
-            print "combining", nodes
+            #print "combining", nodes
             this_level = self.combine(nodes, edge_weights)
             (nodes, edge_weights) = this_level
             self.levels.append(this_level)
         assert len(nodes) == 1
         [self.root] = list(nodes)
+
+    def distance0(self, position1, position2):
+        p1 = position1[:2]
+        p2 = position2[:2]
+        return norm(p1-p2) 
 
     def distance(self, position1, position2):
         p1 = position1[:2]
@@ -78,10 +89,6 @@ class GridForestLayout(object):
             (nodes, edge_weights) = level
             (child_nodes, child_edge_weights) = root_to_leaf[non_leaf_level_number + 1]
             child_adjacent = self.adjacency(child_nodes, child_edge_weights)
-            print
-            print "adjacent", child_adjacent
-            print "children", child_nodes, child_edge_weights
-            print "nodes", nodes
             for node in nodes:
                 node_position = positions[node]
                 if node in non_leaves:
@@ -131,6 +138,7 @@ class GridForestLayout(object):
         strongest_count = {node: 0 for node in nodes}
         strongest_factor_inv = {node: set() for node in nodes}
         members = self.members
+        connected = set()
         for edge in edge_weights:
             weight = edge_weights[edge]
             (nfrom, nto) = edge
@@ -139,10 +147,13 @@ class GridForestLayout(object):
                 strongest_factor[nto] = nfrom
                 strongest_count[nfrom] += 1
                 strongest_factor_inv[nfrom].add(nto)
-        node_strength = sorted((strongest_count[n], n) for n in nodes)
+                connected.add(nfrom)
+                connected.add(nto)
+        isolated = set(nodes) - connected
+        node_strength = sorted((strongest_count[n], n) for n in nodes if n not in isolated)
         def pair_up_list(spoke_order):
             spoke_order = list(spoke_order)
-            print "order before", spoke_order, not_combined
+            #print "order before", spoke_order, not_combined
             while len(spoke_order) > 1:
                 (count1, node1) = spoke_order.pop()
                 (count2, node2) = spoke_order.pop()
@@ -154,7 +165,7 @@ class GridForestLayout(object):
                     level_mapping[n] = pair
                     self.parents[n] = pair
                 members[pair] = members[node1] | members[node2]
-            print "order after", spoke_order, not_combined
+            #print "order after", spoke_order, not_combined
             # add any trailing node as isolated
             if spoke_order:
                 [(rcount, remaining_node)] = spoke_order
@@ -170,7 +181,12 @@ class GridForestLayout(object):
             spoke_order = sorted((strongest_count[sn], sn) for sn in spoke_nodes)
             # also combine the central node_strength
             if central_node in not_combined:
-                spoke_order = [(0, central_node)] + spoke_order
+                #spoke_order = [(0, central_node)] + spoke_order
+                spoke_order.insert(len(spoke_order)/2, (0, central_node))
+            # also combine any remaining isolated nodes
+            if isolated:
+                spoke_order = spoke_order + [(0, n) for n in isolated]
+                isolated = set()
             if len(spoke_order) > 1:
                 # combine node pairs
                 spoke_order = reversed(spoke_order)

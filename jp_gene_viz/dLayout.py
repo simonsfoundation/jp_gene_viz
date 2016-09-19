@@ -1,4 +1,4 @@
-
+from jp_gene_viz import grid_forest
 from jp_gene_viz.dGraph import primary_influence, skeleton, pos
 
 import igraph
@@ -28,11 +28,14 @@ def iGraphLayout(G, name, fit=1000):
          for (i,xy) in enumerate(L)}
     return D
 
-def group_layout(G, name="fr", fit=1000):
+def group_layout0(G, name="fr", fit=1000):
     Gk = skeleton(G)
     Gp = primary_influence(G, connect=True)
     Gp.edge_weights.update(Gk.edge_weights)
     return iGraphLayout(Gp, name, fit)
+
+def group_layout(G, fit=1000):
+    return grid_forest.forest_layout(G, 1000)
 
 def dump(layout, filename):
     jlayout = layoutConverter.to_json_value(layout)

@@ -9,6 +9,8 @@ visualizations with better performance than SVGCanvasWidget can.
 from jp_gene_viz import js_proxy
 import traitlets
 import math
+import json
+
 # this loads the proxy widget javascript "view" implementation
 js_proxy.load_javascript_support()
 
@@ -43,6 +45,7 @@ class HTML5CanvasProxy(traitlets.HasTraits):
         self.empty()
 
     def set_view_box(self, x, y, w, h):
+        print "viewbox", (x,y,w,h)
         self.viewBox = "%s %s %s %s" % (x, y, w, h)
 
     def change_dimensions(self):
@@ -97,10 +100,12 @@ class HTML5CanvasProxy(traitlets.HasTraits):
             tag = '<canvas width="%s" height="%s" style="border:1px solid #d3d3d3;"/>' % (
                 swidth, sheight
             )
+            print "tag is", (tag, self.svg_width, self.svg_height, self.viewBox)
             w(elt._set("canvas", jQuery(tag).appendTo(elt)))
             w.save_function("context_execute",
-                ["context", "sequence"],
+                ["context", "sequence_json"],
                 """ debugger;
+                var sequence = JSON.parse(sequence_json);
                 for (var i=0; i < sequence.length; i++) {
                     var command = sequence[i];
                     var indicator = command[0];
@@ -122,7 +127,10 @@ class HTML5CanvasProxy(traitlets.HasTraits):
             command_prefix.append(self.call_cmd("translate", -x0, -y0))
         self.is_empty = False
         all_commands = command_prefix + self.operations
-        w(elt.context_execute(elt.canvas._get(0).getContext("2d"), all_commands))
+        print "encoding JSON", len(all_commands)
+        all_commands_json = json.dumps(all_commands)
+        print "encoded", len(all_commands_json)
+        w(elt.context_execute(elt.canvas._get(0).getContext("2d"), all_commands_json))
         w.flush()
 
     def rect(self, name, x, y, width, height, fill="black", event_cb=None, style_dict=None,
