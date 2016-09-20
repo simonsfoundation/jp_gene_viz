@@ -35,21 +35,28 @@ class GridForestLayout(object):
 
     def compute_positions(self):
         G = self.G
+        # No positions for no nodes.
+        if not self.G.node_weights:
+            return {}
         self.get_tree()
         positions = self.assign_positions()
         result = {node: positions[node][:2] for node in G.node_weights}
         return result
+
+    def positive_symmetric_edges(self, directed_edges):
+        Gew = directed_edges
+        edge_weights = {}
+        for edge in Gew:
+            back_edge = (edge[1], edge[0])
+            edge_weights[edge] = edge_weights[back_edge] = abs(Gew[edge]) + abs(Gew.get(back_edge, 0))
+        return edge_weights
 
     def get_tree(self):
         G = self.G
         nodes = set(G.node_weights)
         Gew = G.edge_weights
         # enforce positive and symmetric edge weights
-        edge_weights = {}
-        for edge in Gew:
-            back_edge = (edge[1], edge[0])
-            edge_weights[edge] = edge_weights[back_edge] = abs(Gew[edge] + Gew.get(back_edge, 0))
-        #edge_weights = {edge: abs(Gew[edge]) for edge in Gew}
+        edge_weights = self.positive_symmetric_edges(Gew)
         assert len(nodes) > 0
         self.levels.append((nodes, edge_weights))  # leaf level
         while len(nodes) > 1:
@@ -177,7 +184,6 @@ class GridForestLayout(object):
         not_combined = set(nodes)
         combined_nodes = set()
         level_mapping = {}
-        combined_edge_weights = {}
         (greatest_weight, strongest_factor, strongest_factor_inv, strongest_count, connected, isolated) = \
             self.strength_stats(nodes, edge_weights)
         node_strength = sorted((strongest_count[n], n) for n in nodes if n not in isolated)
@@ -203,7 +209,13 @@ class GridForestLayout(object):
         # pair up any uncombined nodes
         not_combined_list = reversed(sorted((len(members[n]), n) for n in not_combined))
         self.pair_up_list(not_combined_list, combined_nodes, not_combined, level_mapping, members)
+        combined_edge_weights = self.combine_edge_weights(edge_weights, level_mapping)
+        #self.parent.update(level_mapping)
+        return (combined_nodes, combined_edge_weights)
+
+    def combine_edge_weights(self, edge_weights, level_mapping):
         # compute combined edge weights
+        combined_edge_weights = {}
         for edge in edge_weights:
             (nfrom, nto) = edge
             mfrom = level_mapping[nfrom]
@@ -212,8 +224,7 @@ class GridForestLayout(object):
                 mapped_edge = (mfrom, mto)
                 w = edge_weights[edge]
                 combined_edge_weights[mapped_edge] = combined_edge_weights.get(mapped_edge, 0) + w
-        #self.parent.update(level_mapping)
-        return (combined_nodes, combined_edge_weights)
+        return combined_edge_weights
 
 class SpokeTreeLayout(GridForestLayout):
     """
