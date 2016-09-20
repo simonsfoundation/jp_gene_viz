@@ -65,7 +65,9 @@ class GridForestLayout(object):
         while len(nodes) > 1:
             #print "combining", nodes
             this_level = self.combine(nodes, edge_weights)
-            (nodes, edge_weights) = this_level
+            (combined_nodes, edge_weights) = this_level
+            assert len(combined_nodes) < len(nodes), repr(nodes) + " no progress."
+            nodes = combined_nodes
             levels.append(this_level)
         assert len(nodes) == 1
         [root] = list(nodes)
@@ -89,7 +91,14 @@ class GridForestLayout(object):
             result = positions[node_parent]
         return result
 
+    def compute_geneology(self):
+        """
+        set up self.parents and self.levels to properly reflect self.root
+        """
+        pass  # this is done during calculation of self.root for this class.
+
     def assign_positions(self):
+        self.compute_geneology()
         root = self.root
         assert root is not None
         parents = self.parents
