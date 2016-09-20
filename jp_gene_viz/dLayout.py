@@ -35,7 +35,7 @@ def group_layout0(G, name="fr", fit=1000):
     return iGraphLayout(Gp, name, fit)
 
 def group_layout(G, fit=1000):
-    return grid_forest.forest_layout(G, 1000)
+    return grid_forest.forest_layout(G, fit)
 
 def dump(layout, filename):
     jlayout = layoutConverter.to_json_value(layout)

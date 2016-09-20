@@ -149,6 +149,28 @@ class GridForestLayout(object):
         isolated = set(nodes) - connected
         return (greatest_weight, strongest_factor, strongest_factor_inv, strongest_count, connected, isolated)
 
+    def pair_up_list(self, spoke_order, combined_nodes, not_combined, level_mapping, members):
+        spoke_order = list(spoke_order)
+        #print "order before", spoke_order, not_combined
+        while len(spoke_order) > 1:
+            (count1, node1) = spoke_order.pop()
+            (count2, node2) = spoke_order.pop()
+            pair = (node1, node2)
+            combined_nodes.add(pair)
+            not_combined.remove(node1)
+            not_combined.remove(node2)
+            for n in (node1, node2):
+                level_mapping[n] = pair
+                self.parents[n] = pair
+            members[pair] = members[node1] | members[node2]
+        #print "order after", spoke_order, not_combined
+        # add any trailing node as isolated
+        if spoke_order:
+            [(rcount, remaining_node)] = spoke_order
+            not_combined.remove(remaining_node)
+            level_mapping[remaining_node] = remaining_node
+            combined_nodes.add(remaining_node)
+
     def combine(self, nodes, edge_weights):
         "Pair up related nodes."
         members = self.members
@@ -159,27 +181,6 @@ class GridForestLayout(object):
         (greatest_weight, strongest_factor, strongest_factor_inv, strongest_count, connected, isolated) = \
             self.strength_stats(nodes, edge_weights)
         node_strength = sorted((strongest_count[n], n) for n in nodes if n not in isolated)
-        def pair_up_list(spoke_order):
-            spoke_order = list(spoke_order)
-            #print "order before", spoke_order, not_combined
-            while len(spoke_order) > 1:
-                (count1, node1) = spoke_order.pop()
-                (count2, node2) = spoke_order.pop()
-                pair = (node1, node2)
-                combined_nodes.add(pair)
-                not_combined.remove(node1)
-                not_combined.remove(node2)
-                for n in (node1, node2):
-                    level_mapping[n] = pair
-                    self.parents[n] = pair
-                members[pair] = members[node1] | members[node2]
-            #print "order after", spoke_order, not_combined
-            # add any trailing node as isolated
-            if spoke_order:
-                [(rcount, remaining_node)] = spoke_order
-                not_combined.remove(remaining_node)
-                level_mapping[remaining_node] = remaining_node
-                combined_nodes.add(remaining_node)
         while node_strength:
             (scount, central_node) = node_strength.pop()
             if scount < 1:
@@ -198,10 +199,10 @@ class GridForestLayout(object):
             if len(spoke_order) > 1:
                 # combine node pairs
                 spoke_order = reversed(spoke_order)
-                pair_up_list(spoke_order)
+                self.pair_up_list(spoke_order, combined_nodes, not_combined, level_mapping, members)
         # pair up any uncombined nodes
         not_combined_list = reversed(sorted((len(members[n]), n) for n in not_combined))
-        pair_up_list(not_combined_list)
+        self.pair_up_list(not_combined_list, combined_nodes, not_combined, level_mapping, members)
         # compute combined edge weights
         for edge in edge_weights:
             (nfrom, nto) = edge
