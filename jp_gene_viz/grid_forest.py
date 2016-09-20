@@ -57,15 +57,19 @@ class GridForestLayout(object):
         Gew = G.edge_weights
         # enforce positive and symmetric edge weights
         edge_weights = self.positive_symmetric_edges(Gew)
+        (self.root, self.levels) = self.get_subtree(nodes, edge_weights)
+
+    def get_subtree(self, nodes, edge_weights):
         assert len(nodes) > 0
-        self.levels.append((nodes, edge_weights))  # leaf level
+        levels = [(nodes, edge_weights)]  # leaf level
         while len(nodes) > 1:
             #print "combining", nodes
             this_level = self.combine(nodes, edge_weights)
             (nodes, edge_weights) = this_level
-            self.levels.append(this_level)
+            levels.append(this_level)
         assert len(nodes) == 1
-        [self.root] = list(nodes)
+        [root] = list(nodes)
+        return (root, levels)
 
     def distance0(self, position1, position2):
         p1 = position1[:2]
