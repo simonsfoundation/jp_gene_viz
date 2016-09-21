@@ -59,13 +59,16 @@ def primary_influence(Gin, connect=False, connect_weight=1):
                 Gout.add_edge(last, first, connect_weight)
     return Gout
 
-skeleton = primary_influence
+#skeleton = primary_influence
 
-def skeleton0(Gin):
+def skeleton(Gin):
+    """
+    Maximal spanning forest of Gin (?)
+    """
     visited_edges = set()
     ew = Gin.edge_weights
     nw = Gin.node_weights
-    print "skeleton in", len(ew), len(nw)
+    # "skeleton in", len(ew), len(nw)
     Gout = WGraph()
     neighbors = Gin.neighbors_dict()
     added = set()
@@ -74,33 +77,29 @@ def skeleton0(Gin):
     limit = len(ew)
     while edges:
         next_edge = None
-        while edges and (next_edge is None or next_edge not in visited_edges):
-            (weight, next_edge) = edges.pop()
-        print "    next_edge", next_edge
-        if not edges:
-            break
-        #visited_edges.add(next_edge)
+        (weight, next_edge) = edges.pop()
         (a, b) = next_edge
         if a not in added or b not in added:
             H = [(-weight, weight, e)]
-            Gout.add_edge(a, b, ew[next_e])
+            #Gout.add_edge(a, b, ew[next_e])
             while H:
-                print "H", H
-                print "added", added
+                #print "H", H
+                #print "added", added
                 (abs_weight, next_weight, next_e) = heapq.heappop(H)
                 assert len(H) < limit, repr((len(H), limit))
                 (a, b) = next_e
-                if a not in added or b not in added and next_e not in visited_edges:
+                if a not in added or b not in added:
                     #visited_edges.add(next_e)
                     for c in next_e:
                         for cn in neighbors[c]:
                             (cw, ce) = Gin.unordered_weight(c, cn)
-                            heapq.heappush(H, (-abs(cw), cw, ce))
+                            if ce not in visited_edges:
+                                heapq.heappush(H, (-abs(cw), cw, ce))
+                                visited_edges.add(ce)
                     Gout.add_edge(a, b, ew[next_e])
                     added.add(a)
                     added.add(b)
     #Gout.node_weights = nw.copy()
-    print "skeleton", len(Gout.edge_weights), len(Gout.node_weights)
     return Gout
 
 
