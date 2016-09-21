@@ -5,6 +5,8 @@ import json
 from jp_gene_viz.color_scale import (clr, clr_check, weighted_color, color)
 from jp_gene_viz import color_scale
 from jp_gene_viz.json_mixin import JsonMixin
+from jp_gene_viz import grid_forest
+
 
 def trim_leaves(Gin):
     #Gout = WGraph()
@@ -57,28 +59,43 @@ def primary_influence(Gin, connect=False, connect_weight=1):
                 Gout.add_edge(last, first, connect_weight)
     return Gout
 
+#skeleton = primary_influence
 
 def skeleton(Gin):
+    """
+    Maximal spanning forest of Gin (?)
+    """
+    visited_edges = set()
     ew = Gin.edge_weights
     nw = Gin.node_weights
+    # "skeleton in", len(ew), len(nw)
     Gout = WGraph()
     neighbors = Gin.neighbors_dict()
     added = set()
     edges = sorted([(abs(ew[e]), e) for e in ew])
+    count = 0
+    limit = len(ew)
     while edges:
+        next_edge = None
         (weight, next_edge) = edges.pop()
         (a, b) = next_edge
         if a not in added or b not in added:
             H = [(-weight, weight, e)]
+            #Gout.add_edge(a, b, ew[next_e])
             while H:
-                #print H[0]
+                #print "H", H
+                #print "added", added
                 (abs_weight, next_weight, next_e) = heapq.heappop(H)
+                assert len(H) < limit, repr((len(H), limit))
                 (a, b) = next_e
                 if a not in added or b not in added:
+                    #visited_edges.add(next_e)
                     for c in next_e:
                         for cn in neighbors[c]:
                             (cw, ce) = Gin.unordered_weight(c, cn)
-                            heapq.heappush(H, (-abs(cw), cw, ce))
+                            if ce not in visited_edges:
+                                heapq.heappush(H, (-abs(cw), cw, ce))
+                                visited_edges.add(ce)
                     Gout.add_edge(a, b, ew[next_e])
                     added.add(a)
                     added.add(b)
@@ -244,7 +261,7 @@ class WGraph(JsonMixin):
         # probably should clone XXXX
         self._node_color_interpolator = color_interpolator
     
-    def draw(self, canvas, positions, edgewidth=1, nodesize=3, fit=True, color_overrides=None):
+    def draw(self, canvas, positions, edgewidth=1, nodesize=3, fit=True, color_overrides=None, send=True):
         if color_overrides is None:
             color_overrides = {}
         (Me, me, Mn, mn) = self.weights_extrema()
@@ -313,7 +330,8 @@ class WGraph(JsonMixin):
                 ncol = color_overrides.get(name, ncol)
                 degree = min(outdegree.get(n, 1) - 1, 4)
                 canvas.circle(name, x, y, nodesize + degree, ncol) 
-        canvas.send_commands()
+        if send:
+            canvas.send_commands()
         # adjust the viewBox
         (minx, miny) = map(int, minimum)
         (maxx, maxy) = map(int, maximum)

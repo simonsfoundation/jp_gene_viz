@@ -16,6 +16,9 @@ from jp_gene_viz import js_context
 from jp_gene_viz.json_mixin import JsonMixin
 from jp_gene_viz import file_chooser_widget
 from jp_gene_viz.widget_utils import set_visibility, is_visible
+from jp_gene_viz import proxy_html5_canvas
+from jp_gene_viz import grid_forest
+from jp_gene_viz import spoke_layout
 import fnmatch
 import igraph
 import json
@@ -25,6 +28,21 @@ import time
 import zlib
 
 SELECTION = "SELECTION"
+
+CANVAS = "canvas"
+SVG = "SVG"
+
+SKELETON = "skeleton"
+SPOKE = "spoke"
+FOREST = "forest"
+
+LAYOUTS = [SKELETON, FOREST, SPOKE]
+
+LAYOUT_METHODS = {
+    SKELETON: dLayout.group_layout,
+    FOREST: grid_forest.forest_layout,
+    SPOKE: spoke_layout.spoke_layout,
+}
 
 # This function should be called once in a notebook before creating a display.
 #from jp_svg_canvas.canvas import load_javascript_support
@@ -106,9 +124,14 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
     # The motif collection to use for looking up motif data.
     motif_collection = None
 
-    def __init__(self, *pargs, **kwargs):
+    def __init__(self, container=SVG, *pargs, **kwargs):
         super(NetworkDisplay, self).__init__(*pargs, **kwargs)
+        containers = [SVG, CANVAS]
+        assert container in containers, "valid containers: " + repr(containers)
         self.title_html = widgets.HTML("Gene network")
+        cd = self.container_dropdown = widgets.Dropdown(options=containers, value=container)
+        cd.layout.width = "150px"
+        cd.on_trait_change(self.handle_container_change, "value")
         self.zoom_button = self.make_button("zoom", self.zoom_click, True)
         self.trim_button = self.make_button("trim", self.trim_click)
         self.layout_button = self.make_button("layout", self.layout_click)
@@ -138,7 +161,9 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.dialog = self.make_dialog()
         #self.settings_assembly.visible = False
         set_visibility(self.settings_assembly, False)
+        # Display containers
         svg = self.svg = canvas.SVGCanvasWidget()
+        self.canvas = proxy_html5_canvas.HTML5CanvasProxy()
         sslider = self.size_slider = widgets.IntSlider(value=500, min=100, max=2000, step=10,
             readout=False, width="150px")
         sslider.layout.width = "150px"
@@ -148,8 +173,16 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.depth_slider.layout.width = "200px"
         # Adjust the width and height of the svg when the size slider changes.
         traitlets.link((self, "svg_width"), (sslider, "value"))
-        traitlets.directional_link((sslider, "value"), (svg, "svg_width"))
-        traitlets.directional_link((sslider, "value"), (svg, "svg_height"))
+        for display in (svg, self.canvas):
+            traitlets.directional_link((sslider, "value"), (display, "svg_width"))
+            traitlets.directional_link((sslider, "value"), (display, "svg_height"))
+        # List of elements which only work for SVG container
+        self.requires_SVG = [
+            self.zoom_button,
+            self.focus_button,
+            self.ignore_button,
+            self.size_slider,
+        ]
         # Adjust the svg view box when the bounding box changes.
         svg.on_trait_change(self.handle_bounding_box_change, "boundingBox")
         svg.add_style("background-color", "white")
@@ -161,9 +194,11 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.on_trait_change(self.handle_maximize_change, "maximize")
         right_panel = [self.title_html,
                       self.svg,
+                      self.canvas.widget,
                       self.hideable_right]
         self.vertical = widgets.VBox(children=right_panel)
-        buttons = [self.zoom_button,
+        buttons = [self.container_dropdown,
+                   self.zoom_button,
                    self.focus_button,
                    self.ignore_button,
                    self.trim_button,
@@ -208,6 +243,32 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         # node color mapper override
         self.override_node_colors = None
         self.reset_interactive_bookkeeping()
+        self.handle_container_change()
+
+    def handle_container_change(self, *args):
+        choice = self.container_dropdown.value
+        chose_svg = True
+        if choice == SVG:
+            self.svg.viewBox = self.canvas.viewBox
+        elif choice == CANVAS:
+            chose_svg = False
+            self.canvas.viewBox = self.svg.viewBox
+        else:
+            raise ValueError("invalid container choice " + repr(choice))
+        set_visibility(self.svg, chose_svg)
+        set_visibility(self.canvas.widget, not chose_svg)
+        for widget in self.requires_SVG:
+            set_visibility(widget, chose_svg)
+        self.draw()
+
+    def chosen_container(self):
+        choice = self.container_dropdown.value
+        if choice == SVG:
+            return self.svg
+        elif choice == CANVAS:
+            return self.canvas
+        else:
+            raise ValueError("invalid container choice " + repr(choice))
 
     def colorize_cursor(self, color):
         "Set the cursor to the given color"
@@ -259,7 +320,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
 
     def make_layout_dropdown(self):
         "Make a layout selection widget."
-        options = ["skeleton"]
+        options = list(LAYOUTS)
         for method_name in dir(igraph.Graph):
             if method_name.startswith("layout_"):
                 layout_name = method_name[7:]
@@ -459,14 +520,14 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         chooser.show()
 
     def draw_click(self, b=None):
-        self.svg.empty()
+        #self.svg.empty()
         self.draw()
 
     def apply_click(self, b=None):
         "Apply threshhold value to the viewable network."
         self.reset_interactive_bookkeeping()
         self.do_threshhold()
-        self.svg.empty()
+        #self.svg.empty()
         self.draw()
 
     def nodes_click(self, b=None):
@@ -519,7 +580,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.display_graph = G
         self.set_node_weights()
 
-    def load_data(self, graph, positions=None):
+    def load_data(self, graph, positions=None, draw=True):
         "Load and draw a graph and positions to the network display."
         if positions is None:
             self.info_area.value = "Computing default layout: " + repr(graph.sizes())
@@ -536,7 +597,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.threshhold_slider.max = maxw
         self.do_threshhold()
         self.reset_interactive_bookkeeping()
-        self.draw()
+        if draw:
+            self.draw()
 
     def fit_heuristic(self, graph):
         "Guess an edge size for fitting network layout."
@@ -562,10 +624,11 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             return
         self.info_area.value = "Drawing graph: " + repr((G.sizes(), len(P)))
         if svg is None:
-            svg = self.svg
+            #svg = self.svg
+            svg = self.chosen_container()
             svg.empty()
         self.svg_origin = G.draw(svg, P, 
-            fit=fit, color_overrides=color_overrides)
+            fit=fit, color_overrides=color_overrides, send=False)
         self.cancel_selection()
         self.info_area.value = "Done drawing: " + repr((G.sizes(), len(P)))
         font_size = self.font_size_slider.value
@@ -597,8 +660,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             if fit:
                 # async: get svg bounding box
                 svg.fit(False)
-            svg.send_commands()
             self.info_area.value = "Labels added."
+        svg.send_commands()
         if is_visible(self.settings_assembly):
             #G.reset_colorization()
             self.info_area.value = "Displaying color choosers."
@@ -635,19 +698,32 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.display_positions = Pfocus
         self.reset_interactive_bookkeeping()
         self.do_threshhold()
-        self.svg.empty()
+        #self.svg.empty()
         self.draw()
+
+    def limit_edges(self, limit):
+        ew = self.data_graph.edge_weights
+        order = sorted((abs(ew[e]), e) for e in ew)
+        dG = dGraph.WGraph()
+        for (count, (weight, edge)) in enumerate(reversed(order)):
+            (a, b) = edge
+            dG.add_edge(a, b, ew[edge])
+            if count > limit:
+                break
+        self.display_graph = dG
+        minw = min(abs(x) for x in dG.edge_weights.values())
+        self.threshhold_slider.value = minw
 
     def labels_click(self, b=None):
         "Label button click: toggle drawing of labels."
         self.info_area.value = "labels click " + repr(self.labels_button.value)
-        self.svg.empty()
+        #self.svg.empty()
         self.draw()
 
     def settings_click(self, b=None):
         checked = self.settings_button.value
         set_visibility(self.settings_assembly, checked)
-        self.svg.empty()
+        #self.svg.empty()
         self.draw()
         self.info_area.value = "settings " + repr(checked)
 
@@ -665,14 +741,15 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         fit = self.fit_heuristic(dG)
         layout_selection = self.layout_dropdown.value
         try:
-            if layout_selection == "skeleton":
-                self.display_positions = dLayout.group_layout(dG, fit=fit)
+            if layout_selection in LAYOUT_METHODS:
+                method = LAYOUT_METHODS[layout_selection]
+                self.display_positions = method(dG, fit=fit)
             else:
                 self.display_positions = dLayout.iGraphLayout(dG, layout_selection, fit)
         except Exception as e:
             self.info_area.value = repr(layout_selection) + " layout failed: " + repr(e)
         else:
-            self.svg.empty()
+            #self.svg.empty()
             self.draw()
 
     def regulates_click(self, b=None):
@@ -727,7 +804,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
                 dP[n] = P[n]
         self.set_node_weights()
         self.do_threshhold()
-        self.svg.empty()
+        #self.svg.empty()
         self.draw()
 
     def selection_extrema(self):
@@ -819,7 +896,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         (Gfocus, Pfocus) = self.select_nodes(nodes, G, P)
         self.display_graph = Gfocus
         self.set_node_weights()
-        self.svg.empty()
+        #self.svg.empty()
         self.draw()
 
     def get_selection(self):
@@ -877,7 +954,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.display_graph = Gfocus
         self.display_positions = Pfocus
         self.do_threshhold()
-        self.svg.empty()
+        #self.svg.empty()
         self.draw()
 
     def zoom_click(self, b=None):
@@ -903,7 +980,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.display_graph = new_display_graph
         self.display_positions = self.data_positions.copy()
         self.do_threshhold()
-        self.svg.empty()
+        #self.svg.empty()
         self.draw()
 
     def trim_click(self, b=None):
@@ -916,7 +993,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             return
         self.display_graph = dGraph.trim_leaves(G)
         self.set_node_weights()
-        self.svg.empty()
+        #self.svg.empty()
         self.draw()
 
     def svg_callback(self, info):
@@ -1233,7 +1310,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
     def handle_bounding_box_change(self, att_name, old, new):
         "Adjust the svg view box to include the bounding box for the network."
         if new:
-            svg = self.svg
+            svg = self.svg  # XXXXX ???? what about the canvas?
             h = new["height"]
             w = new["width"]
             x = new["x"]
@@ -1246,19 +1323,25 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         set_visibility(self.inputs, self.maximize)
 
 
-def display_network(filename, N=None, threshhold=20.0, save_layout=True, show=True):
+def display_network(filename, N=None, threshhold=20.0, save_layout=True, show=True, size_limit=20000):
     from jp_gene_viz import dLayout
     from jp_gene_viz import getData
     assert os.path.exists(filename)
     print ("Reading network", filename)
     G = getData.read_network(filename)
+    size = len(G.node_weights) + len(G.edge_weights)
     layoutpath = filename + ".layout.json"
     if os.path.exists(layoutpath):
         print ("Loading saved layout", layoutpath)
         layout = dLayout.load(layoutpath)
     else:
         print ("Computing layout")
-        layout = dLayout.group_layout(G)
+        if size < size_limit:
+            # Use the slow but prettier method
+            layout = dLayout.group_layout(G)
+        else:
+            print ("Using fast layout because the network is large.")
+            layout = grid_forest.forest_layout(G)
         if save_layout:
             print ("Saving layout", layoutpath)
             dLayout.dump(layout, layoutpath)
@@ -1266,7 +1349,10 @@ def display_network(filename, N=None, threshhold=20.0, save_layout=True, show=Tr
         N = NetworkDisplay()
     if threshhold:
         N.threshhold_slider.value = threshhold
-    N.load_data(G, layout)
+    N.load_data(G, layout, draw=show)
+    if size > size_limit:
+        print("Omitting edges because the network is large")
+        N.limit_edges(size_limit)
     if show:
         N.show()
     return N
