@@ -18,6 +18,7 @@ from jp_gene_viz import file_chooser_widget
 from jp_gene_viz.widget_utils import set_visibility, is_visible
 from jp_gene_viz import proxy_html5_canvas
 from jp_gene_viz import grid_forest
+from jp_gene_viz import spoke_layout
 import fnmatch
 import igraph
 import json
@@ -30,6 +31,18 @@ SELECTION = "SELECTION"
 
 CANVAS = "canvas"
 SVG = "SVG"
+
+SKELETON = "skeleton"
+SPOKE = "spoke"
+FOREST = "forest"
+
+LAYOUTS = [SKELETON, FOREST, SPOKE]
+
+LAYOUT_METHODS = {
+    SKELETON: dLayout.group_layout,
+    FOREST: grid_forest.forest_layout,
+    SPOKE: spoke_layout.spoke_layout,
+}
 
 # This function should be called once in a notebook before creating a display.
 #from jp_svg_canvas.canvas import load_javascript_support
@@ -307,7 +320,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
 
     def make_layout_dropdown(self):
         "Make a layout selection widget."
-        options = ["skeleton"]
+        options = list(LAYOUTS)
         for method_name in dir(igraph.Graph):
             if method_name.startswith("layout_"):
                 layout_name = method_name[7:]
@@ -728,8 +741,9 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         fit = self.fit_heuristic(dG)
         layout_selection = self.layout_dropdown.value
         try:
-            if layout_selection == "skeleton":
-                self.display_positions = dLayout.group_layout(dG, fit=fit)
+            if layout_selection in LAYOUT_METHODS:
+                method = LAYOUT_METHODS[layout_selection]
+                self.display_positions = method(dG, fit=fit)
             else:
                 self.display_positions = dLayout.iGraphLayout(dG, layout_selection, fit)
         except Exception as e:
