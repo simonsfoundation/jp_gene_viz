@@ -5,8 +5,8 @@ Grid forest layout.
 import numpy as np
 from numpy.linalg import norm
 
-def forest_layout(G, side_length=1000):
-    GF = GridForestLayout(G, side_length)
+def forest_layout(G, fit=1000):
+    GF = GridForestLayout(G, fit)
     return GF.compute_positions()
 
 def split_position(position):
