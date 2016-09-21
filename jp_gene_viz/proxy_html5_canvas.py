@@ -45,7 +45,7 @@ class HTML5CanvasProxy(traitlets.HasTraits):
         self.empty()
 
     def set_view_box(self, x, y, w, h):
-        print "viewbox", (x,y,w,h)
+        #p "viewbox", (x,y,w,h)
         self.viewBox = "%s %s %s %s" % (x, y, w, h)
 
     def change_dimensions(self):
@@ -100,7 +100,7 @@ class HTML5CanvasProxy(traitlets.HasTraits):
             tag = '<canvas width="%s" height="%s" style="border:1px solid #d3d3d3;"/>' % (
                 swidth, sheight
             )
-            print "tag is", (tag, self.svg_width, self.svg_height, self.viewBox)
+            #p "tag is", (tag, self.svg_width, self.svg_height, self.viewBox)
             w(elt._set("canvas", jQuery(tag).appendTo(elt)))
             w.save_function("context_execute",
                 ["context", "sequence_json"],
@@ -127,9 +127,9 @@ class HTML5CanvasProxy(traitlets.HasTraits):
             command_prefix.append(self.call_cmd("translate", -x0, -y0))
         self.is_empty = False
         all_commands = command_prefix + self.operations
-        print "encoding JSON", len(all_commands)
+        #p "encoding JSON", len(all_commands)
         all_commands_json = json.dumps(all_commands)
-        print "encoded", len(all_commands_json)
+        #p "encoded", len(all_commands_json)
         w(elt.context_execute(elt.canvas._get(0).getContext("2d"), all_commands_json))
         w.flush()
 
