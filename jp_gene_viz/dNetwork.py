@@ -111,7 +111,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
     # The motif collection to use for looking up motif data.
     motif_collection = None
 
-    def __init__(self, container=CANVAS, *pargs, **kwargs):
+    def __init__(self, container=SVG, *pargs, **kwargs):
         super(NetworkDisplay, self).__init__(*pargs, **kwargs)
         containers = [SVG, CANVAS]
         assert container in containers, "valid containers: " + repr(containers)
@@ -687,6 +687,19 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.do_threshhold()
         #self.svg.empty()
         self.draw()
+
+    def limit_edges(self, limit):
+        ew = self.data_graph.edge_weights
+        order = sorted((abs(ew[e]), e) for e in ew)
+        dG = dGraph.WGraph()
+        for (count, (weight, edge)) in enumerate(reversed(order)):
+            (a, b) = edge
+            dG.add_edge(a, b, ew[edge])
+            if count > limit:
+                break
+        self.display_graph = dG
+        minw = min(abs(x) for x in dG.edge_weights.values())
+        self.threshhold_slider.value = minw
 
     def labels_click(self, b=None):
         "Label button click: toggle drawing of labels."
@@ -1296,19 +1309,19 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         set_visibility(self.inputs, self.maximize)
 
 
-def display_network(filename, N=None, threshhold=20.0, save_layout=True, show=True, size_limit=20000 ):
+def display_network(filename, N=None, threshhold=20.0, save_layout=True, show=True, size_limit=20000):
     from jp_gene_viz import dLayout
     from jp_gene_viz import getData
     assert os.path.exists(filename)
     print ("Reading network", filename)
     G = getData.read_network(filename)
+    size = len(G.node_weights) + len(G.edge_weights)
     layoutpath = filename + ".layout.json"
     if os.path.exists(layoutpath):
         print ("Loading saved layout", layoutpath)
         layout = dLayout.load(layoutpath)
     else:
         print ("Computing layout")
-        size = len(G.node_weights) + len(G.edge_weights)
         if size < size_limit:
             # Use the slow but prettier method
             layout = dLayout.group_layout(G)
@@ -1323,6 +1336,9 @@ def display_network(filename, N=None, threshhold=20.0, save_layout=True, show=Tr
     if threshhold:
         N.threshhold_slider.value = threshhold
     N.load_data(G, layout, draw=show)
+    if size > size_limit:
+        print("Omitting edges because the network is large")
+        N.limit_edges(size_limit)
     if show:
         N.show()
     return N
