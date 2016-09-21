@@ -17,6 +17,7 @@ from jp_gene_viz.json_mixin import JsonMixin
 from jp_gene_viz import file_chooser_widget
 from jp_gene_viz.widget_utils import set_visibility, is_visible
 from jp_gene_viz import proxy_html5_canvas
+from jp_gene_viz import grid_forest
 import fnmatch
 import igraph
 import json
@@ -1295,7 +1296,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         set_visibility(self.inputs, self.maximize)
 
 
-def display_network(filename, N=None, threshhold=20.0, save_layout=True, show=True):
+def display_network(filename, N=None, threshhold=20.0, save_layout=True, show=True, size_limit=20000 ):
     from jp_gene_viz import dLayout
     from jp_gene_viz import getData
     assert os.path.exists(filename)
@@ -1307,7 +1308,13 @@ def display_network(filename, N=None, threshhold=20.0, save_layout=True, show=Tr
         layout = dLayout.load(layoutpath)
     else:
         print ("Computing layout")
-        layout = dLayout.group_layout(G)
+        size = len(G.node_weights) + len(G.edge_weights)
+        if size < size_limit:
+            # Use the slow but prettier method
+            layout = dLayout.group_layout(G)
+        else:
+            print ("Using fast layout because the network is large.")
+            layout = grid_forest.forest_layout(G)
         if save_layout:
             print ("Saving layout", layoutpath)
             dLayout.dump(layout, layoutpath)
