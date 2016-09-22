@@ -19,6 +19,7 @@ from jp_gene_viz.widget_utils import set_visibility, is_visible
 from jp_gene_viz import proxy_html5_canvas
 from jp_gene_viz import grid_forest
 from jp_gene_viz import spoke_layout
+from jp_gene_viz import simple_tree
 import fnmatch
 import igraph
 import json
@@ -35,13 +36,15 @@ SVG = "SVG"
 SKELETON = "skeleton"
 SPOKE = "spoke"
 FOREST = "forest"
+TREE = "tree"
 
-LAYOUTS = [SKELETON, FOREST, SPOKE]
+LAYOUTS = [SKELETON, TREE, FOREST, SPOKE]
 
 LAYOUT_METHODS = {
     SKELETON: dLayout.group_layout,
     FOREST: grid_forest.forest_layout,
     SPOKE: spoke_layout.spoke_layout,
+    TREE: simple_tree.tree_layout,
 }
 
 # This function should be called once in a notebook before creating a display.
@@ -120,6 +123,13 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
     dialog_time = None
 
     dialog_timeout = 5
+
+    label_style = {
+        "text-anchor": "middle",
+        "stroke": "white",
+        "font-weight": "bold",
+        "stroke-width": 0.2,
+        }
 
     # The motif collection to use for looking up motif data.
     motif_collection = None
@@ -361,10 +371,10 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         # label size sliders
         font_sl = self.font_size_slider = widgets.IntSlider(
             description="labels",
-            value=5, min=0, max=20, width="50px")
+            value=7, min=0, max=20, width="50px")
         font_fsl = self.tf_font_size_slider = widgets.IntSlider(
             description="tf labels",
-            value=5, min=5, max=20, width="50px")
+            value=7, min=5, max=20, width="50px")
         font_sl.layout.width = "200px"
         font_fsl.layout.width = "200px"
         # colorize area
@@ -633,7 +643,9 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.info_area.value = "Done drawing: " + repr((G.sizes(), len(P)))
         font_size = self.font_size_slider.value
         tf_font_size = self.tf_font_size_slider.value
-        style0 = {"font-size": font_size, "text-anchor": "middle"}
+        #style0 = {"font-size": font_size, "text-anchor": "middle"}
+        style0 = self.label_style.copy()
+        style0["font-size"] = font_size
         #color = "black"
         if self.labels_button.value:
             nw = G.node_weights
