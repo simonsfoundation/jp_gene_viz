@@ -38,6 +38,7 @@ class HTML5CanvasProxy(traitlets.HasTraits):
         self.on_trait_change(self.change_dimensions, "svg_height")
         self.font = "Arial"  # default
         self.font_size = 10
+        self.font_weight = "normal"
         self.operations = []
         self.assignments = {}
         w = self.widget = js_proxy.ProxyWidget()
@@ -157,15 +158,21 @@ class HTML5CanvasProxy(traitlets.HasTraits):
         style_dict = style_dict.copy()
         style_dict.update(other_attributes)
         f = self.font = style_dict.get("font", self.font)
+        w = self.font_weight = style_dict.get("font-weight", self.font_weight)
         s = self.font_size = style_dict.get("font-size", self.font_size)
-        self._assign("fillStyle", fill)
-        self._assign("font", "%spx %s" % (s, f))
+        self._assign("font", "%s %spx %s" % (w, s, f))
         self._assign("fillStyle", fill)
         ta = style_dict.get("text-anchor", "start")
         if ta == "middle":
             ta = "center"
         self._assign("textAlign", ta)
         self._add("fillText", text, x, y)
+        stroke = style_dict.get("stroke")
+        stroke_width = style_dict.get("stroke-width")
+        if stroke and stroke_width:
+            self._assign("lineWidth", stroke_width)
+            self._assign("strokeStyle", stroke)
+            self._add("strokeText", text, x, y)
 
     def line(self, name, x1, y1, x2, y2, color="black", width=1, 
              event_cb=None, style_dict=None, **other_attributes):
