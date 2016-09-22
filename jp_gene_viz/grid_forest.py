@@ -33,7 +33,7 @@ class GridForestLayout(object):
         self.root = None
         self.levels = []
 
-    def compute_positions(self):
+    def compute_positions(self, jitter=True, jitter_factor=0.7):
         G = self.G
         # No positions for no nodes.
         if not self.G.node_weights:
@@ -41,6 +41,19 @@ class GridForestLayout(object):
         self.get_tree()
         positions = self.assign_positions()
         result = {node: positions[node][:2] for node in G.node_weights}
+        if result and jitter:
+            # jitter positions randomly within min tolerance
+            coords = set()
+            for p in result.values():
+                for c in p:
+                    coords.add(c)
+            L = sorted(coords)
+            min_diff = L[-1] - L[0]
+            for index in range(len(L) - 1):
+                min_diff = min(min_diff, L[index + 1] - L[index])
+            max_jitter = min_diff * jitter_factor
+            for node in result.keys():
+                result[node] += np.random.rand(2) * max_jitter
         return result
 
     def positive_symmetric_edges(self, directed_edges):
@@ -157,7 +170,7 @@ class GridForestLayout(object):
         strongest_factor_inv = {node: set() for node in nodes}
         connected = set()
         for edge in edge_weights:
-            weight = edge_weights[edge]
+            weight = abs(edge_weights[edge])
             (nfrom, nto) = edge
             if weight > greatest_weight[nto]:
                 greatest_weight[nto] = weight
@@ -238,8 +251,3 @@ class GridForestLayout(object):
                 w = edge_weights[edge]
                 combined_edge_weights[mapped_edge] = combined_edge_weights.get(mapped_edge, 0) + w
         return combined_edge_weights
-
-class SpokeTreeLayout(GridForestLayout):
-    """
-    Create subtrees based on shared greatest influence.
-    """
