@@ -20,6 +20,7 @@ from jp_gene_viz import proxy_html5_canvas
 from jp_gene_viz import grid_forest
 from jp_gene_viz import spoke_layout
 from jp_gene_viz import simple_tree
+from jp_gene_viz import cluster_layout
 import fnmatch
 import igraph
 import json
@@ -37,14 +38,16 @@ SKELETON = "skeleton"
 SPOKE = "spoke"
 FOREST = "forest"
 TREE = "tree"
+CLUSTER = "cluster"
 
-LAYOUTS = [SKELETON, TREE, FOREST, SPOKE]
+LAYOUTS = [SKELETON, TREE, FOREST, SPOKE, CLUSTER]
 
 LAYOUT_METHODS = {
     SKELETON: dLayout.group_layout,
     FOREST: grid_forest.forest_layout,
     SPOKE: spoke_layout.spoke_layout,
     TREE: simple_tree.tree_layout,
+    CLUSTER: cluster_layout.cluster_layout,
 }
 
 # This function should be called once in a notebook before creating a display.
@@ -610,8 +613,10 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         if draw:
             self.draw()
 
-    def fit_heuristic(self, graph):
+    def fit_heuristic(self, graph=None):
         "Guess an edge size for fitting network layout."
+        if graph is None:
+            graph = self.display_graph
         (esize, nsize) = graph.sizes()
         fit = max(200, min(1000, 2*(esize/4 + nsize)))
         return fit
@@ -742,6 +747,12 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
     def show_motifs(self, b=None):
         # do nothing
         pass
+
+    def apply_layout(self, layout):
+        self.info_area.value = "applying layout"
+        self.reset_interactive_bookkeeping()
+        self.display_positions = layout
+        self.draw()
 
     def layout_click(self, b=None):
         "Apply the current layout to the viewable graph."
