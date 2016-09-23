@@ -88,6 +88,9 @@ class HeatMap(object):
             result[row] = data[row_index, col_index]
         return result
 
+    def get_data(self):
+        return (self.row_names, self.col_names, self.data)
+
     def set_data(self, row_names, col_names, data):
         """
         Store row names, column names and data entries.
