@@ -60,7 +60,7 @@ class SpokeLayout(grid_forest.GridForestLayout):
         node_weights = G.node_weights
         edge_weights = self.positive_symmetric_edges(G.edge_weights)
         parents = self.parents = {}
-        members = self.members = {}
+        #members = self.members = {}
         level_nodesets = []
         this_level = set([self.root])
         all_leaves = False
@@ -76,7 +76,7 @@ class SpokeLayout(grid_forest.GridForestLayout):
                 else:
                     all_leaves = False
                     (n1, n2) = node
-                    members[node] = set(node)
+                    #members[node] = set(node)
                     for n in (n1, n2):
                         next_level.add(n)
                         parents[n] = node

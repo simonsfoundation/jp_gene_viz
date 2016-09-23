@@ -4,21 +4,35 @@ Grid forest layout.
 
 import numpy as np
 from numpy.linalg import norm
+from random import random
 
 def forest_layout(G, fit=1000):
     GF = GridForestLayout(G, fit)
     return GF.compute_positions()
 
-def split_position(position):
+def split_position(position, ratio):
     (x, y, dx, dy) = position
-    cx = cy = 0
-    ddx = dx
-    ddy = dy
+    x1 = x2 = x
+    y1 = y2 = y
+    dx1 = dx2 = dx
+    dy1 = dy2 = dy
     if dx > dy:
-        cx = ddx = dx * 0.5
+        (x1, x2, dx1, dx2) = split_stats(x, dx, ratio)
     else:
-        cy = ddy = dy * 0.5
-    return (np.array([x+cx, y+cy, ddx, ddy]), np.array([x-cx, y-cy, ddx, ddy]))
+        (y1, y2, dy1, dy2) = split_stats(y, dy, ratio)
+    return (np.array([x1, y1, dx1, dy1]), np.array([x2, y2, dx2, dy2]))
+
+def split_stats(x, dx, ratio):
+    # xxxx could be simplified?
+    ox = x - dx
+    s = 2 * dx
+    rx1 = s * ratio
+    dx1 = 0.5 * rx1
+    rx2 = s - rx1
+    dx2 = 0.5 * rx2
+    cx1 = ox + dx1
+    cx2 = ox + rx1 + dx2
+    return (cx1, cx2, dx1, dx2)
 
 class GridForestLayout(object):
     """
@@ -31,29 +45,43 @@ class GridForestLayout(object):
         self.parents = {}
         self.members = {node: frozenset([node]) for node in G.node_weights}
         self.root = None
+        self.positions = None
         self.levels = []
 
-    def compute_positions(self, jitter=True, jitter_factor=0.7):
+    def fill_in_members(self, node=None, members=None, leaves=None):
+        if leaves is None:
+            leaves = set(self.G.node_weights)
+        if node is None:
+            node = self.root
+        assert node is not None
+        if members is None:
+            members = self.members
+        if node in leaves:
+            members[node] = frozenset([node])
+        else:
+            (left, right) = node
+            members[node] = (
+                self.fill_in_members(left, members, leaves) | 
+                self.fill_in_members(right, members, leaves))
+        return members[node]
+    
+    def compute_positions(self, jitter=True, jitter_factor=0.5):
         G = self.G
         # No positions for no nodes.
         if not self.G.node_weights:
             return {}
         self.get_tree()
-        positions = self.assign_positions()
-        result = {node: positions[node][:2] for node in G.node_weights}
-        if result and jitter:
-            # jitter positions randomly within min tolerance
-            coords = set()
-            for p in result.values():
-                for c in p:
-                    coords.add(c)
-            L = sorted(coords)
-            min_diff = L[-1] - L[0]
-            for index in range(len(L) - 1):
-                min_diff = min(min_diff, L[index + 1] - L[index])
-            max_jitter = min_diff * jitter_factor
-            for node in result.keys():
-                result[node] += np.random.rand(2) * max_jitter
+        self.members = {}
+        self.fill_in_members()
+        positions = self.assign_positions(jitter, jitter_factor)
+        #result = {node: positions[node][:2] for node in G.node_weights}
+        result = {}
+        for node in G.node_weights:
+            (x, y, dx, dy) = positions[node]
+            if jitter:
+                x += random() * jitter_factor * dx
+                y += random() * jitter_factor * dy
+            result[node] = np.array([x, y])
         return result
 
     def positive_symmetric_edges(self, directed_edges):
@@ -86,12 +114,12 @@ class GridForestLayout(object):
         [root] = list(nodes)
         return (root, levels)
 
-    def distance0(self, position1, position2):
+    def distance(self, position1, position2):
         p1 = position1[:2]
         p2 = position2[:2]
-        return norm(p1-p2) 
+        return np.log(norm(p1-p2))
 
-    def distance(self, position1, position2):
+    def distance0(self, position1, position2):
         p1 = position1[:2]
         p2 = position2[:2]
         return np.sum(np.abs(p1 - p2))
@@ -110,7 +138,7 @@ class GridForestLayout(object):
         """
         pass  # this is done during calculation of self.root for this class.
 
-    def assign_positions(self):
+    def assign_positions(self, jitter=True, jitter_factor=0.7):
         self.compute_geneology()
         root = self.root
         assert root is not None
@@ -119,6 +147,7 @@ class GridForestLayout(object):
         half_side = self.side_length/2.0
         root_position = np.array([half_side, half_side, half_side, half_side])
         positions = {root: root_position}
+        members = self.members
         # compute child nodes for each level
         root_to_leaf = list(reversed(self.levels))
         for (non_leaf_level_number, level) in enumerate(root_to_leaf[:-1]):
@@ -134,17 +163,25 @@ class GridForestLayout(object):
                     if child1 not in child_adjacent or child2 not in child_adjacent:
                         # node created at later level
                         continue
-                    (position1, position2) = split_position(node_position)
-                    penalty12 = (self.penalty(child1, position1, child_adjacent, positions, child_edge_weights) +
-                                 self.penalty(child2, position2, child_adjacent, positions, child_edge_weights))
-                    penalty21 = (self.penalty(child1, position2, child_adjacent, positions, child_edge_weights) +
-                                 self.penalty(child2, position1, child_adjacent, positions, child_edge_weights))
+                    len1 = len(members[child1])
+                    len2 = len(members[child2])
+                    if jitter:
+                        len1 += random() * jitter_factor
+                        len2 += random() * jitter_factor
+                    ratio12 = len1/float(len1 + len2)
+                    pos12 = split_position(node_position, ratio12)
+                    pos21 = split_position(node_position, 1.0 - ratio12)
+                    penalty12 = (self.penalty(child1, pos12[0], child_adjacent, positions, child_edge_weights) +
+                                 self.penalty(child2, pos12[1], child_adjacent, positions, child_edge_weights))
+                    penalty21 = (self.penalty(child1, pos21[1], child_adjacent, positions, child_edge_weights) +
+                                 self.penalty(child2, pos21[0], child_adjacent, positions, child_edge_weights))
                     if penalty12 < penalty21:
-                        positions[child1] = position1
-                        positions[child2] = position2
+                        positions[child1] = pos12[0]
+                        positions[child2] = pos12[1]
                     else:
-                        positions[child1] = position2
-                        positions[child2] = position1
+                        positions[child1] = pos21[1]
+                        positions[child2] = pos21[0]
+        self.positions = positions
         return positions
 
     def penalty(self, node, position, adjacency, positions, edge_weights):
