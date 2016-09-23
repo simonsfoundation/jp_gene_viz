@@ -7,6 +7,7 @@ import pprint
 from jp_gene_viz import dExpression
 from jp_gene_viz import dNetwork
 from ipywidgets import widgets
+from jp_gene_viz import cluster_layout
 import traitlets
 
 # Call this once.
@@ -30,7 +31,9 @@ class LinkedExpressionNetwork(traitlets.HasTraits):
         self.gene_button = self.make_button(u"\u21d3 Genes", self.gene_click)
         self.condition_button = self.make_button(u"\u21d1 Condition",
                                                  self.condition_click)
-        buttons = [self.gene_button, self.condition_button]
+        self.cluster_button = self.make_button(u"\u21d1 Cluster",
+                                                 self.cluster_click)
+        buttons = [self.gene_button, self.condition_button, self.cluster_button]
         horizontal = widgets.HBox(children=buttons)
         self.hideable = widgets.VBox(children=[horizontal, self.expression.assembly])
         #traitlets.directional_link((self, "maximize"), (hideable, "visible"))
@@ -49,9 +52,10 @@ class LinkedExpressionNetwork(traitlets.HasTraits):
 
     def show(self):
         display(self.assembly)
+        self.network.draw()
 
     def make_button(self, description, on_click,
-                    disabled=False, width="250px"):
+                    disabled=False, width="150px"):
         "Create a button."
         # XXXX refactor to superclass.
         result = widgets.Button(description=description)
@@ -60,7 +64,7 @@ class LinkedExpressionNetwork(traitlets.HasTraits):
         result.layout.width = width
         return result
 
-    def gene_click(self, b):
+    def gene_click(self, b=None):
         """
         Handle genes button click -- load genes selected in network
         to the heatmap.
@@ -69,7 +73,7 @@ class LinkedExpressionNetwork(traitlets.HasTraits):
         self.expression.select_rows(nodes)
         self.expression.info_area.value = "Genes\n" + pprint.pformat(nodes)
 
-    def condition_click(self, b):
+    def condition_click(self, b=None):
         """
         Handle condition button click -- load weights in heatmap selected
         condition to the gene nodes in the network.
@@ -83,6 +87,17 @@ class LinkedExpressionNetwork(traitlets.HasTraits):
         self.network.draw()
         self.network.info_area.value = ("weights\n" +
                                         pprint.pformat(col_weights))
+    
+    def cluster_click(self, b=None):
+        """
+        Apply a clustering layout to the network using the expression values.
+        """
+        (rows, data) = self.expression.get_observations()
+        self.network.select_and_draw(rows)
+        fit = self.network.fit_heuristic()
+        G = self.network.display_graph
+        layout = cluster_layout.cluster_layout(G, fit, data, rows)
+        self.network.apply_layout(layout)
 
     def load_network(self, filename):
         """
