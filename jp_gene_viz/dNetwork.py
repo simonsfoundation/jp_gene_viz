@@ -255,6 +255,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.override_node_weights = None
         # node color mapper override
         self.override_node_colors = None
+        self.group_rectangle = None
         self.reset_interactive_bookkeeping()
         self.handle_container_change()
 
@@ -772,7 +773,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         try:
             if layout_selection in LAYOUT_METHODS:
                 method = LAYOUT_METHODS[layout_selection]
-                display_positions = method(dG, fit=fit)
+                (display_positions, rectangles) = method(dG, fit=fit)
             else:
                 display_positions = dLayout.iGraphLayout(dG, layout_selection, fit)
         except Exception as e:

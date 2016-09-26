@@ -77,14 +77,19 @@ class GridForestLayout(object):
         self.fill_in_members()
         positions = self.assign_positions(jitter, jitter_factor)
         #result = {node: positions[node][:2] for node in G.node_weights}
-        result = {}
-        for node in G.node_weights:
+        leaf_positions = {}
+        group_rectangles = {}
+        for node in positions:
             (x, y, dx, dy) = positions[node]
-            if jitter:
-                x += random() * jitter_factor * dx
-                y += random() * jitter_factor * dy
-            result[node] = np.array([x, y])
-        return result
+            if node in G.node_weights:
+                if jitter:
+                    x += random() * jitter_factor * dx
+                    y += random() * jitter_factor * dy
+                leaf_positions[node] = np.array([x, y])
+            else:
+                rectangle = np.array([x-dx, y-dy, dx*2, dy*2])
+                group_rectangles = rectangle
+        return (leaf_positions, group_rectangles)
 
     def positive_symmetric_edges(self, directed_edges):
         Gew = directed_edges

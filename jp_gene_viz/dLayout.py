@@ -36,7 +36,7 @@ def group_graph(G):
 
 def group_layout(G, name="fr", fit=1000):
     Gp = group_graph(G)
-    return iGraphLayout(Gp, name, fit)
+    return (iGraphLayout(Gp, name, fit), [])
 
 def group_layout0(G, fit=1000):
     return spoke_layout.spoke_layout(G, fit)
