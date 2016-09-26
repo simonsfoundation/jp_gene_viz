@@ -600,7 +600,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             fit = self.fit_heuristic(graph)
             positions = dLayout.group_layout(graph, fit=fit)
         self.data_positions = positions
-        self.display_positions = positions.copy()
+        #self.display_positions = positions.copy()
+        self.set_layout(positions.copy())
         self.data_graph = graph
         self.display_graph = graph.clone()
         self.override_node_colors = None
@@ -712,7 +713,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             self.data_graph, self.data_positions)
         self.display_graph = Gfocus
         self.set_node_weights()
-        self.display_positions = Pfocus
+        #self.display_positions = Pfocus
+        self.set_layout(Pfocus)
         self.reset_interactive_bookkeeping()
         self.do_threshhold()
         #self.svg.empty()
@@ -751,8 +753,12 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
     def apply_layout(self, layout):
         self.info_area.value = "applying layout"
         self.reset_interactive_bookkeeping()
-        self.display_positions = layout
+        #self.display_positions = layout
+        self.set_layout(layout)
         self.draw()
+
+    def set_layout(self, layout):
+        self.display_positions = layout
 
     def layout_click(self, b=None):
         "Apply the current layout to the viewable graph."
@@ -766,13 +772,13 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         try:
             if layout_selection in LAYOUT_METHODS:
                 method = LAYOUT_METHODS[layout_selection]
-                self.display_positions = method(dG, fit=fit)
+                display_positions = method(dG, fit=fit)
             else:
-                self.display_positions = dLayout.iGraphLayout(dG, layout_selection, fit)
+                display_positions = dLayout.iGraphLayout(dG, layout_selection, fit)
         except Exception as e:
             self.info_area.value = repr(layout_selection) + " layout failed: " + repr(e)
         else:
-            #self.svg.empty()
+            self.set_layout(display_positions)
             self.draw()
 
     def regulates_click(self, b=None):
@@ -1001,7 +1007,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         new_display_graph = self.data_graph.clone()
         new_display_graph.reset_colorization(self.display_graph)
         self.display_graph = new_display_graph
-        self.display_positions = self.data_positions.copy()
+        #self.display_positions = self.data_positions.copy()
+        self.set_layout(self.data_positions.copy())
         self.do_threshhold()
         #self.svg.empty()
         self.draw()
