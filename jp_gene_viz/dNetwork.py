@@ -162,6 +162,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.motifs_button.value = True
         self.draw_button = self.make_button("draw", self.draw_click)
         self.tf_only_button = self.make_button("TF only", self.tf_only_click)
+        self.split_button = self.make_button("split", self.split_click)
         self.connected_only_button = self.make_button("connected only", self.connected_only_click)
         # Assemble the layout
         self.threshhold_assembly = self.make_threshhold_assembly()
@@ -216,6 +217,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
                    self.regulates_button,
                    self.targeted_button,
                    self.tf_only_button,
+                   self.split_button,
                    self.connected_only_button,
                    self.layout_dropdown,
                    self.layout_button,
@@ -743,7 +745,41 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         # do nothing
         pass
 
-    def layout_click(self, b=None):
+    def split_click(self, b=None):
+        """
+        Split nodes with positive end points above, negative below, interior middle.
+        """
+        self.layout_click(draw=False)
+        layout_positions = self.display_positions
+        dG = self.display_graph
+        height = self.fit_heuristic(dG)
+        ew = dG.edge_weights
+        sources = set(s for (s, d) in ew)
+        total_weights = {}
+        for edge in ew:
+            (s, d) = edge
+            total_weights[d] = total_weights.get(d, 0) + ew[edge]
+        negative_destinations = set(d for d in total_weights if total_weights[d] < 0) - sources
+        positive_destinations = set(total_weights) - (sources | negative_destinations)
+        scale = 1.0/3.0
+        negative_shift = 2 * scale * height
+        interior_shift = scale * height
+        positive_shift = 0
+        split_positions = {}
+        for s in sources:
+            p = layout_positions[s]
+            split_positions[s] = dGraph.pos(p[0], p[1] * scale + interior_shift)
+        for d in positive_destinations:
+            p = layout_positions[d]
+            split_positions[d] = dGraph.pos(p[0], p[1] * scale + positive_shift)
+        for d in negative_destinations:
+            p = layout_positions[d]
+            split_positions[d] = dGraph.pos(p[0], p[1] * scale + negative_shift)
+        self.display_positions = split_positions
+        self.svg.empty()
+        self.draw()
+
+    def layout_click(self, b=None, draw=True):
         "Apply the current layout to the viewable graph."
         self.reset_interactive_bookkeeping()
         self.info_area.value = "layout clicked"
@@ -761,6 +797,9 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         except Exception as e:
             self.info_area.value = repr(layout_selection) + " layout failed: " + repr(e)
         else:
+            if draw:
+                self.svg.empty()
+                self.draw()
             #self.svg.empty()
             self.draw()
 
