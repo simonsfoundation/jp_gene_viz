@@ -255,7 +255,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.override_node_weights = None
         # node color mapper override
         self.override_node_colors = None
-        self.group_rectangle = None
+        self.group_rectangles = None
+        self.rectangle_color = None
         self.reset_interactive_bookkeeping()
         self.handle_container_change()
 
@@ -632,6 +633,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         "Draw the network."
         G = self.display_graph
         P = self.display_positions
+        rectangles = self.group_rectangles
         color_overrides = self.color_overrides
         if not self.loaded():
             self.info_area.value = "Cannot draw: no graph loaded."
@@ -644,6 +646,15 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             #svg = self.svg
             svg = self.chosen_container()
             svg.empty()
+        rcolor = self.rectangle_color
+        if rcolor is not None and rectangles is not None:
+            for (x, y, w, h) in rectangles:
+                xw = x + w
+                yh = y + h
+                svg.line("group_border", x, y, xw, y, rcolor)
+                svg.line("group_border", xw, y, xw, yh, rcolor)
+                svg.line("group_border", xw, yh, x, yh, rcolor)
+                svg.line("group_border", x, yh, x, y, rcolor)
         self.svg_origin = G.draw(svg, P, 
             fit=fit, color_overrides=color_overrides, send=False)
         self.cancel_selection()
@@ -751,15 +762,16 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         # do nothing
         pass
 
-    def apply_layout(self, layout):
+    def apply_layout(self, layout, rectangles=None):
         self.info_area.value = "applying layout"
         self.reset_interactive_bookkeeping()
         #self.display_positions = layout
-        self.set_layout(layout)
+        self.set_layout(layout, rectangles)
         self.draw()
 
-    def set_layout(self, layout):
+    def set_layout(self, layout, rectangles=None):
         self.display_positions = layout
+        self.group_rectangles = rectangles
 
     def layout_click(self, b=None):
         "Apply the current layout to the viewable graph."
@@ -770,6 +782,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         dG = self.display_graph
         fit = self.fit_heuristic(dG)
         layout_selection = self.layout_dropdown.value
+        rectangles = []
         try:
             if layout_selection in LAYOUT_METHODS:
                 method = LAYOUT_METHODS[layout_selection]
@@ -779,7 +792,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         except Exception as e:
             self.info_area.value = repr(layout_selection) + " layout failed: " + repr(e)
         else:
-            self.set_layout(display_positions)
+            self.set_layout(display_positions, rectangles)
             self.draw()
 
     def regulates_click(self, b=None):
