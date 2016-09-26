@@ -96,8 +96,8 @@ class LinkedExpressionNetwork(traitlets.HasTraits):
         self.network.select_and_draw(rows)
         fit = self.network.fit_heuristic()
         G = self.network.display_graph
-        layout = cluster_layout.cluster_layout(G, fit, data, rows)
-        self.network.apply_layout(layout)
+        (layout, rectangles) = cluster_layout.cluster_layout(G, fit, data, rows)
+        self.network.apply_layout(layout, rectangles)
 
     def load_network(self, filename):
         """
