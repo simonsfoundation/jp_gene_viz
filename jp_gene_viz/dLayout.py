@@ -1,4 +1,4 @@
-
+from jp_gene_viz import spoke_layout
 from jp_gene_viz.dGraph import primary_influence, skeleton, pos
 
 import igraph
@@ -28,11 +28,18 @@ def iGraphLayout(G, name, fit=1000):
          for (i,xy) in enumerate(L)}
     return D
 
-def group_layout(G, name="fr", fit=1000):
+def group_graph(G):
     Gk = skeleton(G)
     Gp = primary_influence(G, connect=True)
     Gp.edge_weights.update(Gk.edge_weights)
+    return Gp
+
+def group_layout(G, name="fr", fit=1000):
+    Gp = group_graph(G)
     return iGraphLayout(Gp, name, fit)
+
+def group_layout0(G, fit=1000):
+    return spoke_layout.spoke_layout(G, fit)
 
 def dump(layout, filename):
     jlayout = layoutConverter.to_json_value(layout)

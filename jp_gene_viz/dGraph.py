@@ -5,6 +5,8 @@ import json
 from jp_gene_viz.color_scale import (clr, clr_check, weighted_color, color)
 from jp_gene_viz import color_scale
 from jp_gene_viz.json_mixin import JsonMixin
+from jp_gene_viz import grid_forest
+
 
 def trim_leaves(Gin):
     #Gout = WGraph()
@@ -57,28 +59,43 @@ def primary_influence(Gin, connect=False, connect_weight=1):
                 Gout.add_edge(last, first, connect_weight)
     return Gout
 
+#skeleton = primary_influence
 
 def skeleton(Gin):
+    """
+    Maximal spanning forest of Gin (?)
+    """
+    visited_edges = set()
     ew = Gin.edge_weights
     nw = Gin.node_weights
+    # "skeleton in", len(ew), len(nw)
     Gout = WGraph()
     neighbors = Gin.neighbors_dict()
     added = set()
     edges = sorted([(abs(ew[e]), e) for e in ew])
+    count = 0
+    limit = len(ew)
     while edges:
+        next_edge = None
         (weight, next_edge) = edges.pop()
         (a, b) = next_edge
         if a not in added or b not in added:
             H = [(-weight, weight, e)]
+            #Gout.add_edge(a, b, ew[next_e])
             while H:
-                #print H[0]
+                #print "H", H
+                #print "added", added
                 (abs_weight, next_weight, next_e) = heapq.heappop(H)
+                assert len(H) < limit, repr((len(H), limit))
                 (a, b) = next_e
                 if a not in added or b not in added:
+                    #visited_edges.add(next_e)
                     for c in next_e:
                         for cn in neighbors[c]:
                             (cw, ce) = Gin.unordered_weight(c, cn)
-                            heapq.heappush(H, (-abs(cw), cw, ce))
+                            if ce not in visited_edges:
+                                heapq.heappush(H, (-abs(cw), cw, ce))
+                                visited_edges.add(ce)
                     Gout.add_edge(a, b, ew[next_e])
                     added.add(a)
                     added.add(b)
@@ -194,9 +211,9 @@ class WGraph(JsonMixin):
             Mn = max(nw)
         return (Me, me, Mn, mn)
 
-    positive_edge_color = clr(0, 211, 0)
-    zero_edge_color = clr(230, 230, 230)
-    negative_edge_color = clr(255, 0, 0)
+    positive_edge_color = clr(222, 111, 0)  # clr(0, 211, 0)
+    zero_edge_color = clr(166, 166, 166)  # clr(230, 230, 230)
+    negative_edge_color = clr(0, 49, 197)  # clr(255, 0, 0)
 
     _edge_color_interpolator = None
 
@@ -213,8 +230,9 @@ class WGraph(JsonMixin):
             self._edge_color_interpolator = result
         return result
 
-    positive_node_color = clr(255, 100, 100)
-    zero_node_color = clr(200, 200, 230)
+    positive_node_color = clr(222, 111, 0)  # clr(255, 100, 100)
+    zero_node_color = clr(217, 217, 217)
+    negative_node_color = clr(0, 114, 178)
 
     _node_color_interpolator = None
 
@@ -223,8 +241,10 @@ class WGraph(JsonMixin):
         if result is None:
             (_, _, Mv, mv) = self.weights_extrema()
             Mc = self.positive_node_color
-            mc = self.zero_node_color
+            mc = self.negative_node_color
             result = color_scale.ColorInterpolator(mc, Mc, mv, Mv)
+            if mv < 0 and Mv > 0:
+                result.add_color(0, self.zero_node_color)
             #result.count_values(self.node_weights.values(), True)
             self._node_color_interpolator = result
         return result
@@ -241,7 +261,7 @@ class WGraph(JsonMixin):
         # probably should clone XXXX
         self._node_color_interpolator = color_interpolator
     
-    def draw(self, canvas, positions, edgewidth=1, nodesize=3, fit=True, color_overrides=None):
+    def draw(self, canvas, positions, edgewidth=1, nodesize=3, fit=True, color_overrides=None, send=True):
         if color_overrides is None:
             color_overrides = {}
         (Me, me, Mn, mn) = self.weights_extrema()
@@ -310,7 +330,8 @@ class WGraph(JsonMixin):
                 ncol = color_overrides.get(name, ncol)
                 degree = min(outdegree.get(n, 1) - 1, 4)
                 canvas.circle(name, x, y, nodesize + degree, ncol) 
-        canvas.send_commands()
+        if send:
+            canvas.send_commands()
         # adjust the viewBox
         (minx, miny) = map(int, minimum)
         (maxx, maxy) = map(int, maximum)
