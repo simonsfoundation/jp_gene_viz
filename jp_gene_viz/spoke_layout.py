@@ -3,8 +3,7 @@ import grid_forest
 import numpy as np
 
 def spoke_layout(G, fit=1000):
-    GF = SpokeLayout(G, fit)
-    return GF.compute_positions()
+    return grid_forest.forest_layout(G, fit, klass=SpokeLayout)
 
 class SpokeLayout(grid_forest.GridForestLayout):
 

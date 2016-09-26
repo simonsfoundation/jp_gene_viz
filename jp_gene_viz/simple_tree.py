@@ -1,11 +1,11 @@
 
 import spoke_layout
+import grid_forest
 import numpy as np
 from numpy.linalg import norm
 
 def tree_layout(G, fit=1000):
-    GF = SimpleTreeLayout(G, fit)
-    return GF.compute_positions()
+    return grid_forest.forest_layout(G, fit, klass=SimpleTreeLayout)
 
 class SimpleTreeLayout(spoke_layout.SpokeLayout):
 

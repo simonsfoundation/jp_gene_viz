@@ -6,8 +6,10 @@ import numpy as np
 from numpy.linalg import norm
 from random import random
 
-def forest_layout(G, fit=1000):
-    GF = GridForestLayout(G, fit)
+def forest_layout(G, fit=1000, klass=None):
+    if klass is None:
+        klass = GridForestLayout
+    GF = klass(G, fit)
     return GF.compute_positions()
 
 def split_position(position, ratio):
