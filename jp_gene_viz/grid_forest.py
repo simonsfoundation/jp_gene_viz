@@ -67,7 +67,7 @@ class GridForestLayout(object):
                 self.fill_in_members(right, members, leaves))
         return members[node]
     
-    def compute_positions(self, jitter=True, jitter_factor=0.5):
+    def compute_positions(self, jitter=True, jitter_factor=0.5, expand=0.99):
         G = self.G
         # No positions for no nodes.
         if not self.G.node_weights:
@@ -78,7 +78,7 @@ class GridForestLayout(object):
         positions = self.assign_positions(jitter, jitter_factor)
         #result = {node: positions[node][:2] for node in G.node_weights}
         leaf_positions = {}
-        group_rectangles = {}
+        group_rectangles = []
         for node in positions:
             (x, y, dx, dy) = positions[node]
             if node in G.node_weights:
@@ -87,8 +87,10 @@ class GridForestLayout(object):
                     y += random() * jitter_factor * dy
                 leaf_positions[node] = np.array([x, y])
             else:
-                rectangle = np.array([x-dx, y-dy, dx*2, dy*2])
-                group_rectangles = rectangle
+                ddx = dx * expand
+                ddy = dy * expand
+                rectangle = np.array([x-ddx, y-ddy, ddx*2, ddy*2])
+                group_rectangles.append(rectangle)
         return (leaf_positions, group_rectangles)
 
     def positive_symmetric_edges(self, directed_edges):
