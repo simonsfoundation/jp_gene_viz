@@ -49,6 +49,7 @@ class LinkedExpressionNetwork(traitlets.HasTraits):
 
     def show(self):
         display(self.assembly)
+        self.network.draw()
 
     def make_button(self, description, on_click,
                     disabled=False, width="250px"):
