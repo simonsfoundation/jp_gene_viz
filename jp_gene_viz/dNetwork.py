@@ -21,6 +21,7 @@ from jp_gene_viz import grid_forest
 from jp_gene_viz import spoke_layout
 from jp_gene_viz import simple_tree
 from jp_gene_viz import cluster_layout
+from jp_gene_viz import category_layout
 import fnmatch
 import igraph
 import json
@@ -39,8 +40,9 @@ SPOKE = "spoke"
 FOREST = "forest"
 TREE = "tree"
 CLUSTER = "cluster"
+CATEGORY = "category"
 
-LAYOUTS = [SKELETON, TREE, FOREST, SPOKE, CLUSTER]
+LAYOUTS = [SKELETON, TREE, FOREST, SPOKE, CLUSTER, CATEGORY]
 
 LAYOUT_METHODS = {
     SKELETON: dLayout.group_layout,
@@ -48,6 +50,7 @@ LAYOUT_METHODS = {
     SPOKE: spoke_layout.spoke_layout,
     TREE: simple_tree.tree_layout,
     CLUSTER: cluster_layout.cluster_layout,
+    CATEGORY: category_layout.category_layout,
 }
 
 # This function should be called once in a notebook before creating a display.
@@ -136,6 +139,9 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
 
     # The motif collection to use for looking up motif data.
     motif_collection = None
+
+    # Mapping of node to node category.
+    node_categories = None
 
     def __init__(self, container=SVG, *pargs, **kwargs):
         super(NetworkDisplay, self).__init__(*pargs, **kwargs)
@@ -650,7 +656,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             svg.empty()
         rcolor = self.rectangle_color
         if rcolor is not None and rectangles is not None:
-            for (x, y, w, h) in rectangles:
+            for (x, y, w, h) in rectangles.values():
                 xw = x + w
                 yh = y + h
                 svg.line("group_border", x, y, xw, y, rcolor)
@@ -819,14 +825,16 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         dG = self.display_graph
         fit = self.fit_heuristic(dG)
         layout_selection = self.layout_dropdown.value
-        rectangles = []
+        rectangles = {}
         try:
             if layout_selection in LAYOUT_METHODS:
                 method = LAYOUT_METHODS[layout_selection]
-                (display_positions, rectangles) = method(dG, fit=fit)
+                (display_positions, rectangles) = method(dG, fit=fit, 
+                    node_categories=self.node_categories)
             else:
                 display_positions = dLayout.iGraphLayout(dG, layout_selection, fit)
-        except Exception as e:
+        #except Exception as e:
+        except KeyboardInterrupt:
             self.info_area.value = repr(layout_selection) + " layout failed: " + repr(e)
         else:
             self.set_layout(display_positions, rectangles)

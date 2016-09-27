@@ -3,7 +3,7 @@ from jp_gene_viz import spoke_layout
 import numpy as np
 from scipy.cluster.hierarchy import linkage, leaves_list, fcluster
 
-def cluster_layout(G, fit=1000, matrix=None, row_names=None):
+def cluster_layout(G, fit=1000, matrix=None, row_names=None, **kw):
     GF = ClusterLayout(G, fit)
     GF.matrix = matrix
     GF.row_names = row_names
