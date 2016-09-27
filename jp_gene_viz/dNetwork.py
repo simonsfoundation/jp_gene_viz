@@ -20,6 +20,8 @@ from jp_gene_viz import proxy_html5_canvas
 from jp_gene_viz import grid_forest
 from jp_gene_viz import spoke_layout
 from jp_gene_viz import simple_tree
+from jp_gene_viz import cluster_layout
+from jp_gene_viz import category_layout
 import fnmatch
 import igraph
 import json
@@ -37,14 +39,18 @@ SKELETON = "skeleton"
 SPOKE = "spoke"
 FOREST = "forest"
 TREE = "tree"
+CLUSTER = "cluster"
+CATEGORY = "category"
 
-LAYOUTS = [SKELETON, TREE, FOREST, SPOKE]
+LAYOUTS = [SKELETON, TREE, FOREST, SPOKE, CLUSTER, CATEGORY]
 
 LAYOUT_METHODS = {
     SKELETON: dLayout.group_layout,
     FOREST: grid_forest.forest_layout,
     SPOKE: spoke_layout.spoke_layout,
     TREE: simple_tree.tree_layout,
+    CLUSTER: cluster_layout.cluster_layout,
+    CATEGORY: category_layout.category_layout,
 }
 
 # This function should be called once in a notebook before creating a display.
@@ -133,6 +139,9 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
 
     # The motif collection to use for looking up motif data.
     motif_collection = None
+
+    # Mapping of node to node category.
+    node_categories = None
 
     def __init__(self, container=SVG, *pargs, **kwargs):
         super(NetworkDisplay, self).__init__(*pargs, **kwargs)
@@ -254,6 +263,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.override_node_weights = None
         # node color mapper override
         self.override_node_colors = None
+        self.group_rectangles = None
+        self.rectangle_color = None
         self.reset_interactive_bookkeeping()
         self.handle_container_change()
 
@@ -599,7 +610,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             fit = self.fit_heuristic(graph)
             positions = dLayout.group_layout(graph, fit=fit)
         self.data_positions = positions
-        self.display_positions = positions.copy()
+        #self.display_positions = positions.copy()
+        self.set_layout(positions.copy())
         self.data_graph = graph
         self.display_graph = graph.clone()
         self.override_node_colors = None
@@ -612,8 +624,10 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         if draw:
             self.draw()
 
-    def fit_heuristic(self, graph):
+    def fit_heuristic(self, graph=None):
         "Guess an edge size for fitting network layout."
+        if graph is None:
+            graph = self.display_graph
         (esize, nsize) = graph.sizes()
         fit = max(200, min(1000, 2*(esize/4 + nsize)))
         return fit
@@ -627,6 +641,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         "Draw the network."
         G = self.display_graph
         P = self.display_positions
+        rectangles = self.group_rectangles
         color_overrides = self.color_overrides
         if not self.loaded():
             self.info_area.value = "Cannot draw: no graph loaded."
@@ -639,6 +654,15 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             #svg = self.svg
             svg = self.chosen_container()
             svg.empty()
+        rcolor = self.rectangle_color
+        if rcolor is not None and rectangles is not None:
+            for (x, y, w, h) in rectangles.values():
+                xw = x + w
+                yh = y + h
+                svg.line("group_border", x, y, xw, y, rcolor)
+                svg.line("group_border", xw, y, xw, yh, rcolor)
+                svg.line("group_border", xw, yh, x, yh, rcolor)
+                svg.line("group_border", x, yh, x, y, rcolor)
         self.svg_origin = G.draw(svg, P, 
             fit=fit, color_overrides=color_overrides, send=False)
         self.cancel_selection()
@@ -709,7 +733,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             self.data_graph, self.data_positions)
         self.display_graph = Gfocus
         self.set_node_weights()
-        self.display_positions = Pfocus
+        #self.display_positions = Pfocus
+        self.set_layout(Pfocus)
         self.reset_interactive_bookkeeping()
         self.do_threshhold()
         #self.svg.empty()
@@ -775,9 +800,21 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         for d in negative_destinations:
             p = layout_positions[d]
             split_positions[d] = dGraph.pos(p[0], p[1] * scale + negative_shift)
-        self.display_positions = split_positions
+        #self.display_positions = split_positions
+        self.set_layout(split_positions)
         self.svg.empty()
         self.draw()
+
+    def apply_layout(self, layout, rectangles=None):
+        self.info_area.value = "applying layout"
+        self.reset_interactive_bookkeeping()
+        #self.display_positions = layout
+        self.set_layout(layout, rectangles)
+        self.draw()
+
+    def set_layout(self, layout, rectangles=None):
+        self.display_positions = layout
+        self.group_rectangles = rectangles
 
     def layout_click(self, b=None, draw=True):
         "Apply the current layout to the viewable graph."
@@ -788,20 +825,23 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         dG = self.display_graph
         fit = self.fit_heuristic(dG)
         layout_selection = self.layout_dropdown.value
+        rectangles = {}
         try:
             if layout_selection in LAYOUT_METHODS:
                 method = LAYOUT_METHODS[layout_selection]
-                self.display_positions = method(dG, fit=fit)
+                (display_positions, rectangles) = method(dG, fit=fit, 
+                    node_categories=self.node_categories)
             else:
-                self.display_positions = dLayout.iGraphLayout(dG, layout_selection, fit)
-        except Exception as e:
+                display_positions = dLayout.iGraphLayout(dG, layout_selection, fit)
+        #except Exception as e:
+        except KeyboardInterrupt:
             self.info_area.value = repr(layout_selection) + " layout failed: " + repr(e)
         else:
+            self.set_layout(display_positions, rectangles)
             if draw:
                 self.svg.empty()
                 self.draw()
             #self.svg.empty()
-            self.draw()
 
     def regulates_click(self, b=None):
         return self.expand_click(b, incoming=False, outgoing=True, crosslink=False)
@@ -1029,7 +1069,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         new_display_graph = self.data_graph.clone()
         new_display_graph.reset_colorization(self.display_graph)
         self.display_graph = new_display_graph
-        self.display_positions = self.data_positions.copy()
+        #self.display_positions = self.data_positions.copy()
+        self.set_layout(self.data_positions.copy())
         self.do_threshhold()
         #self.svg.empty()
         self.draw()

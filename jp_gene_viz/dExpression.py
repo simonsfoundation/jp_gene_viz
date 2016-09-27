@@ -84,6 +84,10 @@ class ExpressionDisplay(traitlets.HasTraits):
         self.svg.empty()
         return self.draw()
 
+    def get_observations(self):
+        (rows, cols, data) = self.display_heat_map.get_data()
+        return (rows, data)
+
     def select_rows(self, rows=None):
         return self.display_data(rows, self.data_heat_map.col_names[:200])
 

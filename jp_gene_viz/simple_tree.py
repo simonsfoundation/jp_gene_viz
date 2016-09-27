@@ -1,13 +1,15 @@
 
 import spoke_layout
+import grid_forest
 import numpy as np
 from numpy.linalg import norm
 
-def tree_layout(G, fit=1000):
-    GF = SimpleTreeLayout(G, fit)
-    return GF.compute_positions()
+def tree_layout(G, fit=1000, **kw):
+    return grid_forest.forest_layout(G, fit, klass=SimpleTreeLayout)
 
 class SimpleTreeLayout(spoke_layout.SpokeLayout):
+
+    heuristic = True  # if true prefer to balance the tree rather than look for all differences
 
     def get_tree(self):
         paths = self.influence_paths()
@@ -53,8 +55,14 @@ class SimpleTreeLayout(spoke_layout.SpokeLayout):
         middle = int(nnodes / 2)
         split_index = None
         deepest_difference = 0
-        for offset in range(int(nnodes/4)):
+        if self.heuristic:
+            offset_limit = int(nnodes/4)
+        else:
+            offset_limit = int(nnodes/2) + 1
+        for offset in range(offset_limit):
             for test_index in (middle + offset, middle - offset):
+                if test_index > nnodes - 1 or test_index < 1:
+                    continue
                 influence_before = node_order[test_index - 1][0]
                 influence_after = node_order[test_index][0]
                 difference = difference_depth(influence_after, influence_before)
@@ -65,7 +73,10 @@ class SimpleTreeLayout(spoke_layout.SpokeLayout):
             split_index = middle
         left = node_order[:split_index]
         right = node_order[split_index:]
-        return (self.split_subtree(left), self.split_subtree(right))
+        # Don't revert to subclass method
+        #split_method = SimpleTreeLayout.split_subtree
+        split_method = self.split_subtree
+        return (split_method(left), split_method(right))
 
 def difference_depth(tuple1, tuple2):
     if tuple1 == tuple2:
