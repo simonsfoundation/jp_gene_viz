@@ -17,6 +17,25 @@ dependencies and for the wigdets extension to be enabled in Jupyter/IPython.
 
 For example the following sequence completes a first time complete installation
 
+### install prerequisites
+
+You will need Python 2.7 and some other libraries for the installation
+to succeed.  I recommend installing 
+[Anaconda for python 2.7](https://www.continuum.io/downloads) to get all
+needed prerequisite dependencies.
+
+On Debian Linux without using Anaconda I needed to add the following system
+libraries
+
+```
+sudo apt-get install python-pip
+sudo apt-get install python-dev
+sudo apt-get install -y libigraph0-dev 
+sudo apt-get install libxml2-dev
+sudo apt-get install zlib1g-dev
+sudo apt-get install libblas-dev liblapack-dev libatlas-base-dev gfortran
+```
+
 ### clone the repository and change directory into the repository folder
 
 ```
