@@ -1,7 +1,9 @@
+cython>=0.24
 ipywidgets>=5.1.4
 ipython>=4.2.0
 traitlets>=4.2.1
 python-igraph>=0.7.1
 numpy>=1.9.2
+scipy>=0.9
 -e git://github.com/simonsfoundation/jp_svg_canvas@1.3#egg=jp_svg_canvas
 -e git://github.com/scikit-learn/scikit-learn#egg=scikit_learn
