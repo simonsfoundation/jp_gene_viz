@@ -221,13 +221,13 @@ class ExpressionDisplay(traitlets.HasTraits):
     def draw(self):
         if self.drawing:
             raise ValueError, "too many draws"
-        self.apply_transform()
-        self.drawing = True
         heat_map = self.display_heat_map
-        if self.cluster_checkbox.value:
-            heat_map.cluster_rows()
         if heat_map is None:
             return
+        self.apply_transform()
+        self.drawing = True
+        if self.cluster_checkbox.value:
+            heat_map.cluster_rows()
         svg = self.svg
         svg.empty()
         heat_map.draw(svg, self.dx, self.dy, self.labels_space)
