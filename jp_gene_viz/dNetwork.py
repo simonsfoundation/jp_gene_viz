@@ -833,8 +833,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
                     node_categories=self.node_categories)
             else:
                 display_positions = dLayout.iGraphLayout(dG, layout_selection, fit)
-        #except Exception as e:
-        except KeyboardInterrupt:
+        except Exception as e:
             self.info_area.value = repr(layout_selection) + " layout failed: " + repr(e)
         else:
             self.set_layout(display_positions, rectangles)
