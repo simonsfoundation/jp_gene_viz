@@ -752,6 +752,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.display_graph = dG
         minw = min(abs(x) for x in dG.edge_weights.values())
         self.threshhold_slider.value = minw
+        self.do_threshhold()
+        self.draw()
 
     def labels_click(self, b=None):
         "Label button click: toggle drawing of labels."
@@ -1414,7 +1416,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         set_visibility(self.inputs, self.maximize)
 
 
-def display_network(filename, N=None, threshhold=20.0, save_layout=True, show=True, size_limit=20000):
+def display_network(filename, N=None, threshhold=20.0, save_layout=True, show=True, size_limit=2000):
     from jp_gene_viz import dLayout
     from jp_gene_viz import getData
     assert os.path.exists(filename)
@@ -1442,7 +1444,9 @@ def display_network(filename, N=None, threshhold=20.0, save_layout=True, show=Tr
         N.threshhold_slider.value = threshhold
     N.load_data(G, layout, draw=show)
     if size > size_limit:
-        print("Omitting edges because the network is large")
+        print("Omitting edges, using canvas, and fast layout default because the network is large")
+        N.container_dropdown.value = CANVAS
+        N.layout_dropdown.value = SPOKE
         N.limit_edges(size_limit)
     if show:
         N.show()
