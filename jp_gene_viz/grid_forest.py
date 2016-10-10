@@ -129,7 +129,7 @@ class GridForestLayout(object):
     def distance(self, position1, position2):
         p1 = position1[:2]
         p2 = position2[:2]
-        return np.log(norm(p1-p2))
+        return (norm(p1-p2))
 
     def distance0(self, position1, position2):
         p1 = position1[:2]
