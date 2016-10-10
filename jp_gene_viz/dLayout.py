@@ -34,9 +34,9 @@ def group_graph(G):
     Gp.edge_weights.update(Gk.edge_weights)
     return Gp
 
-def group_layout(G, name="fr", fit=1000):
+def group_layout(G, name="fr", fit=1000, **kw):
     Gp = group_graph(G)
-    return (iGraphLayout(Gp, name, fit), [])
+    return (iGraphLayout(Gp, name, fit), {})
 
 def group_layout0(G, fit=1000):
     return spoke_layout.spoke_layout(G, fit)
