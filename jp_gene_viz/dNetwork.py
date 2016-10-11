@@ -53,6 +53,18 @@ LAYOUT_METHODS = {
     CATEGORY: category_layout.category_layout,
 }
 
+# python-igraph layouts which don't work (in 2d) or abbreviations.
+BROKEN_LAYOUTS = set([
+    'bipartite',
+    #'drl',
+    'fruchterman_reingold_3d',
+    'grid_3d',
+    'grid_fruchterman_reingold',
+    'kamada_kawai_3d',
+    'random_3d',
+    'sphere',
+])
+
 # This function should be called once in a notebook before creating a display.
 #from jp_svg_canvas.canvas import load_javascript_support
 
@@ -347,7 +359,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         for method_name in dir(igraph.Graph):
             if method_name.startswith("layout_"):
                 layout_name = method_name[7:]
-                options.append(layout_name)
+                if layout_name not in BROKEN_LAYOUTS:
+                    options.append(layout_name)
         value = "fruchterman_reingold"
         assert value in options
         w = widgets.Dropdown(options=options, value=value)
