@@ -115,6 +115,8 @@ class edgeDictConverter(object):
 
 
 class WGraph(JsonMixin):
+
+    arrow_ratio = 0.75  # how far down an arc to position an arrowhead mark
     
     def __init__(self, node_color_interpolator=None, edge_color_interpolator=None):
         self.edge_weights = {}
@@ -276,6 +278,7 @@ class WGraph(JsonMixin):
         markradius = (edgewidth+1)/2
         outdegree = {}
         eci = self.get_edge_color_interpolator()
+        arrow_ratio = self.arrow_ratio
         for (absw, e) in pos_e:
             w = ew[e]
             (f, t) = e
@@ -283,6 +286,7 @@ class WGraph(JsonMixin):
             fp = positions[f]
             tp = positions[t]
             n = towards(fp, tp)
+            d = distance(fp, tp)
             no = orthogonal(n)
             # shift positions so reverse edges don't overlap
             edgeshift = (edgewidth/2.0) * no
@@ -295,7 +299,8 @@ class WGraph(JsonMixin):
             ecolor = color_overrides.get(name, ecolor)
             canvas.line(name, fp[0], fp[1], tp[0], tp[1], ecolor, edgewidth)
             # add a mark to indicate target
-            p = tp - (2 * nodesize) * n
+            #p = tp - (2 * nodesize) * n
+            p = fp + arrow_ratio * (tp - fp)
             markname = "mark" + name
             if w>0:
                 m = p - edgewidth * 5 * (n + no)
