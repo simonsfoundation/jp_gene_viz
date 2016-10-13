@@ -11,6 +11,9 @@ def cluster_layout(G, fit=1000, matrix=None, row_names=None, **kw):
 
 class ClusterLayout(spoke_layout.SpokeLayout):
 
+    # leave a margin to group clusters more closely.
+    margin = 0.1
+
     matrix = None
 
     row_names = None

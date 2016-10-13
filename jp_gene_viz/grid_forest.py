@@ -12,16 +12,30 @@ def forest_layout(G, fit=1000, klass=None, **kw):
     GF = klass(G, fit)
     return GF.compute_positions()
 
-def split_position(position, ratio):
+def split_position(position, ratio, margin=0):
+    assert margin < 0.5
     (x, y, dx, dy) = position
     x1 = x2 = x
     y1 = y2 = y
     dx1 = dx2 = dx
     dy1 = dy2 = dy
+    useable = 1.0
+    if margin > 0:
+        useable = 1.0 - margin
     if dx > dy:
         (x1, x2, dx1, dx2) = split_stats(x, dx, ratio)
+        dx1 = dx1 * useable
+        dx2 = dx2 * useable
     else:
         (y1, y2, dy1, dy2) = split_stats(y, dy, ratio)
+        dy1 = dy1 * useable
+        dy2 = dy2 * useable
+    #if margin > 0:
+    #    useable = 1.0 - margin
+    #    dx1 = dx1 * useable
+    #    dy1 = dy1 * useable
+    #    dx2 = dx2 * useable
+    #    dy2 = dy2 * useable
     return (np.array([x1, y1, dx1, dy1]), np.array([x2, y2, dx2, dy2]))
 
 def split_stats(x, dx, ratio):
@@ -49,6 +63,9 @@ class GridForestLayout(object):
         self.root = None
         self.positions = None
         self.levels = []
+
+    # Margin for grouping nodes in subtree
+    margin = 0.0   # default: no margin
 
     def fill_in_members(self, node=None, members=None, leaves=None):
         if leaves is None:
@@ -116,7 +133,6 @@ class GridForestLayout(object):
         assert len(nodes) > 0
         levels = [(nodes, edge_weights)]  # leaf level
         while len(nodes) > 1:
-            #print "combining", nodes
             this_level = self.combine(nodes, edge_weights)
             (combined_nodes, edge_weights) = this_level
             assert len(combined_nodes) < len(nodes), repr(nodes) + " no progress."
@@ -194,6 +210,7 @@ class GridForestLayout(object):
         self.levels = levels
 
     def assign_positions(self, jitter=True, jitter_factor=0.7):
+        margin = self.margin
         self.compute_geneology()
         root = self.root
         assert root is not None
@@ -224,8 +241,8 @@ class GridForestLayout(object):
                         len1 += random() * jitter_factor
                         len2 += random() * jitter_factor
                     ratio12 = len1/float(len1 + len2)
-                    pos12 = split_position(node_position, ratio12)
-                    pos21 = split_position(node_position, 1.0 - ratio12)
+                    pos12 = split_position(node_position, ratio12, margin)
+                    pos21 = split_position(node_position, 1.0 - ratio12, margin)
                     penalty12 = (self.penalty(child1, pos12[0], child_adjacent, positions, child_edge_weights) +
                                  self.penalty(child2, pos12[1], child_adjacent, positions, child_edge_weights))
                     penalty21 = (self.penalty(child1, pos21[1], child_adjacent, positions, child_edge_weights) +
