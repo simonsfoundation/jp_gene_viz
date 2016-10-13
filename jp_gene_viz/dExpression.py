@@ -219,26 +219,28 @@ class ExpressionDisplay(traitlets.HasTraits):
                     self.col_text.value = c
 
     def draw(self):
-        if self.drawing:
-            raise ValueError, "too many draws"
-        heat_map = self.display_heat_map
-        if heat_map is None:
-            return
-        self.apply_transform()
-        self.drawing = True
-        if self.cluster_checkbox.value:
-            heat_map.cluster_rows()
-        svg = self.svg
-        svg.empty()
-        heat_map.draw(svg, self.dx, self.dy, self.labels_space)
-        cc = self.color_chooser
-        if is_visible(cc.svg):
-            self.info_area.value = "displaying color chooser."
-            cc.scale = heat_map.get_color_interpolator()
-            cc.count_values(heat_map.visible_array().flatten())
-            cc.draw()
-        svg.send_commands()
-        self.drawing = False
+        try:
+            if self.drawing:
+                raise ValueError, "too many draws"
+            heat_map = self.display_heat_map
+            if heat_map is None:
+                return
+            self.apply_transform()
+            self.drawing = True
+            if self.cluster_checkbox.value:
+                heat_map.cluster_rows()
+            svg = self.svg
+            svg.empty()
+            heat_map.draw(svg, self.dx, self.dy, self.labels_space)
+            cc = self.color_chooser
+            if is_visible(cc.svg):
+                self.info_area.value = "displaying color chooser."
+                cc.scale = heat_map.get_color_interpolator()
+                cc.count_values(heat_map.visible_array().flatten())
+                cc.draw()
+            svg.send_commands()
+        finally:
+            self.drawing = False
 
     def color_interpolator(self):
         return self.display_heat_map.get_color_interpolator()

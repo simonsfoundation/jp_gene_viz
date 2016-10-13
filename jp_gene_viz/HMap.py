@@ -127,6 +127,11 @@ class HeatMap(object):
         self.row_order = None
 
     def cluster_rows(self, method="ward"):
+        display_data = self.display_data
+        rows = len(display_data)
+        if rows < 2:
+            # don't attempt to cluster less than 2 rows
+            return
         Z = linkage(self.display_data, method)
         self.row_order = leaves_list(Z)
 
