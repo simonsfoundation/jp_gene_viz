@@ -92,12 +92,18 @@ class LinkedExpressionNetwork(traitlets.HasTraits):
         """
         Apply a clustering layout to the network using the expression values.
         """
+        # Restrict genes in heatmap to genes in network.
+        self.gene_click()
         (rows, data) = self.expression.get_observations()
         self.network.select_and_draw(rows)
         fit = self.network.fit_heuristic()
         G = self.network.display_graph
-        (layout, rectangles) = cluster_layout.cluster_layout(G, fit, data, rows)
-        self.network.apply_layout(layout, rectangles)
+        try:
+            (layout, rectangles) = cluster_layout.cluster_layout(G, fit, data, rows)
+        except AssertionError as e:
+            self.network.info_area.value = "Layout failed. Genes in network must match heatmap: " + repr(e)
+        else:
+            self.network.apply_layout(layout, rectangles)
 
     def load_network(self, filename):
         """
