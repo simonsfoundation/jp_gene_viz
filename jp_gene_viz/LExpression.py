@@ -70,8 +70,15 @@ class LinkedExpressionNetwork(traitlets.HasTraits):
         to the heatmap.
         """
         nodes = self.network.get_selection()
-        self.expression.select_rows(nodes)
+        try:
+            self.expression.select_rows(nodes)
+        except IndexError as e:
+            message = str(e)
+            self.expression.info_area.value = message
+            self.network.info_area.value = message
+            return False
         self.expression.info_area.value = "Genes\n" + pprint.pformat(nodes)
+        return nodes
 
     def condition_click(self, b=None):
         """
@@ -93,7 +100,10 @@ class LinkedExpressionNetwork(traitlets.HasTraits):
         Apply a clustering layout to the network using the expression values.
         """
         # Restrict genes in heatmap to genes in network.
-        self.gene_click()
+        nodes = self.gene_click()
+        if not nodes:
+            self.network.info_area.value = "No genes in visible network occur in heatmap."
+            return
         (rows, data) = self.expression.get_observations()
         self.network.select_and_draw(rows)
         fit = self.network.fit_heuristic()
