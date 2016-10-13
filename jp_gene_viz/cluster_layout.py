@@ -46,6 +46,12 @@ class ClusterLayout(spoke_layout.SpokeLayout):
 
     def get_tree(self):
         (row_names, matrix) = self.get_observations()
+        nrows = len(row_names)
+        assert nrows > 0, "Cannot cluster 0 rows."
+        if nrows == 1:
+            # trivial clustering
+            [row_name]  = row_names
+            return row_name
         Z = linkage(matrix, "ward")
         D = {}
         for i in range(len(matrix)):
