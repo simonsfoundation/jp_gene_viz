@@ -64,6 +64,10 @@ class HeatMap(object):
             cols = col_names[:]
         else:
             cols = checked_names(cols, col_names, strict)
+        if not rows:
+            raise IndexError("no valid rows selected in projection")
+        if not cols:
+            raise IndexError("no valid columns selected in projection")
         data = self.data
         col_index = index_dict(col_names)
         row_index = index_dict(row_names)
