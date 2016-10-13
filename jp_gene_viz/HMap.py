@@ -89,7 +89,7 @@ class HeatMap(object):
         return result
 
     def get_data(self):
-        return (self.row_names, self.col_names, self.data)
+        return (self.row_names, self.col_names, self.display_data)
 
     def set_data(self, row_names, col_names, data):
         """
