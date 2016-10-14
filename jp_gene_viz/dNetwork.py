@@ -826,12 +826,12 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
 
     def apply_layout(self, layout, rectangles=None):
         self.info_area.value = "applying layout"
-        self.reset_interactive_bookkeeping()
         #self.display_positions = layout
         self.set_layout(layout, rectangles)
         self.draw()
 
     def set_layout(self, layout, rectangles=None):
+        self.reset_interactive_bookkeeping()
         self.display_positions = layout
         self.group_rectangles = rectangles
 
