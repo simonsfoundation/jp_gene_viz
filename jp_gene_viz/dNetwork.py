@@ -124,6 +124,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
 
     maximize = traitlets.Bool(True)
     svg_width = traitlets.Int(500)
+    rectangle_color = traitlets.Unicode("#edefef")
 
     json_atts = "threshhold label_position_overrides".split()
 
@@ -276,7 +277,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         # node color mapper override
         self.override_node_colors = None
         self.group_rectangles = None
-        self.rectangle_color = None
+        #self.rectangle_color = None
         self.reset_interactive_bookkeeping()
         self.handle_container_change()
 
@@ -419,6 +420,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         ecc = self.edge_color_chooser = color_widget.ColorChooser()
         ecc.title = "edges"
         w = "150px"
+        rect_color_tb = self.rectangle_color_textbox = widgets.Text(value="#edefef", description="cluster boundary color")
+        traitlets.link((rect_color_tb, "value"), (self, "rectangle_color"))
         # file save area
         self.filename_button = self.make_button("save/load file name", self.filename_click, width=w)
         self.save_button = self.make_button("save", self.save_click, width=w)
@@ -444,7 +447,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         snapshot_area = widgets.HBox(children=[fmt, iss, snp])
         assembly = widgets.VBox(children=[
             labels_sliders, 
-            color_choosers, 
+            color_choosers,
+            rect_color_tb,
             file_input,
             file_buttons,
             snap_file_area,
@@ -667,8 +671,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             #svg = self.svg
             svg = self.chosen_container()
             svg.empty()
-        rcolor = self.rectangle_color
-        if rcolor is not None and rectangles is not None:
+        rcolor = self.rectangle_color.strip()
+        if rcolor and rectangles is not None:
             for (x, y, w, h) in rectangles.values():
                 xw = x + w
                 yh = y + h
