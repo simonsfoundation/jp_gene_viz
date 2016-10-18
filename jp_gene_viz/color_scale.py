@@ -167,3 +167,10 @@ class ColorInterpolator(JsonMixin):
                 break
         result = weighted_color(highcolor, lowcolor, highvalue - lowvalue, value - lowvalue)
         return result
+
+# Standard color choices.
+blue = clr(0,0,255)
+medBlue = clr(0,85,255)
+medRed = clr(228,26,28)
+lightGrey = clr(217,217,217)
+lightLightGrey = clr(235,235,235)

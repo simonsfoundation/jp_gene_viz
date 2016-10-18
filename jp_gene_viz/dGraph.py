@@ -213,9 +213,9 @@ class WGraph(JsonMixin):
             Mn = max(nw)
         return (Me, me, Mn, mn)
 
-    positive_edge_color = clr(222, 111, 0)  # clr(0, 211, 0)
-    zero_edge_color = clr(166, 166, 166)  # clr(230, 230, 230)
-    negative_edge_color = clr(0, 49, 197)  # clr(255, 0, 0)
+    positive_edge_color = color_scale.medRed
+    zero_edge_color = color_scale.lightGrey
+    negative_edge_color = color_scale.medBlue
 
     _edge_color_interpolator = None
 
@@ -232,9 +232,9 @@ class WGraph(JsonMixin):
             self._edge_color_interpolator = result
         return result
 
-    positive_node_color = clr(222, 111, 0)  # clr(255, 100, 100)
-    zero_node_color = clr(217, 217, 217)
-    negative_node_color = clr(0, 114, 178)
+    positive_node_color = color_scale.medRed
+    zero_node_color = color_scale.lightGrey
+    negative_node_color = color_scale.medBlue
 
     _node_color_interpolator = None
 

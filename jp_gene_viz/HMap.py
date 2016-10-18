@@ -35,9 +35,9 @@ class HeatMap(object):
     a numeric data value for each row/column combination.
     """
 
-    max_clr = dGraph.clr(255, 0, 0)
-    min_clr = dGraph.clr(0, 255, 0)
-    zero_clr = dGraph.clr(230, 230, 230)
+    max_clr = color_scale.medRed
+    min_clr = color_scale.blue
+    zero_clr = color_scale.lightLightGrey
     highlight_color = "black"
 
     def __init__(self, row_names=None, col_names=None, data=None):
