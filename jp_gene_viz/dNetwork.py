@@ -206,6 +206,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.depth_slider.layout.width = "200px"
         # Adjust the width and height of the svg when the size slider changes.
         traitlets.link((self, "svg_width"), (sslider, "value"))
+        # Force svg format if the width changes
+        self.on_trait_change(self.force_svg, "svg_width")
         for display in (svg, self.canvas):
             traitlets.directional_link((sslider, "value"), (display, "svg_width"))
             traitlets.directional_link((sslider, "value"), (display, "svg_height"))
@@ -296,6 +298,11 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         for widget in self.requires_SVG:
             set_visibility(widget, chose_svg)
         self.draw()
+
+    def force_svg(self, *args):
+        "Force SVG format"
+        # this will trigger a call to handle_container_change
+        self.container_dropdown.value = SVG
 
     def chosen_container(self):
         choice = self.container_dropdown.value
