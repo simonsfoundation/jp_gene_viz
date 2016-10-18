@@ -57,6 +57,8 @@ def primary_influence(Gin, connect=False, connect_weight=1):
                         Gout.add_edge(last, current, connect_weight)
                         last = current
                 Gout.add_edge(last, first, connect_weight)
+    # preserve all nodes
+    Gout.node_weights = nw.copy()
     return Gout
 
 #skeleton = primary_influence
@@ -70,6 +72,8 @@ def skeleton(Gin):
     nw = Gin.node_weights
     # "skeleton in", len(ew), len(nw)
     Gout = WGraph()
+    # preserve all nodes.
+    Gout.node_weights = Gin.node_weights.copy()
     neighbors = Gin.neighbors_dict()
     added = set()
     edges = sorted([(abs(ew[e]), e) for e in ew])
