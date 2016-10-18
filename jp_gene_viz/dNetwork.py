@@ -65,6 +65,18 @@ BROKEN_LAYOUTS = set([
     'sphere',
 ])
 
+OUTLINE_LABEL_STYLE = {
+    "text-anchor": "middle",
+    "stroke": "white",
+    "font-weight": "bold",
+    "stroke-width": 0.2,
+}
+
+NO_OUTLINE_LABEL_STYLE = {
+    "text-anchor": "middle",
+    "font-weight": "bold",
+}
+
 # This function should be called once in a notebook before creating a display.
 #from jp_svg_canvas.canvas import load_javascript_support
 
@@ -143,12 +155,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
 
     dialog_timeout = 5
 
-    label_style = {
-        "text-anchor": "middle",
-        "stroke": "white",
-        "font-weight": "bold",
-        "stroke-width": 0.2,
-        }
+    label_style = OUTLINE_LABEL_STYLE
 
     # The motif collection to use for looking up motif data.
     motif_collection = None
@@ -352,10 +359,10 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         assembly = widgets.HBox(children=[self.match_button, self.pattern_text])
         return assembly
 
-    def make_checkbox(self, description, callback):
+    def make_checkbox(self, description, callback, value=False):
         "Make a labels toggle widget."
         #result = widgets.Button(description="labels", value=False)
-        result = widgets.Checkbox(description=description, value=False)
+        result = widgets.Checkbox(description=description, value=value)
         #result.on_click(self.labels_click)
         if callback is not None:
             result.on_trait_change(callback, "value")
@@ -409,6 +416,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         font_fsl = self.tf_font_size_slider = widgets.IntSlider(
             description="tf labels",
             value=7, min=5, max=20, width="50px")
+        self.label_outline_checkbox = locb = self.make_checkbox("outlined", self.outlined_click, value=True)
         font_sl.layout.width = "200px"
         font_fsl.layout.width = "200px"
         # colorize area
@@ -435,7 +443,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.load_button = self.make_button("load", self.load_click, width=w)
         self.upload_button = self.make_button("upload/download", self.upload_click, width=w)
         self.filename_text = widgets.Text(value='')
-        labels_sliders = widgets.HBox(children=[font_sl, font_fsl])
+        labels_sliders = widgets.HBox(children=[font_sl, font_fsl, locb])
         color_choosers = widgets.HBox(children=[ncc.svg, ecc.svg, colorize_area])
         fmt = self.format_dropdown = widgets.Dropdown(options=["PNG", "TIFF"], value="PNG")
         fmt.layout.width = "50px"
@@ -464,6 +472,12 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         #assembly.visible = False # default
         set_visibility(assembly, False)
         return assembly
+
+    def outlined_click(self, *args):
+        if self.label_outline_checkbox.value:
+            self.label_style = OUTLINE_LABEL_STYLE
+        else:
+            self.label_style = NO_OUTLINE_LABEL_STYLE
 
     def uncolorize_click(self, *args):
         self.color_overrides = {}
