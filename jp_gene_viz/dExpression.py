@@ -28,6 +28,7 @@ class ExpressionDisplay(traitlets.HasTraits):
 
     def __init__(self, *args, **kwargs):
         super(ExpressionDisplay, self).__init__(*args, **kwargs)
+
         svg = self.svg = canvas.SVGCanvasWidget()
         svg.add_style("background-color", "cornsilk")
         svg.svg_width = 550
@@ -43,7 +44,7 @@ class ExpressionDisplay(traitlets.HasTraits):
         )
         tdd.on_trait_change(self.draw_click, "value")
         tdd.layout.width = "100px"
-        self.title_html = widgets.HTML("Expression Heat Map")
+        self.title_html = widgets.HTML(kwargs["title"])
         self.text_assembly = self.make_text_displays()
         self.match_assembly = self.make_match_assembly()
         self.genes_assembly = self.make_genes_assembly(tdd)
@@ -249,13 +250,13 @@ class ExpressionDisplay(traitlets.HasTraits):
         display(self.assembly)
 
 
-def display_heat_map(filename, dexpr=None, side_length=550, show=False):
+def display_heat_map(filename, dexpr=None, side_length=550, show=False, title="Expression Heat Map"):
     from jp_gene_viz import getData
     H = HMap.HeatMap()
     (r, c, d) = getData.read_tsv(filename)
     H.set_data(r, c, d)
     if dexpr is None:
-        dexpr = ExpressionDisplay()
+        dexpr = ExpressionDisplay(title=title)
     dexpr.load_data(H, side_length=side_length)
     if show:
         dexpr.show()
