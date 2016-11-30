@@ -176,6 +176,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.layout_button = self.make_button("layout", self.layout_click)
         self.expand_button = self.make_button("expand", self.expand_click)
         self.regulates_button = self.make_button("regulates", self.regulates_click)
+        self.regulates_edges_button = self.make_button("reg edges", self.regulates_edges_click)
         self.targeted_button = self.make_button("targeted by", self.targeted_click)
         self.focus_button = self.make_button("focus", self.focus_click)
         self.restore_button = self.make_button("restore", self.restore_click)
@@ -246,6 +247,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
                    self.trim_button,
                    self.expand_button,
                    self.regulates_button,
+                   self.regulates_edges_button,
                    self.targeted_button,
                    self.tf_only_button,
                    self.split_button,
@@ -883,10 +885,13 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             #self.svg.empty()
 
     def regulates_click(self, b=None):
+        return self.expand_click(b, incoming=False, outgoing=True, crosslink=True)
+
+    def regulates_edges_click(self, b=None):
         return self.expand_click(b, incoming=False, outgoing=True, crosslink=False)
 
     def targeted_click(self, b=None):
-        return self.expand_click(b, incoming=True, outgoing=False, crosslink=False)
+        return self.expand_click(b, incoming=True, outgoing=False, crosslink=True)
 
     def expand_click(self, b, incoming=True, outgoing=True, crosslink=True):
         "Add nodes for incoming or outgoing edges from current nodes."
@@ -932,8 +937,9 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         for n in nodes:
             if n not in dP and n in P:
                 dP[n] = P[n]
+        if crosslink:
+            self.do_threshhold()
         self.set_node_weights()
-        self.do_threshhold()
         #self.svg.empty()
         self.draw()
 
