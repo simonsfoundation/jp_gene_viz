@@ -119,11 +119,14 @@ class ExpressionDisplay(traitlets.HasTraits):
         d = self.draw_button = widgets.Button(description="draw", width="50px")
         d.layout.width = "50px"
         d.on_click(self.draw_click)
+        l = self.list_conditions_button = widgets.Button(description="list", width="50px")
+        l.layout.width = "50px"
+        l.on_click(self.list_conditions_click)
         c = self.color_checkbox = widgets.Checkbox(description="colors", value=False)
         c.on_trait_change(self.colors_click, "value")
         cl = self.cluster_checkbox = widgets.Checkbox(description="cluster", value=True)
         cl.on_trait_change(self.colors_click, "value")
-        assembly = widgets.HBox(children=[b, t, d, c, cl])
+        assembly = widgets.HBox(children=[b, t, l, d, c, cl])
         return assembly
 
     def make_genes_assembly(self, transform_dropdown):
@@ -135,7 +138,10 @@ class ExpressionDisplay(traitlets.HasTraits):
         r = self.reset_button = widgets.Button(description="reset")
         r.layout.width = "50px"
         r.on_click(self.reset_click)
-        assembly = widgets.HBox(children=[b, t, r, transform_dropdown])
+        l = self.list_genes_button = widgets.Button(description="list")
+        l.layout.width = "50px"
+        l.on_click(self.list_genes_click)
+        assembly = widgets.HBox(children=[b, t, l, r, transform_dropdown])
         return assembly
 
     def reset_click(self, b=None):
@@ -156,6 +162,14 @@ class ExpressionDisplay(traitlets.HasTraits):
 
     def draw_click(self, b=None):
         self.draw()
+
+    def list_conditions_click(self, b=None):
+        conditions = self.display_heat_map.col_names
+        self.info_area.value = "\t".join(conditions)
+
+    def list_genes_click(self, b=None):
+        genes = self.display_heat_map.row_names
+        self.info_area.value = "\t".join(genes)
 
     def genes_click(self, b=None):
         patterns = self.genes_text.value.lower().split()
