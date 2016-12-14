@@ -38,6 +38,7 @@ class HTML5CanvasProxy(traitlets.HasTraits):
         self.on_trait_change(self.change_dimensions, "svg_height")
         self.font = "Arial"  # default
         self.font_size = 10
+        self.font_style = ""
         self.font_weight = "normal"
         self.operations = []
         self.assignments = {}
@@ -160,7 +161,8 @@ class HTML5CanvasProxy(traitlets.HasTraits):
         f = self.font = style_dict.get("font", self.font)
         w = self.font_weight = style_dict.get("font-weight", self.font_weight)
         s = self.font_size = style_dict.get("font-size", self.font_size)
-        self._assign("font", "%s %spx %s" % (w, s, f))
+        fs = self.font_style = style_dict.get("font-style", self.font_style)
+        self._assign("font", "%s %s %spx %s" % (fs, w, s, f))
         self._assign("fillStyle", fill)
         ta = style_dict.get("text-anchor", "start")
         if ta == "middle":

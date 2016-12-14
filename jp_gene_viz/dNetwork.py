@@ -66,6 +66,7 @@ BROKEN_LAYOUTS = set([
 ])
 
 OUTLINE_LABEL_STYLE = {
+    "font-style": "italic",
     "text-anchor": "middle",
     "stroke": "white",
     "font-weight": "bold",
@@ -73,6 +74,7 @@ OUTLINE_LABEL_STYLE = {
 }
 
 NO_OUTLINE_LABEL_STYLE = {
+    "font-style": "italic",
     "text-anchor": "middle",
     "font-weight": "bold",
 }
