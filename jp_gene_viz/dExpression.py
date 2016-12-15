@@ -177,7 +177,7 @@ class ExpressionDisplay(traitlets.HasTraits):
         self.info_area.value = "\t".join(genes)
 
     def genes_click(self, b=None):
-        patterns = self.genes_text.value.lower().split()
+        patterns = [x.lower() for x in self.genes_text.value.lower().split()]
         row_set = set()
         rows = [x.lower() for x in self.data_heat_map.row_names]
         for pattern in patterns:
@@ -190,9 +190,9 @@ class ExpressionDisplay(traitlets.HasTraits):
             self.display_data(rows, columns)
 
     def match_click(self, b=None):
-        patterns = self.match_text.value.split()
+        patterns = [x.lower() for x in self.match_text.value.split()]
         column_set = set()
-        columns = [x.lower() self.data_heat_map.col_names]
+        columns = [x.lower() for x in self.data_heat_map.col_names]
         for pattern in patterns:
             column_set.update(fnmatch.filter(columns, pattern))
         if not column_set:
