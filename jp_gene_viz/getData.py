@@ -26,7 +26,7 @@ def read_network(fn=network0, limit=None, threshhold=None):
         if threshhold is not None and  abs(beta) < threshhold:
             continue
         attributes = dict(zip(headers, columns))
-        G.add_edge(regulator.lower(), target.lower(), beta, attributes)
+        G.add_edge(regulator, target, beta, attributes)
         count += 1
         if limit is not None and count > limit:
             break
@@ -38,6 +38,19 @@ expr0 = ("../../../misc/networks/"
 
 expr1 = "../../../misc/networks/Tr1_Th17_noBatch_Th17PapCut.tsv"
 
+def caseless_intersection_list(string_sequence_source, string_sequence_compare, use_left=True):
+    source_map = lower_case_map(string_sequence_source)
+    compare_map = lower_case_map(string_sequence_compare)
+    common_keys = set(source_map.keys()) & set(compare_map.keys())
+    result_set = set(source_map[k] for k in common_keys)
+    if use_left:
+        result = [x for x in string_sequence_source if x in result_set]
+    else:
+        result = [compare_map[x.lower()] for x in string_sequence_source if x in result_set]
+    return result
+
+def lower_case_map(string_sequence):
+    return {s.lower(): s for s in string_sequence}
 
 def read_tsv(fn=expr1):
     """
@@ -50,7 +63,7 @@ def read_tsv(fn=expr1):
     f = open(fn, "rU")
     heading = f.readline()
     assert heading[0] == "\t", "expect tab first in headings " + repr(heading)
-    column_names = [x.strip().lower() for x in heading[1:].split("\t")]
+    column_names = [x.strip() for x in heading[1:].split("\t")]
     row_names = []
     all_data = []
     for dataline in f:
@@ -60,6 +73,6 @@ def read_tsv(fn=expr1):
         values = map(float, valuestr)
         assert len(values) == len(column_names), repr(
             (len(values), len(column_names)))
-        row_names.append(rowname.lower())
+        row_names.append(rowname)
         all_data.append(values)
     return (row_names, column_names, all_data)

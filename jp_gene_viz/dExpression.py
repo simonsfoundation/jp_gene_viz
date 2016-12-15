@@ -1,4 +1,4 @@
-import HMap
+from jp_gene_viz import HMap
 import pprint
 import ipywidgets as widgets
 from IPython.display import display
@@ -6,10 +6,11 @@ from jp_svg_canvas import canvas
 from jp_gene_viz.widget_utils import set_visibility, is_visible
 import traitlets
 import fnmatch
-import color_scale
-import color_widget
+from jp_gene_viz import color_scale
+from jp_gene_viz import color_widget
+from jp_gene_viz import getData
 from jp_svg_canvas.canvas import load_javascript_support
-from . import array_transforms
+from jp_gene_viz import array_transforms
 
 NO_TRANSFORM = "no transform"
 LOG2_TRANSFORM = 'log 2 fold change'
@@ -72,12 +73,16 @@ class ExpressionDisplay(traitlets.HasTraits):
         self.display_data(rows, cols, side_length)
 
     def display_data(self, rows, cols, side_length=None):
+        (data_rows, data_cols, data) = self.data_heat_map.get_data()
         if side_length is None:
             side_length = self.side_length
         if rows is not None:
+            rows = getData.caseless_intersection_list(rows, data_rows, use_left=False)
             self.rows = rows
         else:
             rows = self.rows
+        if cols is not None:
+            cols = getData.caseless_intersection_list(cols, data_cols, use_left=False)
         heat_map = self.display_heat_map = self.data_heat_map.projection(rows, cols)
         (self.dx, self.dy) = heat_map.fit(self.svg, side_length, self.labels_space)
         self.row = self.col = None
@@ -174,7 +179,7 @@ class ExpressionDisplay(traitlets.HasTraits):
     def genes_click(self, b=None):
         patterns = self.genes_text.value.lower().split()
         row_set = set()
-        rows = self.data_heat_map.row_names
+        rows = [x.lower() for x in self.data_heat_map.row_names]
         for pattern in patterns:
             row_set.update(fnmatch.filter(rows, pattern))
         if not row_set:
@@ -187,7 +192,7 @@ class ExpressionDisplay(traitlets.HasTraits):
     def match_click(self, b=None):
         patterns = self.match_text.value.split()
         column_set = set()
-        columns = self.data_heat_map.col_names
+        columns = [x.lower() self.data_heat_map.col_names]
         for pattern in patterns:
             column_set.update(fnmatch.filter(columns, pattern))
         if not column_set:

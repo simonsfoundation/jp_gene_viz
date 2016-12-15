@@ -2,6 +2,7 @@
 import numpy
 from jp_gene_viz import dGraph
 from jp_gene_viz import color_scale
+from jp_gene_viz import getData
 from scipy.cluster.hierarchy import linkage, leaves_list
 
 
@@ -13,7 +14,7 @@ def checked_names(subset, superset, strict=False):
     """
     ss = set(subset)
     sp = set(superset)
-    proper = ss & sp
+    proper = set(getData.caseless_intersection_list(ss, sp))  # ss & sp
     if strict and proper != ss:
         raise ValueError("extra names not allowed: " + repr(ss-sp))
     result = [name for name in subset if name in sp]
