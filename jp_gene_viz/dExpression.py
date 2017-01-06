@@ -94,7 +94,7 @@ class ExpressionDisplay(traitlets.HasTraits):
         return (rows, data)
 
     def select_rows(self, rows=None):
-        return self.display_data(rows, self.data_heat_map.col_names[:200])
+        return self.display_data(rows, self.display_heat_map.col_names[:200])
 
     def column_weights(self):
         if self.col is None:
