@@ -44,7 +44,7 @@
         } else {
             throw new Error("unknown triangle surface kind: " + kind);
         }
-        //material.side = THREE.DoubleSide;
+        material.side = THREE.DoubleSide;
         var mesh = new THREE.Mesh(geometry, material);
         scene.add(mesh);
         return mesh;
