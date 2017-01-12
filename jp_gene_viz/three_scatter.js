@@ -6,10 +6,10 @@ A three.js plugin to support 3d scatter plots.
 
 (function (THREE, $) {
     // shared objects
-    var wireboxGeometry = new THREE.BoxGeometry(2, 2, 2);
+    var wireboxGeometry = new THREE.BoxGeometry(1,1,1);
     var wireTetrahedronGeometry = new THREE.TetrahedronGeometry();
     var sphereGeometry = new THREE.SphereGeometry(100, 5, 5);
-    wireboxGeometry.shift_origin = -1;
+    wireboxGeometry.shift_origin = 0;
     var wireframeMaterial = function (hexcolor) {
         return new THREE.MeshBasicMaterial( { color: hexcolor, wireframe: true } );
     };
@@ -105,7 +105,7 @@ A three.js plugin to support 3d scatter plots.
         } else {
             throw "Unknown shape name for scatter " + shapeName;
         }
-        var shift = geometry.shift_origin || 0
+        var shift = (geometry.shift_origin || 0) * scale;
         for (var i=0; i<centers.length; i++) {
             var center = centers[i];
             var mesh;

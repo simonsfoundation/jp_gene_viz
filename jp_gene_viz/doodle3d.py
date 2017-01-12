@@ -62,12 +62,21 @@ class Doodle3D(object):
         THREE = self.THREE
         w(THREE.triangle_surface(self.scene, points, indices, color, kind, opacity))
 
+    shapenames = ["star", "wireBox", "openTetrahedron", "wireSphere", "openCube", "cube", "axes"]
+
+    def scatter(self, points, color=0x000000, scale=1.0, shapename="star"):
+        assert shapename in self.shapenames, "shapenames are " + repr(shapenames)
+        points = list(map(list, points))
+        w = self.w
+        THREE = self.THREE
+        w(THREE.scatter(self.scene, shapename, points, scale, color))
+
     def ambient_light(self, color):
         w = self.w
         new_light = w.save_new("light", self.THREE.AmbientLight, [color])
         w(self.scene.add(new_light))
 
-    camera_arguments = [75, 1.0, 1, 100000]
+    camera_arguments = [75, 1.0, 0.0001, 100000]
 
     def show(self):
         renderer = self.renderer
@@ -76,14 +85,9 @@ class Doodle3D(object):
         w = self.w
         camera = self.camera = w.save_new("camera", THREE.PerspectiveCamera, list(self.camera_arguments))
         w(camera.position._set("z", self.offset))
-        (x, y, z) = self.center
-        w(scene.position._set("x", x))
-        w(scene.position._set("y", y))
-        w(scene.position._set("z", z))
-        w(camera.lookAt(scene.position))
         w(renderer.setClearColor( 0xffffff, 1))
-        do_render = w(renderer.render(scene, camera))
-        options = {"autoRotate": self.autoRotate}
+        #do_render = w(renderer.render(scene, camera))
+        options = {"autoRotate": self.autoRotate, "center": list(self.center)}
         w(THREE.orbiter(camera, renderer, scene, options))
         w.flush()
         return w

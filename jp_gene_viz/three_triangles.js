@@ -1,5 +1,5 @@
 /*
-* three.js plugin to support curve drawing.
+* three.js convenience plugin to support surface rendering.
 */
 
 (function (THREE, $) {
