@@ -76,6 +76,25 @@ class Doodle3D(object):
         new_light = w.save_new("light", self.THREE.AmbientLight, [color])
         w(self.scene.add(new_light))
 
+    def text(self, text, position, size, color=None, rotation=None, height=None, options=None):
+        if options is None:
+            options = {}
+        settings = options.copy()
+        if not height:
+            height = size/10.0
+        settings["size"] = size
+        settings["height"] = height
+        settings["bevelSize"] = size/20.0
+        settings["bevelThickness"] = size/20.0
+        if color is not None:
+            settings["color"] = color
+        position = list(position)
+        if rotation:
+            rotation = list(rotation)
+        w = self.w
+        THREE = self.THREE
+        w(THREE.simple_text(text, position, self.scene, rotation, settings))
+
     camera_arguments = [75, 1.0, 0.0001, 100000]
 
     def show(self):
