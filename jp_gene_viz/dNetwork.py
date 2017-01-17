@@ -680,9 +680,10 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.override_node_colors = None
         self.override_node_weights = None
         ew = graph.edge_weights
-        maxw = max(abs(ew[e]) for e in ew) + 1.0
-        self.threshhold_slider.max = maxw
-        self.do_threshhold()
+        if ew:
+            maxw = max(abs(ew[e]) for e in ew) + 1.0
+            self.threshhold_slider.max = maxw
+            self.do_threshhold()
         self.reset_interactive_bookkeeping()
         if draw:
             self.draw()
