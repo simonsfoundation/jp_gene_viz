@@ -1513,7 +1513,8 @@ def display_network(filename, N=None, threshhold=20.0, save_layout=True, show=Tr
             layout = dLayout.group_layout(G)
         else:
             print ("Using fast layout because the network is large.")
-            layout = grid_forest.forest_layout(G)
+            (layout, rectangles) = grid_forest.forest_layout(G)
+            assert type(layout) is dict, type(layout)
         if save_layout:
             print ("Saving layout", layoutpath)
             dLayout.dump(layout, layoutpath)
