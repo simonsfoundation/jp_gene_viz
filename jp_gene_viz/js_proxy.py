@@ -157,6 +157,7 @@ HTML_EMBEDDING_TEMPLATE = u"""
         element.Fix = function () {{
             // do nothing (not implemented.)
         }}
+        var f;  // named function variable for debugging.
         {actions};
     }};
     var wait_for_libraries = function () {{
@@ -528,13 +529,14 @@ class CommandMaker(object):
 
 
 Set_Template = """
-(function () {
+f = function () {
     var target = %s;
     var attribute = %s;
     var value = %s;
     target[attribute] = value;
     return target;
-})()
+};
+f();
 """.strip()
 
 
