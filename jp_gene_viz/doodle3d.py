@@ -16,6 +16,7 @@ def init():
     js_context.load_if_not_loaded(["three_triangles.js"])
     js_context.load_if_not_loaded(["TextGeometry.js"])
     js_context.load_if_not_loaded(["three_simple_text.js"])
+    js_context.load_if_not_loaded(["three_sprite_text.js"])
     js_context.load_if_not_loaded(["OrbitControls.js"])
     js_proxy.load_javascript_support()
 
@@ -43,10 +44,10 @@ class Doodle3D(object):
         w(new_light.position.set(x, y, z))
         w(self.scene.add(new_light))
 
-    def text(self, text, position, rotation):
-        w = self.w
-        THREE = self.THREE
-        w(THREE.simple_text(text, location, self.scene, location))
+    #def text(self, text, position, rotation):
+    #    w = self.w
+    #    THREE = self.THREE
+    #    w(THREE.simple_text(text, location, self.scene, location))
 
     def curve(self, color, points):
         points = list(map(list, points))
@@ -95,9 +96,22 @@ class Doodle3D(object):
         THREE = self.THREE
         w(THREE.simple_text(text, position, self.scene, rotation, settings))
 
+    def sprite_text(self, text, positions, size, color, canvasWidth, options=None):
+        positions = map(list, positions)
+        if options is None:
+            options = {}
+        settings = options.copy()
+        # canvasWidth should be power of 2
+        canvasWidth2 = 1
+        while canvasWidth > canvasWidth2:
+            canvasWidth2 += canvasWidth2
+        w = self.w
+        THREE = self.THREE
+        w(THREE.sprite_text(self.scene, text, positions, size, color, canvasWidth2, options))
+
     camera_arguments = [75, 1.0, 0.0001, 100000]
 
-    def show(self):
+    def show(self, embed=False):
         renderer = self.renderer
         scene = self.scene
         THREE = self.THREE
@@ -108,5 +122,10 @@ class Doodle3D(object):
         #do_render = w(renderer.render(scene, camera))
         options = {"autoRotate": self.autoRotate, "center": list(self.center)}
         w(THREE.orbiter(camera, renderer, scene, options))
-        w.flush()
-        return w
+        if embed:
+            # html = w.embedded_html(True, await=["THREE", "_typeface_js.faces['helvetiker']"])
+            # open("/tmp/embedded_html.txt", "w").write(html)
+            w.embed(True, await=["THREE", "_typeface_js.faces['helvetiker']"])
+        else:
+            w.flush()
+            return w
