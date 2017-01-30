@@ -13,15 +13,15 @@ my_dir = os.path.dirname(__file__)
 
 LOADED_JAVASCRIPT = set()
 
-def load_if_not_loaded(filenames, verbose=False, delay=0.1, force=False):
+def load_if_not_loaded(filenames, verbose=False, delay=0.1, force=False, local=True):
     """
     Load a javascript file to the Jupyter notebook context,
     unless it was already loaded.
     """
     loaded = False
     for filename in filenames:
-        if os.path.exists(filename):
-            js_filename = filename
+        if local and os.path.exists(filename):
+            js_filename = os.path.abspath(filename)
         else:
             js_filename = os.path.join(my_dir, filename)
         assert os.path.exists(js_filename), "no such file " + repr(js_filename)
