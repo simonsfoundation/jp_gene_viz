@@ -77,6 +77,17 @@ class Doodle3D(object):
         new_light = w.save_new("light", self.THREE.AmbientLight, [color])
         w(self.scene.add(new_light))
 
+    def std_lighting(self, offset=1000):
+        self.light(0x915f7a, offset, offset, offset)
+        self.light(0xa5971f, offset, offset, -offset)
+        self.light(0x91a57f, offset, -offset, offset)
+        self.light(0xa15f97, offset, -offset, -offset)
+        self.light(0x795af1, -offset, offset, offset)
+        self.light(0xfa5197, -offset, offset, -offset)
+        self.light(0x7fa591, -offset, -offset, offset)
+        self.light(0xa59f17, -offset, -offset, -offset)
+        self.ambient_light(0x225533)
+
     def text(self, text, position, size, color=None, rotation=None, height=None, options=None):
         if options is None:
             options = {}
@@ -117,7 +128,14 @@ class Doodle3D(object):
         THREE = self.THREE
         w = self.w
         camera = self.camera = w.save_new("camera", THREE.PerspectiveCamera, list(self.camera_arguments))
-        w(camera.position._set("z", self.offset))
+        try:
+            (x, y, z) = self.offset
+        except TypeError:
+            w(camera.position._set("z", self.offset))
+        else:
+            w(camera.position._set("x", x))
+            w(camera.position._set("y", y))
+            w(camera.position._set("z", z))
         w(renderer.setClearColor( 0xffffff, 1))
         #do_render = w(renderer.render(scene, camera))
         options = {"autoRotate": self.autoRotate, "center": list(self.center)}
