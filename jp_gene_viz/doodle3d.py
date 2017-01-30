@@ -6,18 +6,18 @@ from jp_gene_viz import js_context
 from jp_gene_viz import js_proxy
 
 def init():
-    js_context.load_if_not_loaded(["three.js"])
-    js_context.load_if_not_loaded(["FontUtils.js"])
-    js_context.load_if_not_loaded(["helvetiker_regular.typeface.js"])
-    js_context.load_if_not_loaded(["three_scatter.js"])
-    js_context.load_if_not_loaded(["three_rotator.js"])
-    js_context.load_if_not_loaded(["three_orbit.js"])
-    js_context.load_if_not_loaded(["three_curve.js"])
-    js_context.load_if_not_loaded(["three_triangles.js"])
-    js_context.load_if_not_loaded(["TextGeometry.js"])
-    js_context.load_if_not_loaded(["three_simple_text.js"])
-    js_context.load_if_not_loaded(["three_sprite_text.js"])
-    js_context.load_if_not_loaded(["OrbitControls.js"])
+    js_context.load_if_not_loaded(["three.js"], local=False)
+    js_context.load_if_not_loaded(["FontUtils.js"], local=False)
+    js_context.load_if_not_loaded(["helvetiker_regular.typeface.js"], local=False)
+    js_context.load_if_not_loaded(["three_scatter.js"], local=False)
+    js_context.load_if_not_loaded(["three_rotator.js"], local=False)
+    js_context.load_if_not_loaded(["three_orbit.js"], local=False)
+    js_context.load_if_not_loaded(["three_curve.js"], local=False)
+    js_context.load_if_not_loaded(["three_triangles.js"], local=False)
+    js_context.load_if_not_loaded(["TextGeometry.js"], local=False)
+    js_context.load_if_not_loaded(["three_simple_text.js"], local=False)
+    js_context.load_if_not_loaded(["three_sprite_text.js"], local=False)
+    js_context.load_if_not_loaded(["OrbitControls.js"], local=False)
     js_proxy.load_javascript_support()
 
 class Doodle3D(object):
