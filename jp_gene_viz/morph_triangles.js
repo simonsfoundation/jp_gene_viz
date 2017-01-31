@@ -169,7 +169,7 @@ THREE.morph_triangles = function(morph_triangle_data, scene, duration, material,
                 return p_late;
                 //throw new Error("over extended segment interpolation " + ratio);
             }
-            interp_3d = []
+            var interp_3d = []
             for (var i=0; i<3; i++) {
                 var interp_i = p_early[i] + ratio * (p_late[i] - p_early[i]);
                 interp_3d.push(interp_i);
