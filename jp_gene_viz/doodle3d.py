@@ -29,6 +29,27 @@ def parameterized_points_2d(f, mins, maxes, counts):
             result[i, j] = f(u, v)
     return result
 
+def parameterized_points_3d(f, mins, maxes, counts):
+    "generate 2d array of triples using f(u,v) --> (x, y, z)"
+    (umin, vmin, wmin) = mins
+    (umax, vmax, wmax) = maxes
+    (ucount, vcount, wcount) = counts
+    u_values = np.linspace(umin, umax, ucount)
+    v_values = np.linspace(vmin, vmax, vcount)
+    w_values = np.linspace(wmin, wmax, wcount)
+    ur = range(ucount)
+    vr = range(vcount)
+    wr = range(wcount)
+    result = np.zeros((ucount, vcount, wcount, 3))
+    for i in ur:
+        u = u_values[i]
+        for j in vr:
+            v = v_values[j]
+            for k in wr:
+                w = w_values[k]
+                result[i, j, k] = f(u, v, w)
+    return result
+
 def triangulate_2d_points(array):
     "generate list of points and triangulations from array of triples."
     (u_count, v_count, dimension) = array.shape
@@ -66,6 +87,7 @@ def init():
     js_context.load_if_not_loaded(["three_orbit.js"], local=False)
     js_context.load_if_not_loaded(["three_curve.js"], local=False)
     js_context.load_if_not_loaded(["three_triangles.js"], local=False)
+    js_context.load_if_not_loaded(["morph_triangles.js"], local=False)
     js_context.load_if_not_loaded(["TextGeometry.js"], local=False)
     js_context.load_if_not_loaded(["three_simple_text.js"], local=False)
     js_context.load_if_not_loaded(["three_sprite_text.js"], local=False)
@@ -199,6 +221,34 @@ class Doodle3D(object):
         w = self.w
         THREE = self.THREE
         w(THREE.simple_text(text, position, self.scene, rotation, settings))
+
+    def morph_triangles(self, points, segments, triangles, min_value, max_value, duration, color):
+        w = self.w
+        THREE = self.THREE
+        # xxxx don't need to cache material here.
+        mesh_options = {"color": color, "morphTargets": True}
+        material = w.save_new("morph_material", THREE.MeshLambertMaterial, [mesh_options])
+        data = {}
+        data["max_value"] = max_value
+        data["min_value"] = min_value
+        data["shift"] = [0,0,0,0]
+        data["scale"] = [1,1,1,1]
+        #data["positions"] = points
+        # flatten points, segments, triangles
+        positions = []
+        for p in points:
+            positions.extend(p)
+        data["positions"] = positions
+        fsegments = []
+        for segment in segments:
+            fsegments.extend(segment)
+        data["segments"] = fsegments
+        ftriangles = []
+        for triangle in triangles:
+            ftriangles.extend(triangle)
+        data["triangles"] = ftriangles
+        w(material._set("side", THREE.DoubleSide))
+        w(THREE.morph_triangles(data, self.scene, duration, material).set_ticking(True))
 
     def sprite_text(self, text, positions, size, color, canvasWidth, options=None):
         positions = map(list, positions)
