@@ -268,6 +268,11 @@ THREE.morph_triangles = function(morph_triangle_data, scene, duration, material,
     var set_ticking = function(onoff) {
         if ((!ticking) && (onoff)) {
             ticking = true;
+            // adjust transition_start to leave influence unchanged
+            var now = clock.getElapsedTime();
+            var influence = mesh.morphTargetInfluences[0]
+            var elapsed = influence * (max_t - min_t) * (1.0 / t_units_per_second);
+            transition_start = now - elapsed;
             autotick();
         }
         ticking = onoff;
