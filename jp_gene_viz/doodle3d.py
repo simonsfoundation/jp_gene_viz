@@ -123,21 +123,28 @@ def triangulate_3d_points(array):
     assert len(triangles) == ntriangles
     return (points, segments, list(triangles))
 
+JS_LIBRARIES = [
+    ("three.js", "THREE"),
+    ("FontUtils.js", "THREE.FontUtils"),
+    ("helvetiker_regular.typeface.js", "_typeface_js.faces['helvetiker']"),
+    ("three_scatter.js", "THREE.scatter"),
+    ("three_rotator.js", "THREE.rotator"),
+    ("three_orbit.js", "THREE.orbiter"),
+    ("three_curve.js", "THREE.simple_curve"),
+    ("three_triangles.js", "THREE.triangle_surface"),
+    ("morph_triangles.js", "THREE.morph_triangles"),
+    ("TextGeometry.js", "THREE.TextGeometry"),
+    ("three_simple_text.js", "THREE.simple_text"),
+    ("three_simple_text.js", "THREE.sprite_text"),
+    ("OrbitControls.js", "THREE.OrbitControls"),
+]
+
 def init():
-    js_context.load_if_not_loaded(["three.js"], local=False)
-    js_context.load_if_not_loaded(["FontUtils.js"], local=False)
-    js_context.load_if_not_loaded(["helvetiker_regular.typeface.js"], local=False)
-    js_context.load_if_not_loaded(["three_scatter.js"], local=False)
-    js_context.load_if_not_loaded(["three_rotator.js"], local=False)
-    js_context.load_if_not_loaded(["three_orbit.js"], local=False)
-    js_context.load_if_not_loaded(["three_curve.js"], local=False)
-    js_context.load_if_not_loaded(["three_triangles.js"], local=False)
-    js_context.load_if_not_loaded(["morph_triangles.js"], local=False)
-    js_context.load_if_not_loaded(["TextGeometry.js"], local=False)
-    js_context.load_if_not_loaded(["three_simple_text.js"], local=False)
-    js_context.load_if_not_loaded(["three_sprite_text.js"], local=False)
-    js_context.load_if_not_loaded(["OrbitControls.js"], local=False)
+    for (library, dependency) in JS_LIBRARIES:
+        js_context.load_if_not_loaded([library], local=False)
     js_proxy.load_javascript_support()
+
+RAWGIT = "https://rawgit.com/AaronWatters/contourist/master/misc/"
 
 class Doodle3D(object):
 
