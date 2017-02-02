@@ -6,6 +6,9 @@ from jp_gene_viz import js_context
 from jp_gene_viz import js_proxy
 import numpy as np
 from numpy.linalg import norm
+from ipywidgets import widgets
+import traitlets
+from IPython.display import display
 
 
 def parameterized_points_1d(f, min_t, max_t, npoints):
@@ -37,10 +40,10 @@ def parameterized_points_3d(f, mins, maxes, counts):
     u_values = np.linspace(umin, umax, ucount)
     v_values = np.linspace(vmin, vmax, vcount)
     w_values = np.linspace(wmin, wmax, wcount)
-    ur = range(ucount)
-    vr = range(vcount)
-    wr = range(wcount)
-    result = np.zeros((ucount, vcount, wcount, 3))
+    ur = list(range(ucount))
+    vr = list(range(vcount))
+    wr = list(range(wcount))
+    result = np.zeros((ucount, vcount, wcount, 4))
     for i in ur:
         u = u_values[i]
         for j in vr:
@@ -62,8 +65,8 @@ def triangulate_2d_points(array):
         for j in range(v_count):
             ij = point_ravel(i, j)
             assert points[ij] is None
-            points[ij] = array[i][j]
-    assert None not in points
+            points[ij] = array[i,j]
+    # assert None not in points
     ntriangles = 2 * (u_count - 1) * (v_count - 1)
     triangles = set()
     for i in range(u_count - 1):
@@ -77,6 +80,48 @@ def triangulate_2d_points(array):
             triangles.add((d, b, c))
     assert len(triangles) == ntriangles
     return (points, list(triangles))
+
+def triangulate_3d_points(array):
+    "generate list of points and triangulations from array of triples."
+    (u_count, v_count, w_count, dimension) = array.shape
+    assert dimension == 4
+    npoints = u_count * v_count * w_count
+    points = [None] * npoints
+    def point_ravel(i, j, k):
+        return i + (u_count * (j + (v_count * k)))
+    for i in range(u_count):
+        for j in range(v_count):
+            for k in range(w_count):
+                ijk = point_ravel(i, j, k)
+                assert points[ijk] is None
+                points[ijk] = array[i,j,k]
+    #assert None not in points
+    ntriangles = 2 * (u_count - 1) * (v_count - 1) * (w_count - 1)
+    #segments = [(point_ravel(i,j,k), point_ravel(i,j,k+1))
+    #    for i in range(u_count)
+    #    for j in range(v_count)
+    #    for k in range(w_count - 1)]
+    segments = [None] * (u_count * v_count * (w_count - 1))
+    for i in range(u_count):
+        for j in range(v_count):
+            for k in range(w_count - 1):
+                ijk = point_ravel(i, j, k)
+                assert segments[ijk] is None
+                segments[ijk] = (ijk, point_ravel(i,j,k+1))
+    assert None not in segments
+    triangles = set()
+    for i in range(u_count - 1):
+        for j in range(v_count - 1):
+            for k in range(w_count - 1):
+                a = point_ravel(i, j, k)
+                b = point_ravel(i, j+1, k)
+                c = point_ravel(i+1, j+1, k)
+                d = point_ravel(i+1, j, k)
+                assert max(a, b, c, d) < npoints
+                triangles.add((a, b, d))
+                triangles.add((d, b, c))
+    assert len(triangles) == ntriangles
+    return (points, segments, list(triangles))
 
 def init():
     js_context.load_if_not_loaded(["three.js"], local=False)
@@ -138,6 +183,14 @@ class Doodle3D(object):
         (points, indices) = triangulate_2d_points(A)
         return self.triangle_surface(points, indices, color, kind, opacity)
 
+    def parameterized_morph(self, f, mins, maxes, counts, duration, color, opacity=None):
+        A = parameterized_points_3d(f, mins, maxes, counts)
+        (points, segments, triangles) = triangulate_3d_points(A)
+        #print "points", len(points), points
+        #print "segments", len(segments), segments
+        #print "triangles", len(triangles), triangles
+        return self.morph_triangles(points, segments, triangles, mins[-1], maxes[-1], duration, color, opacity=opacity)
+
     def triangle_surface(self, points, indices, color, kind="solid", opacity=None):
         assert kind in ["wire", "solid"]
         points = list(map(list, points))
@@ -149,7 +202,7 @@ class Doodle3D(object):
     shapenames = ["star", "wireBox", "openTetrahedron", "wireSphere", "openCube", "cube", "axes"]
 
     def scatter(self, points, color=0x000000, scale=1.0, shapename="star"):
-        assert shapename in self.shapenames, "shapenames are " + repr(shapenames)
+        assert shapename in self.shapenames, "shapenames are " + repr(self.shapenames)
         points = list(map(list, points))
         w = self.w
         THREE = self.THREE
@@ -222,12 +275,19 @@ class Doodle3D(object):
         THREE = self.THREE
         w(THREE.simple_text(text, position, self.scene, rotation, settings))
 
-    def morph_triangles(self, points, segments, triangles, min_value, max_value, duration, color):
+    def morph_triangles(self, points, segments, triangles, min_value, max_value, duration, color, 
+            opacity=None, name="morph_triangles", ticking=True):
         w = self.w
         THREE = self.THREE
+        element = self.element
         # xxxx don't need to cache material here.
         mesh_options = {"color": color, "morphTargets": True}
-        material = w.save_new("morph_material", THREE.MeshLambertMaterial, [mesh_options])
+        if opacity is not None:
+            mesh_options["opacity"] = opacity
+        mesh_options["shading"] = THREE.FlatShading
+        #klass = THREE.MeshLambertMaterial
+        klass = THREE.MeshPhongMaterial
+        material = w.save_new("morph_material", klass, [mesh_options])
         data = {}
         data["max_value"] = max_value
         data["min_value"] = min_value
@@ -248,7 +308,26 @@ class Doodle3D(object):
             ftriangles.extend(triangle)
         data["triangles"] = ftriangles
         w(material._set("side", THREE.DoubleSide))
-        w(THREE.morph_triangles(data, self.scene, duration, material).set_ticking(True))
+        w.save(name, THREE.morph_triangles(data, self.scene, duration, material))
+        w(element[name].set_ticking(ticking))
+
+    def animate(self, onoff=True, name="morph_triangles"):
+        w = self.w
+        info = self.element[name]
+        w(info.set_ticking(onoff))
+        w.flush()
+
+    def set_time(self, time, name="morph_triangles"):
+        w = self.w
+        info = self.element[name]
+        w(info.set_current_time(time))
+        w(info.tick())
+        w.flush()
+
+    def morph_stats_async(self, callback, name="morph_triangles"):
+        w = self.w
+        info = self.element[name]
+        return w.send_commands([info.min, info.max, info.get_current_time()], callback)
 
     def sprite_text(self, text, positions, size, color, canvasWidth, options=None):
         positions = map(list, positions)
@@ -290,3 +369,34 @@ class Doodle3D(object):
         else:
             w.flush()
             return w
+
+class AnimationControl(object):
+
+    def __init__(self, doodle, min_t, max_t, animation_name="morph_triangles"):
+        self.doodle = doodle
+        self.name = animation_name
+        self.min_t = min_t
+        self.max_t = max_t
+        slider = self.slider = widgets.FloatSlider(min=min_t, max=max_t)
+        slider.on_trait_change(self.change_time, "value")
+        checkbox = self.checkbox = widgets.Checkbox(description="animate", value=True)
+        checkbox.on_trait_change(self.change_animation, "value")
+        self.assembly = widgets.VBox(children=[checkbox, doodle.w, slider])
+
+    def change_time(self, *args):
+        new_time = self.slider.value
+        self.doodle.set_time(new_time, name=self.name)
+
+    def change_animation(self, *args):
+        self.doodle.animate(self.checkbox.value, self.name)
+
+    def stats_callback(self, *args):
+        (self.mins, self.maxes, self.current_time) = args[0][0]
+        self.slider.min = self.mins[-1]
+        self.slider.max = self.maxes[-1]
+
+    def show(self):
+        display(self.assembly)
+        self.doodle.show()
+        # xxxx some sync issue with the following:
+        #self.doodle.morph_stats_async(self.stats_callback, self.name)
