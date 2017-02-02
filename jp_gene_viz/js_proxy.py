@@ -318,7 +318,8 @@ class ProxyWidget(widgets.DOMWidget):
         "Send several commands fo the JS View."
         count = self.counter
         self.counter = count + 1
-        commands = validate_commands(list(commands_iter))
+        qcommands = list(map(quoteIfNeeded, commands_iter))
+        commands = validate_commands(qcommands)
         payload = [count, commands, level]
         if results_callback is not None:
             self.identifier_to_callback[count] = results_callback
