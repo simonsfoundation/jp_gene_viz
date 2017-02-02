@@ -4,6 +4,11 @@
  * @author mrdoob / http://mrdoob.com/
  */
 
+// don't redefine THREE if it is already there.
+if (window.THREE != undefined) {
+	console.log("Not reloading THREE.");
+} else {
+
 var THREE = { REVISION: '73' };
 window.THREE = THREE
 
@@ -7989,7 +7994,7 @@ THREE.Object3D.prototype = {
 			this.children.push( object );
 
 		} else {
-
+debugger;
 			console.error( "THREE.Object3D.add: object not an instance of THREE.Object3D.", object );
 
 		}
@@ -36174,4 +36179,6 @@ THREE.MorphBlendMesh.prototype.update = function ( delta ) {
 	}
 
 };
+
+}; // end of check to not redefine THREE.
 
