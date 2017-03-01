@@ -141,10 +141,7 @@ def delay_in_thread(callable):
 def load_javascript_support(verbose=False):
     js_context.load_if_not_loaded(["js_proxy.js"])
 
-HTML_EMBEDDING_TEMPLATE = u"""
-<div id="{div_id}"></div>
-
-<script>
+JAVASCRIPT_EMBEDDING_TEMPLATE = u"""
 (function () {{
     {debugger_string}
     var do_actions = function () {{
@@ -177,8 +174,14 @@ HTML_EMBEDDING_TEMPLATE = u"""
     }};
     wait_for_libraries();
 }})();
-</script>
 """
+
+HTML_EMBEDDING_TEMPLATE = (u"""
+<div id="{div_id}"></div>
+<script>""" +
+JAVASCRIPT_EMBEDDING_TEMPLATE + """
+</script>
+""")
 
 # For creating unique DOM identities for embedded objects
 IDENTITY_COUNTER = [int(time.time()) % 10000000]
@@ -214,14 +217,15 @@ class ProxyWidget(widgets.DOMWidget):
         self.on_trait_change(self.handle_results, "results")
         self.buffered_commands = []
 
-    def embedded_html(self, debugger=False, await=[]):
+    def embedded_html(self, debugger=False, await=[], template=HTML_EMBEDDING_TEMPLATE, div_id=None):
         """
         Translate buffered commands to static HTML.
         """
         assert type(await) is list
         await_string = json.dumps(await)
         IDENTITY_COUNTER[0] += 1
-        div_id = "jupyter_proxy_widget" + str(IDENTITY_COUNTER[0])
+        if div_id is None:
+            div_id = "jupyter_proxy_widget" + str(IDENTITY_COUNTER[0])
         #print("id", div_id)
         debugger_string = "// Initialize static widget display with no debugging."
         if debugger:
@@ -230,7 +234,7 @@ class ProxyWidget(widgets.DOMWidget):
         js_commands = [to_javascript(c) for c in commands]
         command_string = indent_string(";\n".join(js_commands), 2)
         #return HTML_EMBEDDING_TEMPLATE % (div_id, debugger_string, div_id, command_string)
-        return HTML_EMBEDDING_TEMPLATE.format(
+        return template.format(
             div_id=div_id,
             debugger_string=debugger_string,
             actions=command_string,
@@ -242,6 +246,14 @@ class ProxyWidget(widgets.DOMWidget):
         """
         embedded_html = self.embedded_html(debugger, await=await)
         display(HTML(embedded_html))
+
+    def embedded_javascript(self, debugger=False, await=[], div_id=None):
+        return self.embedded_html(debugger, await, template=JAVASCRIPT_EMBEDDING_TEMPLATE, div_id=div_id)
+
+    def save_javascript(self, filename, debugger=False, await=[], div_id=None):
+        out = open(filename, "w")
+        js = self.embedded_javascript(debugger, await, div_id=div_id)
+        out.write(js)
 
     def __call__(self, command):
         "Add a command to the buffered commands. Convenience."
@@ -460,7 +472,7 @@ def indent_string(s, level, indent="    "):
     return s.replace("\n", "\n" + lindent)
 
 
-def to_javascript(thing, level=0):
+def to_javascript(thing, level=0, indent=None, comma=","):
     if isinstance(thing, CommandMaker):
         return thing.javascript(level)
     else:
@@ -469,12 +481,12 @@ def to_javascript(thing, level=0):
         if ty is dict:
             L = {"%s: %s" % (to_javascript(key), to_javascript(thing[key]))
                 for key in thing.keys()}
-            json_value = "{%s}" % (",\n".join(L))
+            json_value = "{%s}" % (comma.join(L))
         elif ty is list or ty is tuple:
             L = [to_javascript(x) for x in thing]
-            json_value = "[%s]" % (",\n".join(L))
+            json_value = "[%s]" % (comma.join(L))
         elif json_value is None:
-            json_value = json.dumps(thing, indent=4)
+            json_value = json.dumps(thing, indent=indent)
         return indent_string(json_value, level)
 
 
