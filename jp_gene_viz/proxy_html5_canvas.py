@@ -62,6 +62,7 @@ class HTML5CanvasProxy(traitlets.HasTraits):
         e = self.element
         callback = w.callback(self.handle_event, "dummy value", level=3)
         w(e.on(events, callback))
+        w(e.canvas.on(events, callback))
         w.flush()
 
     def handle_event(self, identifier, args):
@@ -141,13 +142,15 @@ class HTML5CanvasProxy(traitlets.HasTraits):
             self.width = width
             self.height = height
             #dimension = self.dimension
-            minside = min(width, height)
+            #minside = min(width, height)
+            #print "width, height, minside", width, height#, minside
             # scale from canvas width offset to device width offset
-            wscale = self.wscale = self.svg_width * 1.0/minside
+            wscale = self.wscale = self.svg_width * 1.0/width
             # device width of draw area in device offsets
             swidth = self.swidth = wscale * width
             # scale from canvas height offset to device height offsert
-            hscale = self.hscale = self.svg_height * 1.0/minside
+            hscale = self.hscale = self.svg_height * 1.0/height
+            #print "wscale, hscale", wscale, hscale
             # height of draw area in device offsets
             sheight = hscale * height
             window = w.window()
@@ -155,7 +158,8 @@ class HTML5CanvasProxy(traitlets.HasTraits):
             tag = '<canvas width="%s" height="%s" style="border:1px solid #d3d3d3;"/>' % (
                 swidth, sheight
             )
-            #p "tag is", (tag, self.svg_width, self.svg_height, self.viewBox)
+            #tag = '<canvas style="border:1px solid #d3d3d3;"/>'
+            #print "tag is", (tag, self.svg_width, self.svg_height, self.viewBox)
             w(elt._set("canvas", jQuery(tag).appendTo(elt)))
             w.save_function("context_execute",
                 ["context", "sequence_json"],
