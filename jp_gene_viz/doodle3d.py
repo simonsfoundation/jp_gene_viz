@@ -135,7 +135,7 @@ JS_LIBRARIES = [
     ("morph_triangles.js", "THREE.morph_triangles"),
     ("TextGeometry.js", "THREE.TextGeometry"),
     ("three_simple_text.js", "THREE.simple_text"),
-    ("three_simple_text.js", "THREE.sprite_text"),
+    ("three_sprite_text.js", "THREE.sprite_text"),
     ("OrbitControls.js", "THREE.OrbitControls"),
 ]
 
@@ -144,7 +144,11 @@ def init():
         js_context.load_if_not_loaded([library], local=False)
     js_proxy.load_javascript_support()
 
-RAWGIT = "https://rawgit.com/AaronWatters/contourist/master/misc/"
+RAWGIT = "https://rawgit.com/simonsfoundation/jp_gene_viz/master/jp_gene_viz/"
+
+def js_includes(baseurl=RAWGIT, libraries=JS_LIBRARIES):
+    L = ['<script src="%s"></script>' % (baseurl + library) for (library, dependency) in libraries]
+    return "\n".join(L)
 
 class Doodle3D(object):
 
@@ -162,6 +166,32 @@ class Doodle3D(object):
         w(renderer.setSize(width, height))
         w(renderer.setClearColor( 0xffffff, 1))
         w(element.append(renderer.domElement))
+
+    def as_html_page(self, filepath, title='HTML Doodle', div_id="OUTPUT_3D"):
+        self.prepare_renderer()
+        L = []
+        a = L.append
+        a("<html>")
+        a("<head>")
+        a("<title> %s </title>" % title)
+        a('<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>')
+        a(js_includes())
+        a("</head>")
+        a("<body>")
+        a('<div id="%s"></div>' % div_id)
+        a('<script type="text/javascript">')
+        a(self.javascript_string(div_id=div_id))
+        a('</script>')
+        a("</body>")
+        a("</html>")
+        html = "\n".join(L)
+        out = open(filepath, "w")
+        out.write(html)
+
+    def javascript_string(self, debugger=False, div_id=None):
+        await = [dependency for (library, dependency) in JS_LIBRARIES]
+        await += ["jQuery"]
+        return self.w.embedded_javascript(debugger, await, div_id=div_id)
 
     def light(self, color, x, y, z):
         w = self.w
@@ -284,6 +314,9 @@ class Doodle3D(object):
 
     def morph_triangles(self, points, segments, triangles, min_value, max_value, duration, color, 
             opacity=None, name="morph_triangles", ticking=True):
+        self.last_points = points
+        self.last_segments = segments
+        self.last_triangles = triangles
         w = self.w
         THREE = self.THREE
         element = self.element
@@ -351,7 +384,11 @@ class Doodle3D(object):
 
     camera_arguments = [75, 1.0, 0.0001, 100000]
 
-    def show(self, embed=False):
+    prepared = False
+
+    def prepare_renderer(self):
+        if self.prepared:
+            return
         renderer = self.renderer
         scene = self.scene
         THREE = self.THREE
@@ -369,6 +406,11 @@ class Doodle3D(object):
         #do_render = w(renderer.render(scene, camera))
         options = {"autoRotate": self.autoRotate, "center": list(self.center)}
         w(THREE.orbiter(camera, renderer, scene, options))
+        self.prepared = True
+
+    def show(self, embed=False):
+        self.prepare_renderer()
+        w = self.w
         if embed:
             # html = w.embedded_html(True, await=["THREE", "_typeface_js.faces['helvetiker']"])
             # open("/tmp/embedded_html.txt", "w").write(html)
