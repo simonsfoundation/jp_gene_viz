@@ -1,4 +1,5 @@
 from jp_gene_viz import dGraph
+import math
 
 
 network0 = ("../../../misc/networks/"
@@ -23,6 +24,8 @@ def read_network(fn=network0, limit=None, threshhold=None):
         columns = dataline.strip().split("\t")
         [regulator, target, beta_s] = columns[:3]
         beta = float(beta_s)
+        assert not math.isnan(beta), "nan beta in row " + repr(columns)
+        assert not math.isinf(beta), "inf beta in row " + repr(columns)
         if threshhold is not None and  abs(beta) < threshhold:
             continue
         attributes = dict(zip(headers, columns))
