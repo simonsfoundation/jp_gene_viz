@@ -23,6 +23,7 @@ from jp_gene_viz import simple_tree
 from jp_gene_viz import cluster_layout
 from jp_gene_viz import category_layout
 from jp_gene_viz import getData
+from threading import Timer
 import fnmatch
 import igraph
 import json
@@ -700,6 +701,10 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         "Test whether a network is loaded."
         return (self.display_graph is not None and 
                 self.display_positions is not None)
+
+    def draw_later(self, fit=True, svg=None):
+        t = Timer(0.1, self.draw, [fit, svg])
+        t.start()
 
     def draw(self, fit=True, svg=None):
         "Draw the network."
@@ -1437,7 +1442,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             if self.moving_node or self.moving_label:
                 self.moving_node = None
                 self.moving_label = None
-                self.draw()
+                self.draw_later()
             elif name.startswith("NODE_"):
                 # otherwords if it's a node, start moving it
                 nodename = name[5:]
