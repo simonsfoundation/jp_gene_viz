@@ -1,0 +1,49 @@
+This is BibTeX, Version 0.99d (TeX Live 2015)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: jp_gene_viz.aux
+The style file: abbrv.bst
+Database file #1: jp_gene_viz.bib
+Warning--entry type for "gephi" isn't style-file defined
+--line 261 of file jp_gene_viz.bib
+You've used 24 entries,
+            2118 wiz_defined-function locations,
+            653 strings with 9980 characters,
+and the built_in function-call counts, 11239 in all, are:
+= -- 977
+> -- 967
+< -- 1
++ -- 386
+- -- 360
+* -- 1026
+:= -- 2008
+add.period$ -- 72
+call.type$ -- 24
+change.case$ -- 247
+chr.to.int$ -- 0
+cite$ -- 24
+duplicate$ -- 259
+empty$ -- 581
+format.name$ -- 360
+if$ -- 2142
+int.to.chr$ -- 0
+int.to.str$ -- 24
+missing$ -- 21
+newline$ -- 122
+num.names$ -- 48
+pop$ -- 235
+preamble$ -- 1
+purify$ -- 224
+quote$ -- 0
+skip$ -- 191
+stack$ -- 0
+substring$ -- 449
+swap$ -- 37
+text.length$ -- 1
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 94
+warning$ -- 0
+while$ -- 73
+width$ -- 26
+write$ -- 259
+(There was 1 warning)
