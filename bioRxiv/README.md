@@ -1,3 +1,6 @@
+
+from: https://github.com/schlegelp/bioRxiv-LaTeX-template
+
 # bioRxiv-LaTeX-template
 
 This is a **LaTeX** template for scientific publications (e.g. on [BioRxiv](http://www.biorxiv.org)) that contains several examples of how to embed figures directly into the manuscript. It is derived from [Schlegel et al., (2016)](http://biorxiv.org/content/early/2016/04/07/044990).
