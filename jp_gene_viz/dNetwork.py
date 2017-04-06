@@ -37,6 +37,8 @@ SELECTION = "SELECTION"
 CANVAS = "canvas"
 SVG = "SVG"
 
+MAX_FONT_SIZE = 40
+
 SKELETON = "skeleton"
 SPOKE = "spoke"
 FOREST = "forest"
@@ -418,10 +420,10 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         # label size sliders
         font_sl = self.font_size_slider = widgets.IntSlider(
             description="labels",
-            value=7, min=0, max=20, width="50px")
+            value=7, min=0, max=MAX_FONT_SIZE, width="50px")
         font_fsl = self.tf_font_size_slider = widgets.IntSlider(
             description="tf labels",
-            value=7, min=5, max=20, width="50px")
+            value=7, min=5, max=MAX_FONT_SIZE, width="50px")
         self.label_outline_checkbox = locb = self.make_checkbox("outlined", self.outlined_click, value=True)
         font_sl.layout.width = "200px"
         font_fsl.layout.width = "200px"
