@@ -1517,7 +1517,8 @@ def display_network(filename, N=None, threshhold=20.0, save_layout=True, show=Tr
         print ("Computing layout")
         if size < size_limit:
             # Use the slow but prettier method
-            layout = dLayout.group_layout(G)
+            (layout, rectangles) = dLayout.group_layout(G)
+            assert type(layout) is dict, type(layout)
         else:
             print ("Using fast layout because the network is large.")
             (layout, rectangles) = grid_forest.forest_layout(G)
