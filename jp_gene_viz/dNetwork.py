@@ -161,6 +161,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
 
     dialog_timeout = 5
 
+    undo_limit = 10
+
     label_style = OUTLINE_LABEL_STYLE
 
     # The motif collection to use for looking up motif data.
@@ -171,6 +173,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
 
     def __init__(self, container=SVG, *pargs, **kwargs):
         super(NetworkDisplay, self).__init__(*pargs, **kwargs)
+        self.undo_stack = []
         containers = [SVG, CANVAS]
         assert container in containers, "valid containers: " + repr(containers)
         self.title_html = widgets.HTML("Gene network")
@@ -178,6 +181,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         cd.layout.width = "150px"
         cd.on_trait_change(self.handle_container_change, "value")
         self.zoom_button = self.make_button("zoom", self.zoom_click, True)
+        self.undo_button = self.make_button("undo", self.undo_click, False)
         self.trim_button = self.make_button("trim", self.trim_click)
         self.layout_button = self.make_button("layout", self.layout_click)
         self.expand_button = self.make_button("expand", self.expand_click)
@@ -248,6 +252,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
                       self.hideable_right]
         self.vertical = widgets.VBox(children=right_panel)
         buttons = [self.container_dropdown,
+                   self.undo_button,
                    self.zoom_button,
                    self.focus_button,
                    self.ignore_button,
@@ -299,6 +304,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         #self.rectangle_color = None
         self.reset_interactive_bookkeeping()
         self.handle_container_change()
+        # set undo button to invisible
+        self.pop_state()
 
     def handle_container_change(self, *args):
         choice = self.container_dropdown.value
@@ -490,6 +497,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             self.label_style = NO_OUTLINE_LABEL_STYLE
 
     def uncolorize_click(self, *args):
+        self.push_state()
         self.color_overrides = {}
         self.reset_node_weights()
         self.display_graph.reset_colorization()
@@ -582,6 +590,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         except Exception:
             return self.alert("could not parse as JSON " + repr(filename))
         try:
+            self.undo_stack = []
             self.from_json_value(json_object)
             pass
         except Exception:
@@ -606,6 +615,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
 
     def apply_click(self, b=None):
         "Apply threshhold value to the viewable network."
+        self.push_state()
         self.reset_interactive_bookkeeping()
         self.do_threshhold()
         #self.svg.empty()
@@ -661,8 +671,32 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.display_graph = G
         self.set_node_weights()
 
+    def undo_click(self, b=None):
+        if len(self.undo_stack) < 1:
+            self.info_area.value = "No previous state to restore."
+        else:
+            self.pop_state()
+
+    def pop_state(self):
+        s = self.undo_stack
+        if len(s) > 0:
+            last_state = s.pop()
+            self.from_json_value(last_state)
+            self.draw()
+        set_visibility(self.undo_button, len(s) > 0)
+
+    def push_state(self):
+        s = self.undo_stack
+        state = self.to_json_value()
+        s.append(state)
+        if len(s) > self.undo_limit:
+            del s[0]
+        set_visibility(self.undo_button, len(s) > 0)
+
     def load_data(self, graph, positions=None, draw=True):
         "Load and draw a graph and positions to the network display."
+        self.undo_stack = []
+        self.pop_state()
         if positions is None:
             self.info_area.value = "Computing default layout: " + repr(graph.sizes())
             fit = self.fit_heuristic(graph)
@@ -791,6 +825,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
 
     def match_click(self, b=None):
         "Restrict viewable graph to nodes matching text input."
+        self.push_state()
         self.info_area.value = "match click"
         patterns = self.pattern_text.value.lower().split()
         #print ("patterns", patterns)
@@ -851,6 +886,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         """
         Split nodes with positive end points above, negative below, interior middle.
         """
+        self.push_state()
         self.layout_click(draw=False)
         layout_positions = self.display_positions
         dG = self.display_graph
@@ -895,6 +931,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
 
     def layout_click(self, b=None, draw=True):
         "Apply the current layout to the viewable graph."
+        self.push_state()
         self.reset_interactive_bookkeeping()
         self.info_area.value = "layout clicked"
         if not self.loaded:
@@ -933,6 +970,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
 
     def expand_click(self, b, incoming=True, outgoing=True, crosslink=True):
         "Add nodes for incoming or outgoing edges from current nodes."
+        self.push_state()
         self.info_area.value = "expand clicked"
         if not self.loaded():
             self.info_area.value = "Cannot expand: no graph loaded."
@@ -1029,6 +1067,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
 
     def ignore_click(self, b=None):
         "Remove selected nodes from view."
+        self.push_state()
         self.info_area.value = "ignore clicked"
         selected = self.nodes_in_selection()
         if selected is not None:
@@ -1040,6 +1079,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
 
     def tf_only_click(self, b=None):
         "restrict nodes the transcription factors (nodes with outgoing edges, visible or not)."
+        self.push_state()
         dG = self.data_graph
         G = self.display_graph
         sources = set(dG.get_node_to_descendants())
@@ -1052,6 +1092,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
 
     def connected_only_click(self, b=None):
         "remove from view nodess not connected to any other visible node"
+        self.push_state()
         G = self.display_graph
         n2d = G.get_node_to_descendants()
         sources = set(n2d)
@@ -1159,6 +1200,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
 
     def restore_click(self, b=None):
         "Restore button click: restore data to loaded state."
+        self.push_state()
         new_display_graph = self.data_graph.clone()
         new_display_graph.reset_colorization(self.display_graph)
         self.display_graph = new_display_graph
@@ -1170,6 +1212,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
 
     def trim_click(self, b=None):
         "Trim button click: delete nodes without outgoing edges."
+        self.push_state()
         #print "trim"
         self.info_area.value = "trim clicked"
         G = self.display_graph
