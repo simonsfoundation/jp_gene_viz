@@ -61,4 +61,4 @@ class layoutConverter(object):
 
     @staticmethod
     def from_json_value(jlayout):
-        return {k.lower(): pos(*jlayout[k]) for k in jlayout}
+        return {k: pos(*jlayout[k]) for k in jlayout}
