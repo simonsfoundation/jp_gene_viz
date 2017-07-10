@@ -1528,6 +1528,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         #self.display_graph.reset_colorization()
         if colors is not None:
             self.display_graph.set_node_color_interpolator(colors)
+        # share edge attributes between display graph and data graph
+        self.display_graph.edge_attributes = self.data_graph.edge_attributes
 
     def reset_node_weights(self, weights=None, colors=None):
         self.override_node_weights = None
