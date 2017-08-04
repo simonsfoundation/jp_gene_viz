@@ -6,7 +6,6 @@ from jp_gene_viz.color_scale import (clr, clr_check, weighted_color, color)
 from jp_gene_viz import color_scale
 from jp_gene_viz.json_mixin import JsonMixin
 from jp_gene_viz import grid_forest
-from jp_svg_canvas import canvas as svg_canvas
 
 
 def trim_leaves(Gin):
@@ -274,7 +273,6 @@ class WGraph(JsonMixin):
         (Me, me, Mn, mn) = self.weights_extrema()
         # layout edges
         ew = self.edge_weights
-        ea = self.edge_attributes
         # only layout positioned edges
         pos_e = [(abs(ew[e]), e) 
                  for e in ew if e[0] in positions and e[1] in positions]
@@ -287,14 +285,6 @@ class WGraph(JsonMixin):
         arrow_ratio = self.arrow_ratio
         for (absw, e) in pos_e:
             w = ew[e]
-            a = ea[e]
-            other_atts = {}
-            if a:
-                for att in svg_canvas.STROKE_ATTRIBUTES:
-                    if att in a:
-                        value = a[att]
-                        if value and value.upper() != "NONE":
-                            other_atts[att] = a[att]
             (f, t) = e
             outdegree[f] = outdegree.get(f, 0) + 1
             fp = positions[f]
@@ -311,18 +301,18 @@ class WGraph(JsonMixin):
             ecolor = eci.interpolate_color(w)
             name = self.edge_name(f, t)  # "EDGE_" + json.dumps([f,t])
             ecolor = color_overrides.get(name, ecolor)
-            canvas.line(name, fp[0], fp[1], tp[0], tp[1], ecolor, edgewidth, **other_atts)
+            canvas.line(name, fp[0], fp[1], tp[0], tp[1], ecolor, edgewidth)
             # add a mark to indicate target
             #p = tp - (2 * nodesize) * n
             p = fp + arrow_ratio * (tp - fp)
             markname = "mark" + name
             if w>0:
                 m = p - edgewidth * 5 * (n + no)
-                canvas.line(markname, p[0], p[1], m[0], m[1], ecolor, edgewidth, **other_atts)
+                canvas.line(markname, p[0], p[1], m[0], m[1], ecolor, edgewidth)
                 #canvas.circle(None, m[0], m[1], markradius, pcolor)
             else:
                 m = p - edgewidth * 5 * no
-                canvas.line(markname, p[0], p[1], m[0], m[1], ecolor, edgewidth, **other_atts)
+                canvas.line(markname, p[0], p[1], m[0], m[1], ecolor, edgewidth)
                 #canvas.rect(None, m[0]-markradius, m[1]-markradius, 
                 #            markradius*2, markradius*2, ncolor)
         # layout nodes (after edges)
