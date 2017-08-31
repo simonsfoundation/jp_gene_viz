@@ -10,7 +10,7 @@
 
 require.undef("JSProxy");
 
-define("JSProxy", ["jupyter-js-widgets"], function(widgets) {
+define("JSProxy", ['@jupyter-widgets/base'], function(widgets) {
 
     var JSProxyView = widgets.DOMWidgetView.extend({
 
@@ -46,10 +46,14 @@ define("JSProxy", ["jupyter-js-widgets"], function(widgets) {
                 var level = commands[2];
                 level = that.check_level(level);
                 var results = [];
-                _.each(command_list, function(command,i) {
-                    var result = that.execute_command(command);
-                    results[i] = that.json_safe(result, level);
-                });
+                try {
+                    _.each(command_list, function(command,i) {
+                        var result = that.execute_command(command);
+                        results[i] = that.json_safe(result, level);
+                    });
+                } catch (err) {
+                    results.push("" + err);
+                }
                 that.model.set("commands", []);
                 that.model.set("results", [command_counter, results])
                 that.touch();
