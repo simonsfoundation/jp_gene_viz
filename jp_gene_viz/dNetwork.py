@@ -968,7 +968,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
     def target_edges_click(self, b=None):
         return self.expand_click(b, incoming=True, outgoing=False, crosslink=False)
 
-    def expand_click(self, b, incoming=True, outgoing=True, crosslink=True):
+    def expand_click(self, b=None, incoming=True, outgoing=True, crosslink=True):
         "Add nodes for incoming or outgoing edges from current nodes."
         self.push_state()
         self.info_area.value = "expand clicked"
@@ -1113,6 +1113,25 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.set_node_weights()
         #self.svg.empty()
         self.draw()
+
+    def select_layout(self, node_to_positions):
+        """
+        Select network nodes to view and specify their layout positions.abs
+        Parameter node_to_positions must be a dictionary with selected nodes
+        as keys and layout positions for each node as values.
+        """
+        nodes = set(self.data_graph.node_weights)
+        view_nodes = set(node_to_positions)
+        assert view_nodes.issubset(nodes), "Unknown node names: " + repr(list(view_nodes - nodes)[:10])
+        edges = self.data_graph.edge_weights
+        positions = self.display_positions
+        for (node, (x, y)) in node_to_positions.items():
+            positions[node] = dGraph.pos(x, y)
+            self.display_graph.node_weights[node] = self.data_graph.node_weights[node]
+        for ((src, dst), weight) in edges.items():
+            if src in view_nodes and dst in view_nodes:
+                self.display_graph.edge_weights[(src, dst)] = weight
+        self.select_and_draw(view_nodes)
 
     def get_selection(self):
         "Get nodes list for currently viewable nodes."
