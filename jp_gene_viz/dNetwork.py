@@ -700,7 +700,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         if positions is None:
             self.info_area.value = "Computing default layout: " + repr(graph.sizes())
             fit = self.fit_heuristic(graph)
-            positions = dLayout.group_layout(graph, fit=fit)
+            positions = dLayout.group_layout(graph, fit=fit)[0]
         else:
             # match names ignoring case
             nodes = list(graph.node_weights.keys())
