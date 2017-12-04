@@ -388,21 +388,22 @@ class WGraph(JsonMixin):
                     self.descendant_set(d, next_level, accumulator)
         return accumulator
 
-    def move_descendants(self, canvas, positions, n, x, y, depth=0):
+    def move_descendants(self, canvas, positions, n, x, y, depth=0, add_edges=True):
         descendants = self.descendant_set(n, int(depth))
         offset = pos(x, y) - positions[n]
         for d in descendants:
             positions[d] = positions[d] + offset
         # move edges attached to descendants
-        for (f, t) in self.edge_weights:
-            for (n0, xname, yname) in ((f, "x1", "y1"), (t, "x2", "y2")):
-                if n0 in descendants:
-                    (x0, y0) = positions[n0]
-                    name0 = self.edge_name(f, t)
-                    markname = "mark" + name0
-                    attributes = {xname: x0, yname: y0}
-                    canvas.change_element(name0, attributes)
-                    canvas.delete_names([markname])
+        if add_edges:
+            for (f, t) in self.edge_weights:
+                for (n0, xname, yname) in ((f, "x1", "y1"), (t, "x2", "y2")):
+                    if n0 in descendants:
+                        (x0, y0) = positions[n0]
+                        name0 = self.edge_name(f, t)
+                        markname = "mark" + name0
+                        attributes = {xname: x0, yname: y0}
+                        canvas.change_element(name0, attributes)
+                        canvas.delete_names([markname])
         # move the nodes
         for d in descendants:
             (xd, yd) = positions[d]

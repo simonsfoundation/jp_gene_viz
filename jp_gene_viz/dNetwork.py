@@ -159,6 +159,9 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
 
     dialog_time = None
 
+    # Flag to move attached edges when a node is moved via cursor interaction
+    rubber_band_edges = False
+
     dialog_timeout = 5
 
     undo_limit = 10
@@ -1467,7 +1470,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         positions = self.display_positions
         dG = self.display_graph
         depth = self.depth_slider.value
-        dG.move_descendants(svg, positions, moving_node, svgX, svgY, depth)
+        dG.move_descendants(svg, positions, moving_node, svgX, svgY, depth, 
+            add_edges=self.rubber_band_edges)
 
     def update_selection(self, info):
         svg = self.svg
