@@ -842,7 +842,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             selected_nodes_lower.update(fnmatch.filter(lowernodes, pattern))
         selected_nodes = getData.caseless_intersection_list(nodes, selected_nodes_lower)
         #print ("found", len(selected_nodes), "of", len(nodes))
-        self.focus_on_nodes(self, selected_nodes)
+        self.focus_on_nodes(selected_nodes)
 
     def focus_on_nodes(self, selected_nodes):
         (Gfocus, Pfocus) = self.select_nodes(selected_nodes,
