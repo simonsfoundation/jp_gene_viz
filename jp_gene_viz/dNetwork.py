@@ -842,6 +842,9 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             selected_nodes_lower.update(fnmatch.filter(lowernodes, pattern))
         selected_nodes = getData.caseless_intersection_list(nodes, selected_nodes_lower)
         #print ("found", len(selected_nodes), "of", len(nodes))
+        self.focus_on_nodes(self, selected_nodes)
+
+    def focus_on_nodes(self, selected_nodes):
         (Gfocus, Pfocus) = self.select_nodes(selected_nodes,
             self.data_graph, self.data_positions)
         self.display_graph = Gfocus
@@ -931,6 +934,44 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.reset_interactive_bookkeeping()
         self.display_positions = layout
         self.group_rectangles = rectangles
+
+    def save_view_positions(self, to_file_name):
+        f = open(to_file_name, "w")
+        #nodes = {}
+        positions = {}
+        dG = self.display_graph
+        nw = dG.node_weights
+        P = self.display_positions
+        for node in nw:
+            if node in P:
+                (x, y) = P[node]
+                positions[node] = [x, y]
+        json_data = {
+            "positions": positions
+        }
+        json.dump(json_data, f)
+        f.close()
+        result = "saved nodes and positions to " + repr(to_file_name)
+        self.info_area.value = result
+        return result
+
+    def load_view_positions(self, from_file_name):
+        f = open(from_file_name, "r")
+        json_data = json.load(f)
+        f.close()
+        positions = json_data["positions"]
+        P = self.data_positions
+        view_nodes = []
+        nw = self.data_graph.node_weights
+        for node in nw:
+            if node in positions:
+                (x, y) = positions[node]
+                P[node] = dGraph.pos(x, y)
+                view_nodes.append(node)
+        self.focus_on_nodes(view_nodes)
+        result = "loaded nodes and positions from " + repr(from_file_name)
+        self.info_area.value = result
+        return result
 
     def layout_click(self, b=None, draw=True):
         "Apply the current layout to the viewable graph."
