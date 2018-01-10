@@ -104,17 +104,28 @@ class GraphDiagramWidget(traitlets.HasTraits):
         dnode = widgets.VBox(children=[ns, nbc_html, nbc.svg, nbi])
         dedge = widgets.VBox(children=[edc_html, edc.svg, eds])
         detail = widgets.VBox(children=[dlabel, dnode, dedge, applyb, resetb])
-        detail.visible = False
-        traitlets.link((detail, "visible"), (dcb, "value"))
+        detail.layout.visibility = "hidden"
+        self.detail = detail
+        #traitlets.link((detail, "visible"), (dcb, "value"))
+        self.visibility_link(dcb, detail)
         middle = widgets.HBox(children=[w, detail])
         hideable = widgets.VBox(children=[top, middle, info])
         self.view_checkbox = vcb = widgets.Checkbox(description="view", value=True)
-        traitlets.link((vcb, "value"), (hideable, "visible"))
+        #traitlets.link((vcb, "value"), (hideable, "visible"))
+        self.visibility_link(vcb, hideable)
         a = self.assembly = widgets.VBox(children=[vcb, hideable])
         # make the assembly big enough
         hideable.height = 650
         # restore from addenda if archived
         #addenda.reset(self, key, default_key)
+
+    def visibility_link(self, checkbox, toggle_component):
+        def checkbox_change(name, old, new):
+            if checkbox.value:
+                toggle_component.layout.visibility = "visible"
+            else:
+                toggle_component.layout.visibility = "hidden"
+        checkbox.on_trait_change(checkbox_change, "value")
 
     def reset_inputs(self, b=None):
         self.edge_style.value = ""
