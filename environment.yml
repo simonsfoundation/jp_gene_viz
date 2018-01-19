@@ -1,0 +1,14 @@
+
+channels:
+  - conda-forge
+dependencies:
+  - python=2
+  - ipywidgets
+  - scipy
+  - numpy
+  - pycrypto
+  - pip
+  - pip:
+    - python-igraph>=0.7.1
+    - git+https://github.com/simonsfoundation/jp_svg_canvas#egg=jp_svg_canvas
+    - git+https://github.com/simonsfoundation/jp_gene_viz#egg=jp_gene_viz
