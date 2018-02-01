@@ -15,7 +15,7 @@ from jp_gene_viz import color_widget
 from jp_gene_viz import js_context
 from jp_gene_viz.json_mixin import JsonMixin
 from jp_gene_viz import file_chooser_widget
-from jp_gene_viz.widget_utils import set_visibility, is_visible
+from jp_gene_viz.widget_utils import set_visibility, is_visible, no_overflow
 from jp_gene_viz import proxy_html5_canvas
 from jp_gene_viz import grid_forest
 from jp_gene_viz import spoke_layout
@@ -749,6 +749,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
 
     def draw(self, fit=True, svg=None):
         "Draw the network."
+        # prevent overflow for display and containers
+        no_overflow(self.dialog)
         G = self.display_graph
         P = self.display_positions
         rectangles = self.group_rectangles
