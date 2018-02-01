@@ -1,6 +1,6 @@
 cython>=0.24
 ipywidgets>=5.1.4
-ipython==4.2.0
+ipython>=4.2.0
 traitlets>=4.2.1
 python-igraph>=0.7.1
 numpy>=1.9.2
