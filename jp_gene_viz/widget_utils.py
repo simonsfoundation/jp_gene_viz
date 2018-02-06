@@ -23,6 +23,7 @@ var div = element[0];
 for (var count=0; count<10; count++) {
     if (div.style) {
         div.style.overflowX = "visible";
+        div.style.overflow = "visible";
     }
     div = div.parentNode;
     if (!element) {
