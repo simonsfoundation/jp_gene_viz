@@ -20,7 +20,7 @@ NO_OVERFLOW_JS = """
 // prevent overflow scroll bars
 debugger;
 var div = element[0];
-for (var count=0; count<4; count++) {
+for (var count=0; count<10; count++) {
     if (div.style) {
         div.style.overflowX = "visible";
     }
