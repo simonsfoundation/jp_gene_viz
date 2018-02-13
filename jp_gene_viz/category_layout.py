@@ -7,7 +7,8 @@ import math
 def category_layout(G, fit=1000, node_categories=None, **kw):
     if node_categories is None:
         node_categories = default_categories(G)
-    anonymous_categories = numeric_categories(node_categories, G)
+    #anonymous_categories = numeric_categories(node_categories, G)
+    anonymous_categories = fill_in_categories(node_categories, G)
     GF = CategoryForestLayout(G, fit)
     GF.node_categories = anonymous_categories
     (positions, rectangles) = GF.compute_positions()
@@ -19,9 +20,18 @@ def category_layout(G, fit=1000, node_categories=None, **kw):
         if len(categories) == 1:
             [category] = list(categories)
             category_to_rectangle[category] = (nodes, rectangles[nodes])
-    maximal_rectangles = {nodes: rectangle for (nodes, rectangle) in category_to_rectangle.values()}
+    #maximal_rectangles = {nodes: rectangle for (nodes, rectangle) in category_to_rectangle.values()}
+    maximal_rectangles = {label: rectangle for (label, (nodes, rectangle)) in category_to_rectangle.items()}
     return (positions, maximal_rectangles)
 
+def fill_in_categories(node_categories, G):
+    result = {}
+    for (count, node) in enumerate(G.node_weights):
+        if node in node_categories:
+            result[node] = node_categories[node]
+        else:
+            result[node] = str(node) + "_" + str(count)
+    return result
 
 def numeric_categories(node_categories, G):
     "fully define categories using fresh numbers as anonymous identifiers for convenience"
