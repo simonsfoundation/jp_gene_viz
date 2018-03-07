@@ -162,6 +162,9 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
     # Flag to move attached edges when a node is moved via cursor interaction
     rubber_band_edges = False
 
+    # Flag to label rectangles when present
+    label_rectangles = False
+
     dialog_timeout = 5
 
     undo_limit = 10
@@ -768,13 +771,16 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             svg.empty()
         rcolor = self.rectangle_color.strip()
         if rcolor and rectangles is not None:
-            for (x, y, w, h) in rectangles.values():
+            for (key, (x, y, w, h)) in rectangles.items():
                 xw = x + w
                 yh = y + h
                 svg.line("group_border", x, y, xw, y, rcolor)
                 svg.line("group_border", xw, y, xw, yh, rcolor)
                 svg.line("group_border", xw, yh, x, yh, rcolor)
                 svg.line("group_border", x, yh, x, y, rcolor)
+                if self.label_rectangles:
+                    rlabel = str(key)[:10]
+                    svg.text(None, x, yh, rlabel, rcolor)
         self.svg_origin = G.draw(svg, P, 
             fit=fit, color_overrides=color_overrides, send=False)
         self.cancel_selection()
