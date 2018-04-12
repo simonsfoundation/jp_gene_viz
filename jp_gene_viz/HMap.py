@@ -197,6 +197,18 @@ class HeatMap(object):
             check_indices = numpy.where(check(data))
             data[check_indices] = default_value
 
+    def displayed_row_order(self):
+        row_order = self.row_order
+        row_names = self.row_names
+        if row_order is None:
+            return list(row_name)
+        else:
+            return [row_names[i] for i in row_order]
+
+    def displayed_col_order(self):
+        # for consistency
+        return list(self.col_names)
+
     def draw(self, canvas, dx, dy, labels_space=None, fit=True):
         """
         Draw the heat map on an SVG canvas.

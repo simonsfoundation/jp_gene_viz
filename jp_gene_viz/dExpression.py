@@ -220,10 +220,12 @@ class ExpressionDisplay(traitlets.HasTraits):
         y = info["svgY"]
         i = int(y/dy)
         j = int(x/dx)
+        row_names = heat_map.displayed_row_order()
+        col_names = heat_map.displayed_col_order()
         if i >= 0 and j >= 0 and i < heat_map.nrows and j < heat_map.ncols:
             try:
-                r = heat_map.row_names[i]
-                c = heat_map.col_names[j]
+                r = row_names[i]
+                c = col_names[j]
             except IndexError:
                 pass  # XXXX Shouldn't happen, but does.
             else:
