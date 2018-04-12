@@ -229,7 +229,8 @@ class ExpressionDisplay(traitlets.HasTraits):
             except IndexError:
                 pass  # XXXX Shouldn't happen, but does.
             else:
-                intensity = heat_map.visible_array()[i, j]
+                #intensity = heat_map.visible_array()[i, j]
+                intensity = heat_map.displayed_intensity(i, j)
                 self.info_area.value = "%s :: %s, %s -> %s" % (name, r, c, intensity)
                 if typ == "click":
                     heat_map.unhighlight(svg)

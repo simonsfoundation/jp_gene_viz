@@ -201,13 +201,19 @@ class HeatMap(object):
         row_order = self.row_order
         row_names = self.row_names
         if row_order is None:
-            return list(row_name)
+            return list(row_names)
         else:
             return [row_names[i] for i in row_order]
 
     def displayed_col_order(self):
         # for consistency
         return list(self.col_names)
+
+    def displayed_intensity(self, rowi, colj):
+        row_order = self.row_order
+        if row_order is not None:
+            rowi = row_order[rowi]
+        return self.display_data[rowi, colj]
 
     def draw(self, canvas, dx, dy, labels_space=None, fit=True):
         """
