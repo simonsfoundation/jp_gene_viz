@@ -143,6 +143,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
     maximize = traitlets.Bool(True)
     svg_width = traitlets.Int(500)
     rectangle_color = traitlets.Unicode("#edefef")
+    # mapping of category id to color to override category rectangle colors
+    rectangle_color_overrides = {}
 
     json_atts = "threshhold label_position_overrides".split()
 
@@ -770,17 +772,19 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             svg = self.chosen_container()
             svg.empty()
         rcolor = self.rectangle_color.strip()
+        rectangle_color_overrides = self.rectangle_color_overrides
         if rcolor and rectangles is not None:
             for (key, (x, y, w, h)) in rectangles.items():
+                this_rect_color = rectangle_color_overrides.get(key, rcolor)
                 xw = x + w
                 yh = y + h
-                svg.line("group_border", x, y, xw, y, rcolor)
-                svg.line("group_border", xw, y, xw, yh, rcolor)
-                svg.line("group_border", xw, yh, x, yh, rcolor)
-                svg.line("group_border", x, yh, x, y, rcolor)
+                svg.line("group_border", x, y, xw, y, this_rect_color)
+                svg.line("group_border", xw, y, xw, yh, this_rect_color)
+                svg.line("group_border", xw, yh, x, yh, this_rect_color)
+                svg.line("group_border", x, yh, x, y, this_rect_color)
                 if self.label_rectangles:
                     rlabel = str(key)[:10]
-                    svg.text(None, x, yh, rlabel, rcolor)
+                    svg.text(None, x, yh, rlabel, this_rect_color)
         self.svg_origin = G.draw(svg, P, 
             fit=fit, color_overrides=color_overrides, send=False)
         self.cancel_selection()
