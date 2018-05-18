@@ -1133,6 +1133,29 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         else:
             self.alert_no_selection("ignore")
 
+    def remove_visible_positive_edges(self, test=None):
+        if test is None:
+            def is_positive_edge(network, edge):
+                edge_weights = network.data_graph.edge_weights
+                weight = edge_weights[edge]
+                return weight > 0
+            test = is_positive_edge
+        # remove edges that test positive
+        weights = self.display_graph.edge_weights
+        new_weights = {}
+        for edge in weights:
+            if not test(self, edge):
+                new_weights[edge] = weights[edge]
+        self.display_graph.edge_weights = new_weights
+        self.draw()
+
+    def remove_visible_negative_edges(self):
+        def is_negative_edge(network, edge):
+            edge_weights = network.data_graph.edge_weights
+            weight = edge_weights[edge]
+            return weight <= 0
+        return self.remove_visible_positive_edges(test=is_negative_edge)
+
     def tf_only_click(self, b=None):
         "restrict nodes the transcription factors (nodes with outgoing edges, visible or not)."
         self.push_state()
