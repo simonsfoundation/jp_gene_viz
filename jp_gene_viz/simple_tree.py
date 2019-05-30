@@ -1,6 +1,6 @@
 
-import spoke_layout
-import grid_forest
+from jp_gene_viz import spoke_layout
+from jp_gene_viz import grid_forest
 import numpy as np
 from numpy.linalg import norm
 

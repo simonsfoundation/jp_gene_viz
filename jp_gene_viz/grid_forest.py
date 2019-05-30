@@ -1,7 +1,7 @@
 """
 Grid forest layout.
 """
-
+from __future__ import division
 import numpy as np
 from numpy.linalg import norm
 from random import random
@@ -332,7 +332,7 @@ class GridForestLayout(object):
             # also combine the central node_strength
             if central_node in not_combined:
                 #spoke_order = [(0, central_node)] + spoke_order
-                spoke_order.insert(len(spoke_order)/2, (0, central_node))
+                spoke_order.insert(int(len(spoke_order)/2), (0, central_node))
             # also combine any remaining isolated nodes
             if isolated:
                 spoke_order = spoke_order + [(0, n) for n in isolated]

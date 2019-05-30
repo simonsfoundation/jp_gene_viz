@@ -243,7 +243,7 @@ class ExpressionDisplay(traitlets.HasTraits):
     def draw(self):
         try:
             if self.drawing:
-                raise ValueError, "too many draws"
+                raise ValueError("too many draws")
             heat_map = self.display_heat_map
             if heat_map is None:
                 return

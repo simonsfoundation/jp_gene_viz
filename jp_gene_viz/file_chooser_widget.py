@@ -5,7 +5,13 @@ import traitlets
 from jp_gene_viz import js_proxy
 from jp_gene_viz import js_context
 from IPython.display import display
-import urlparse
+
+
+# Py2/3 compatibility
+try:
+    import urlparse
+except ImportError:
+    import urllib.parse as urlparse
 
 
 class FileChooser(traitlets.HasTraits):

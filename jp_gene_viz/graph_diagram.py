@@ -143,7 +143,7 @@ class GraphDiagramWidget(traitlets.HasTraits):
         self.info_area.value = "apply click"
         identifier = self.label_id
         if identifier is None:
-            self.info_area.value = "nothing selected to apply " + repr((old, new))
+            self.info_area.value = "nothing selected to apply"
             return
         return self.apply_details(identifier)
 

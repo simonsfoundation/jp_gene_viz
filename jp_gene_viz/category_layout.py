@@ -1,6 +1,6 @@
 
-import simple_tree
-import grid_forest
+from jp_gene_viz import simple_tree
+from jp_gene_viz import grid_forest
 import math
 
 
