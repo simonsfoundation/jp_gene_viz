@@ -870,7 +870,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
 
     def limit_edges(self, limit):
         ew = self.data_graph.edge_weights
-        order = sorted((abs(ew[e]), e) for e in ew)
+        order = sorted([(abs(ew[e]), e) for e in ew], key=lambda x: x[0])
         dG = dGraph.WGraph()
         for (count, (weight, edge)) in enumerate(reversed(order)):
             (a, b) = edge

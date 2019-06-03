@@ -135,7 +135,7 @@ class GridForestLayout(object):
         while len(nodes) > 1:
             this_level = self.combine(nodes, edge_weights)
             (combined_nodes, edge_weights) = this_level
-            assert len(combined_nodes) < len(nodes), repr(nodes) + " no progress."
+            #assert len(combined_nodes) < len(nodes), repr(nodes) + " no progress."
             nodes = combined_nodes
             levels.append(this_level)
         assert len(nodes) == 1
@@ -321,14 +321,14 @@ class GridForestLayout(object):
         level_mapping = {}
         (greatest_weight, strongest_factor, strongest_factor_inv, strongest_count, connected, isolated) = \
             self.strength_stats(nodes, edge_weights)
-        node_strength = sorted((strongest_count[n], n) for n in nodes if n not in isolated)
+        node_strength = sorted([(strongest_count[n], n) for n in nodes if n not in isolated], key=lambda x: x[0])
         while node_strength:
             (scount, central_node) = node_strength.pop()
             if scount < 1:
                 # stop for not strongest factor
                 break
             spoke_nodes = {x for x in strongest_factor_inv[central_node] if x in not_combined}
-            spoke_order = sorted((strongest_count[sn], sn) for sn in spoke_nodes)
+            spoke_order = sorted([(strongest_count[sn], sn) for sn in spoke_nodes], key=lambda x: x[0])
             # also combine the central node_strength
             if central_node in not_combined:
                 #spoke_order = [(0, central_node)] + spoke_order
@@ -342,7 +342,7 @@ class GridForestLayout(object):
                 spoke_order = reversed(spoke_order)
                 self.pair_up_list(spoke_order, combined_nodes, not_combined, level_mapping, members)
         # pair up any uncombined nodes
-        not_combined_list = reversed(sorted((len(members[n]), n) for n in not_combined))
+        not_combined_list = reversed(sorted([(len(members[n]), n) for n in not_combined], key=lambda x: x[0]))
         self.pair_up_list(not_combined_list, combined_nodes, not_combined, level_mapping, members)
         combined_edge_weights = self.combine_edge_weights(edge_weights, level_mapping)
         #self.parent.update(level_mapping)

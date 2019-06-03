@@ -78,7 +78,7 @@ def skeleton(Gin):
     neighbors = Gin.neighbors_dict()
     added = set()
     limit = len(edge_weights)
-    for weight, edge in sorted([(abs(edge_weights[e]), e) for e in edge_weights]):
+    for weight, edge in sorted([(abs(edge_weights[e]), e) for e in edge_weights], key=lambda x: x[0]):
         a, b = edge
         if a not in added or b not in added:
             H = [(-weight, weight, edge)]
