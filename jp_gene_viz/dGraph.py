@@ -348,7 +348,11 @@ class WGraph(JsonMixin):
                 name = self.node_name(n)  # "NODE_" + str(n) 
                 ncol = color_overrides.get(name, ncol)
                 degree = min(outdegree.get(n, 1) - 1, 4)
-                canvas.circle(name, x, y, nodesize + degree, ncol) 
+                radius = nodesize + degree
+                if n in outdegree:
+                    canvas.rect(name, x-radius, y-radius, 2*radius, 2*radius, ncol)
+                else:
+                    canvas.circle(name, x, y, radius, ncol) 
         if send:
             canvas.send_commands()
         # adjust the viewBox
@@ -408,7 +412,7 @@ class WGraph(JsonMixin):
         for d in descendants:
             (xd, yd) = positions[d]
             dname = self.node_name(d)
-            attributes = {"cx": xd, "cy": yd}
+            attributes = {"cx": xd, "cy": yd, "x": xd, "y": yd}
             canvas.change_element(dname, attributes)
         canvas.send_commands()
 
@@ -439,6 +443,8 @@ class WGraph(JsonMixin):
         attributes = {}
         attributes["cx"] = x
         attributes["cy"] = y
+        attributes["x"] = x
+        attributes["y"] = y
         canvas.change_element(name, attributes)
         canvas.send_commands()
 
