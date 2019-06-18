@@ -1322,9 +1322,12 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         #self.svg.empty()
         self.draw()
 
+    svg_save = {}
+
     def svg_callback(self, info):
         "Dispatch events over the canvas to handlers."
         typ = info["type"]
+        self.svg_save[typ] = info
         typ_callback = getattr(self, "svg_" + typ, None)
         if typ_callback is not None:
             return typ_callback(info)
@@ -1343,8 +1346,9 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         name = info.get("name")
         shift = info.get("shiftKey")
         if name and not shift:
+            self.svg_save["mouseover_name"] = info
             self.info_area.value = name + pprint.pformat(info)
-            split = name.split("_")
+            split = name.split("_", 1)
             L = []
             if len(split) == 2:
                 [indicator, data] = split
