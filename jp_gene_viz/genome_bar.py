@@ -1,4 +1,4 @@
-
+from __future__ import division
 import traitlets
 
 class GenomeBar(traitlets.HasTraits):
@@ -65,7 +65,7 @@ class GenomeBar(traitlets.HasTraits):
     def draw(self, canvas):
         canvas.empty()
         height = self.height
-        midheight = height/2
+        midheight = int(height/2)
         color = self.color
         canvas.line("guide_line", 0, midheight,
                     self.width, midheight,
@@ -86,7 +86,7 @@ class GenomeBar(traitlets.HasTraits):
 
 def test0():
     import pprint
-    import gtf_format
+    from jp_gene_viz import gtf_format
     from jp_svg_canvas import canvas
     canvas.load_javascript_support()
     GB = GenomeBar()

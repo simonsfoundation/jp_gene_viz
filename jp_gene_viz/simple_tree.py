@@ -1,6 +1,6 @@
 
-import spoke_layout
-import grid_forest
+from jp_gene_viz import spoke_layout
+from jp_gene_viz import grid_forest
 import numpy as np
 from numpy.linalg import norm
 
@@ -13,7 +13,7 @@ class SimpleTreeLayout(spoke_layout.SpokeLayout):
 
     def get_tree(self):
         paths = self.influence_paths()
-        node_order = sorted( (paths[n], n) for n in self.G.node_weights)
+        node_order = sorted([(paths[n], n) for n in self.G.node_weights], key=lambda x: x[0])
         self.root = self.split_subtree(node_order)
 
     def influence_paths(self, nodes=None, edge_weights=None, level=0, level_limit=5):

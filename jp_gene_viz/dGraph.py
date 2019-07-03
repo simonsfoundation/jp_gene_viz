@@ -69,42 +69,33 @@ def skeleton(Gin):
     Maximal spanning forest of Gin (?)
     """
     visited_edges = set()
-    ew = Gin.edge_weights
+    edge_weights = Gin.edge_weights
     nw = Gin.node_weights
-    # "skeleton in", len(ew), len(nw)
+    # "skeleton in", len(edge_weights), len(nw)
     Gout = WGraph()
     # preserve all nodes.
     Gout.node_weights = Gin.node_weights.copy()
     neighbors = Gin.neighbors_dict()
     added = set()
-    edges = sorted([(abs(ew[e]), e) for e in ew])
-    count = 0
-    limit = len(ew)
-    while edges:
-        next_edge = None
-        (weight, next_edge) = edges.pop()
-        (a, b) = next_edge
+    limit = len(edge_weights)
+    for weight, edge in sorted([(abs(edge_weights[e]), e) for e in edge_weights], key=lambda x: x[0]):
+        a, b = edge
         if a not in added or b not in added:
-            H = [(-weight, weight, e)]
-            #Gout.add_edge(a, b, ew[next_e])
+            H = [(-weight, weight, edge)]
             while H:
-                #print "H", H
-                #print "added", added
                 (abs_weight, next_weight, next_e) = heapq.heappop(H)
                 assert len(H) < limit, repr((len(H), limit))
                 (a, b) = next_e
                 if a not in added or b not in added:
-                    #visited_edges.add(next_e)
                     for c in next_e:
                         for cn in neighbors[c]:
                             (cw, ce) = Gin.unordered_weight(c, cn)
                             if ce not in visited_edges:
                                 heapq.heappush(H, (-abs(cw), cw, ce))
                                 visited_edges.add(ce)
-                    Gout.add_edge(a, b, ew[next_e])
+                    Gout.add_edge(a, b, edge_weights[next_e])
                     added.add(a)
                     added.add(b)
-    #Gout.node_weights = nw.copy()
     return Gout
 
 

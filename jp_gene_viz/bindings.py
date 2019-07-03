@@ -1,4 +1,3 @@
-
 """
 This is an experimental class for holding WIG format data.
 At the moment it only supports files containing one track
@@ -10,6 +9,7 @@ variableStep chrom=chrX span=10
 3000021 1
 3000031 1
 """
+from __future__ import division
 import numpy
 import gzip
 import traitlets
@@ -66,7 +66,7 @@ class WigData(traitlets.HasTraits):
         array_text = f.read()
         A = numpy.fromstring(array_text, numpy.float, sep=" ")
         (d,) = A.shape
-        B = A.reshape((d/2, 2))
+        B = A.reshape((int(d/2), 2))
         self.locations = B[:, 0]
         self.heights = B[:, 1]
         self.maxheight = numpy.max(self.heights)

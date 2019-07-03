@@ -2,6 +2,7 @@
 from jp_gene_viz import spoke_layout
 import numpy as np
 from scipy.cluster.hierarchy import linkage, leaves_list, fcluster
+from scipy.spatial.distance import squareform
 
 def cluster_layout(G, fit=1000, matrix=None, row_names=None, **kw):
     GF = ClusterLayout(G, fit)
@@ -52,7 +53,10 @@ class ClusterLayout(spoke_layout.SpokeLayout):
             # trivial clustering
             [row_name]  = row_names
             return row_name
-        Z = linkage(matrix, "ward")
+
+        # Convert the symmetric distance matrix into a condensed distance vector with squareform
+        Z = linkage(squareform(matrix), "ward")
+
         D = {}
         for i in range(len(matrix)):
             D[i] = row_names[i]

@@ -4,9 +4,9 @@ import scipy.optimize
 
 # from http://docs.scipy.org/doc/numpy/reference/generated/numpy.linalg.lstsq.html
 def lsqfit(x, y):
-    x = np.array(x)
-    A = np.vstack([x, np.ones(len(x))]).T
-    m, c = np.linalg.lstsq(A, y)[0]
+    x = numpy.array(x)
+    A = numpy.vstack([x, numpy.ones(len(x))]).T
+    m, c = numpy.linalg.lstsq(A, y)[0]
     fity = m*x + c
     return fity
 
