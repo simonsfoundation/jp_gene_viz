@@ -126,6 +126,7 @@ class WGraph(JsonMixin):
     def __init__(self, node_color_interpolator=None, edge_color_interpolator=None):
         self.edge_weights = {}
         self.node_weights = {}
+        self.node_radius = {}
         self.edge_attributes = {}
         # populate on demand
         self._node_to_descendents = None
@@ -160,6 +161,7 @@ class WGraph(JsonMixin):
         result = WGraph()
         result.edge_weights = self.edge_weights.copy()
         result.node_weights = self.node_weights.copy()
+        result.node_radius = self.node_radius.copy()
         # share edge attributes for now
         result.edge_attributes = self.edge_attributes
         result.reset_colorization(self)
@@ -327,6 +329,7 @@ class WGraph(JsonMixin):
                 #            markradius*2, markradius*2, ncolor)
         # layout nodes (after edges)
         nw = self.node_weights
+        node_radius = self.node_radius
         if not nw:
             return
         pos_n = [(nw[n], n) for n in self.node_weights if n in positions]
@@ -349,6 +352,8 @@ class WGraph(JsonMixin):
                 ncol = color_overrides.get(name, ncol)
                 degree = min(outdegree.get(n, 1) - 1, 4)
                 radius = nodesize + degree
+                # use node radius override if defined for this node
+                radius = node_radius.get(n, radius)
                 if n in outdegree:
                     canvas.rect(name, x-radius, y-radius, 2*radius, 2*radius, ncol)
                 else:

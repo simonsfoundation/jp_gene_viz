@@ -181,6 +181,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
 
     def __init__(self, container=SVG, *pargs, **kwargs):
         super(NetworkDisplay, self).__init__(*pargs, **kwargs)
+        # initially no node radius overrides
+        self.node_radius_override = {}
         self.undo_stack = []
         containers = [SVG, CANVAS]
         assert container in containers, "valid containers: " + repr(containers)
@@ -314,6 +316,9 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.handle_container_change()
         # set undo button to invisible
         self.pop_state()
+
+    def set_node_radius(self, node_name, radius):
+        self.node_radius_override[node_name] = radius
 
     def handle_container_change(self, *args):
         choice = self.container_dropdown.value
@@ -757,6 +762,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         # prevent overflow for display and containers
         no_overflow(self.dialog)
         G = self.display_graph
+        if G is not None:  # ????
+            G.node_radius = self.node_radius_override.copy()
         P = self.display_positions
         rectangles = self.group_rectangles
         color_overrides = self.color_overrides
