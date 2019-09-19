@@ -320,6 +320,21 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
     def set_node_radius(self, node_name, radius):
         self.node_radius_override[node_name] = radius
 
+    def override_glyph_color(self, svg_name, color):
+        self.color_overrides[svg_name] = color
+
+    def set_label_color(self, label, color):
+        svg_name = self.label_name(label)
+        self.override_glyph_color(svg_name, color)
+
+    def set_node_color(self, label, color):
+        svg_name = self.data_graph.node_name(label)
+        self.override_glyph_color(svg_name, color)
+
+    def set_edge_color(self, source, destination, color):
+        svg_name = self.data_graph.edge_name(source, destination)
+        self.override_glyph_color(svg_name, color)
+
     def handle_container_change(self, *args):
         choice = self.container_dropdown.value
         chose_svg = True
@@ -1662,6 +1677,60 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
     def handle_maximize_change(self, att_name, old, new):
         set_visibility(self.hideable_right, self.maximize)
         set_visibility(self.inputs, self.maximize)
+
+
+class StylingOverrides:
+
+    def __init__(self, network_display):
+        self.network = network_display   # used for naming conventions only.
+        self.svg_name_to_overrides = {}
+        self.dummy_graph = dGraph.WGraph()   # used for naming conventions only.
+
+    def clone(self):
+        import copy
+        result = StylingOverrides(self.network)
+        result.svg_name_to_overrides = copy.deepcopy(self.svg_name_to_overrides)
+        return result
+
+    def set_overrides(self, svg_name, overrides):
+        s2o = self.svg_name_to_overrides
+        all_overrides = s2o[svg_name] = s2o.get(svg_name, {})
+        for key in overrides:
+            v = overrides[key]
+            if v is not None:
+                all_overrides[key] = overrides[key]
+        return all_overrides
+
+    def get_overrides(self, svg_name):
+        return self.svg_name_to_overrides.get(svg_name, {})
+
+    def override_edge(
+        self, source, destination,
+        color=None,
+        stroke=None,
+        stroke_width=None,
+        stroke_dasharray=None,
+        ):
+        svg_name = self.dummy_graph.edge_name(source, destination)
+        overrides = {
+            "color": color,
+            "stroke": stroke,
+            "stroke-width": stroke_width,
+            "stroke-dasharray": stroke_dasharray,
+        }
+        self.set_overrides(svg_name, overrides)
+
+    def get_edge_overrides(self, source, destination):
+        svg_name = self.dummy_graph.edge_name(source, destination)
+        return self.get_overrides(svg_name)
+
+    def get_node_overrides(self, name):
+        svg_name = self.dummy_graph.node_name(name)
+        return self.get_overrides(svg_name)
+
+    def get_label_overrides(self, name):
+        svg_name = self.network.label_name(name)
+        return self.get_overrides(svg_name)
 
 
 def display_network(filename, N=None, threshhold=20.0, save_layout=True, show=True, size_limit=2000):
