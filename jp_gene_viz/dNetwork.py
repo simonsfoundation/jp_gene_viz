@@ -182,7 +182,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
     def __init__(self, container=SVG, *pargs, **kwargs):
         super(NetworkDisplay, self).__init__(*pargs, **kwargs)
         # initially no node radius overrides
-        self.node_radius_override = {}
+        #self.node_radius_override = {}
         self.undo_stack = []
         containers = [SVG, CANVAS]
         assert container in containers, "valid containers: " + repr(containers)
@@ -304,8 +304,9 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.display_graph = None
         self.selected_nodes = None
         self.svg_origin = dGraph.pos(0, 0)
+        self.styling_overrides = StylingOverrides(self)
         # svg name to color override dictionary
-        self.color_overrides = {}
+        #self.color_overrides = {}
         # node weight override mapping
         self.override_node_weights = None
         # node color mapper override
@@ -318,22 +319,68 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.pop_state()
 
     def set_node_radius(self, node_name, radius):
-        self.node_radius_override[node_name] = radius
+        #self.node_radius_override[node_name] = radius
+        self.override_node(node_name, radius=radius)
 
-    def override_glyph_color(self, svg_name, color):
-        self.color_overrides[svg_name] = color
+    def override_node(
+        self, node_name,
+        color=None,
+        shape=None,
+        radius=None,
+        ):
+        return self.styling_overrides.override_node(node_name,
+            color=color, shape=shape, radius=radius
+        )
+
+    #def override_glyph_color(self, svg_name, color):
+    #    self.color_overrides[svg_name] = color
+
+    def override_label(
+        self, name,
+        color=None,
+        hide=None,
+        font_size=None,
+        font_style=None,
+        font_weight=None,
+        ):
+        return self.styling_overrides.override_label(
+            name,
+            color=color,
+            hide=hide,
+            font_size=font_size,
+            font_style=font_style,
+            font_weight=font_weight,
+        )
 
     def set_label_color(self, label, color):
-        svg_name = self.label_name(label)
-        self.override_glyph_color(svg_name, color)
+        #svg_name = self.label_name(label)
+        #self.override_glyph_color(svg_name, color)
+        return self.override_label(label, color=color)
 
     def set_node_color(self, label, color):
-        svg_name = self.data_graph.node_name(label)
-        self.override_glyph_color(svg_name, color)
+        #svg_name = self.data_graph.node_name(label)
+        #self.override_glyph_color(svg_name, color)
+        return self.override_node(label, color=color)
+
+    def override_edge(
+        self, source, destination,
+        color=None,
+        #stroke=None,  # synonym for color
+        stroke_width=None,
+        stroke_dasharray=None,
+        ):
+        return self.styling_overrides.override_edge(
+            source, destination,
+            color=color,
+            #stroke=stroke,
+            stroke_width=stroke_width,
+            stroke_dasharray=stroke_dasharray,
+        )
 
     def set_edge_color(self, source, destination, color):
-        svg_name = self.data_graph.edge_name(source, destination)
-        self.override_glyph_color(svg_name, color)
+        #svg_name = self.data_graph.edge_name(source, destination)
+        #self.override_glyph_color(svg_name, color)
+        return self.override_edge(source, destination, color=color)
 
     def handle_container_change(self, *args):
         choice = self.container_dropdown.value
@@ -526,7 +573,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
 
     def uncolorize_click(self, *args):
         self.push_state()
-        self.color_overrides = {}
+        #self.color_overrides = {}
+        self.styling_overrides = StylingOverrides(self)
         self.reset_node_weights()
         self.display_graph.reset_colorization()
         self.draw()
@@ -744,7 +792,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         self.set_layout(positions.copy())
         self.data_graph = graph
         self.display_graph = graph.clone()
-        self.override_node_colors = None
+        #self.override_node_colors = None
         self.override_node_weights = None
         ew = graph.edge_weights
         if ew:
@@ -778,10 +826,12 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
         no_overflow(self.dialog)
         G = self.display_graph
         if G is not None:  # ????
-            G.node_radius = self.node_radius_override.copy()
+            #G.node_radius = self.node_radius_override.copy()
+            G.styling_overrides = self.styling_overrides
         P = self.display_positions
         rectangles = self.group_rectangles
-        color_overrides = self.color_overrides
+        #color_overrides = self.color_overrides
+        styling_overrides = self.styling_overrides
         if not self.loaded():
             self.info_area.value = "Cannot draw: no graph loaded."
             return
@@ -808,7 +858,7 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
                     rlabel = str(key)[:10]
                     svg.text(None, x, yh, rlabel, this_rect_color)
         self.svg_origin = G.draw(svg, P, 
-            fit=fit, color_overrides=color_overrides, send=False)
+            fit=fit, styling_overrides=styling_overrides, send=False)
         self.cancel_selection()
         self.info_area.value = "Done drawing: " + repr((G.sizes(), len(P)))
         font_size = self.font_size_slider.value
@@ -831,13 +881,18 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
                     (x, y) = P[node]
                     if node in overrides:
                         (x, y) = overrides[node]
-                    style = style0.copy()
+                    label_overrides = styling_overrides.get_label_overrides(node)
+                    #style = style0.copy()
+                    style = {}
+                    for n in style0:
+                        style[n] = label_overrides.get(n, style0[n])
                     if node in sources and tf_font_size > font_size:
                         style["font-size"] = tf_font_size
                     lname = self.label_name(node)
-                    color = color_overrides.get(lname, "black")
+                    #color = color_overrides.get(lname, "black")
+                    color = label_overrides.get("color", "black")
                     # If font-size is zero, don't show the text
-                    if style["font-size"] != 0:
+                    if style["font-size"] != 0 and not label_overrides.get("hide"):
                         svg.text(lname, x, y-4, node, color, **style)
             if fit:
                 # async: get svg bounding box
@@ -1595,7 +1650,8 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             name = info.get("name", "")
             if name:
                 color = self.color_picker.color
-                self.color_overrides[name] = str(color)
+                #self.color_overrides[name] = str(color)
+                self.styling_overrides.set_overrides(name, {"color": color})
                 # change the color of the object selected
                 atts = {"stroke": color, "fill": color}
                 self.svg.change_element(name, atts)
@@ -1698,7 +1754,7 @@ class StylingOverrides:
         for key in overrides:
             v = overrides[key]
             if v is not None:
-                all_overrides[key] = overrides[key]
+                all_overrides[key] = v
         return all_overrides
 
     def get_overrides(self, svg_name):
@@ -1717,6 +1773,38 @@ class StylingOverrides:
             "stroke": stroke,
             "stroke-width": stroke_width,
             "stroke-dasharray": stroke_dasharray,
+        }
+        self.set_overrides(svg_name, overrides)
+
+    def override_node(
+        self, name,
+        color=None,
+        shape=None,
+        radius=None,
+        ):
+        svg_name = self.dummy_graph.node_name(name)
+        overrides = {
+            "color": color,
+            "shape": shape,
+            "radius": radius,
+        }
+        self.set_overrides(svg_name, overrides)
+
+    def override_label(
+        self, name,
+        color=None,
+        hide=None,
+        font_size=None,
+        font_style=None,
+        font_weight=None,
+        ):
+        svg_name = self.network.label_name(name)
+        overrides = {
+            "color": color,
+            "hide": hide,
+            "font-size": font_size,
+            "font-style": font_style,
+            "font-weight": font_weight,
         }
         self.set_overrides(svg_name, overrides)
 

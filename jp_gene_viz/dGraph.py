@@ -70,7 +70,7 @@ def skeleton(Gin):
     """
     visited_edges = set()
     ew = Gin.edge_weights
-    nw = Gin.node_weights
+    #nw = Gin.node_weights
     # "skeleton in", len(ew), len(nw)
     Gout = WGraph()
     # preserve all nodes.
@@ -78,7 +78,7 @@ def skeleton(Gin):
     neighbors = Gin.neighbors_dict()
     added = set()
     edges = sorted([(abs(ew[e]), e) for e in ew])
-    count = 0
+    #count = 0
     limit = len(ew)
     while edges:
         next_edge = None
@@ -270,9 +270,10 @@ class WGraph(JsonMixin):
         # probably should clone XXXX
         self._node_color_interpolator = color_interpolator
     
-    def draw(self, canvas, positions, edgewidth=1, nodesize=3, fit=True, color_overrides=None, send=True):
-        if color_overrides is None:
-            color_overrides = {}
+    def draw(self, canvas, positions, edgewidth=1, nodesize=3, fit=True, styling_overrides=None, send=True):
+        import dNetwork
+        if styling_overrides is None:
+            styling_overrides = dNetwork.StylingOverrides(None)
         (Me, me, Mn, mn) = self.weights_extrema()
         # layout edges
         ew = self.edge_weights
@@ -283,21 +284,21 @@ class WGraph(JsonMixin):
         # "heavier" edges on top
         pos_e.sort()
         #print ("pos_e", pos_e)
-        markradius = (edgewidth+1)/2
+        #markradius = (edgewidth+1)/2
         outdegree = {}
         eci = self.get_edge_color_interpolator()
         arrow_ratio = self.arrow_ratio
         for (absw, e) in pos_e:
             w = ew[e]
-            a = ea[e]
-            other_atts = {}
-            if a:
-                for att in svg_canvas.STROKE_ATTRIBUTES:
-                    if att in a:
-                        value = a[att]
-                        if value and value.upper() != "NONE":
-                            other_atts[att] = a[att]
+            a = ea[e] or {}
             (f, t) = e
+            name = self.edge_name(f, t)  # "EDGE_" + json.dumps([f,t])
+            edge_overrides = styling_overrides.get_overrides(name)
+            other_atts = {}
+            for att in svg_canvas.STROKE_ATTRIBUTES:
+                value = edge_overrides.get(att) or a.get(att)
+                if value and str(value).upper()!="NONE":
+                    other_atts[att] = value
             outdegree[f] = outdegree.get(f, 0) + 1
             fp = positions[f]
             tp = positions[t]
@@ -311,8 +312,9 @@ class WGraph(JsonMixin):
             tp = tp + edgeshift
             #ecolor = self.edge_color(w, me, Me)
             ecolor = eci.interpolate_color(w)
-            name = self.edge_name(f, t)  # "EDGE_" + json.dumps([f,t])
-            ecolor = color_overrides.get(name, ecolor)
+            #name = self.edge_name(f, t)  # "EDGE_" + json.dumps([f,t])
+            #ecolor = color_overrides.get(name, ecolor)
+            ecolor = edge_overrides.get("color", ecolor)
             canvas.line(name, fp[0], fp[1], tp[0], tp[1], ecolor, edgewidth, **other_atts)
             # add a mark to indicate target
             #p = tp - (2 * nodesize) * n
@@ -349,14 +351,22 @@ class WGraph(JsonMixin):
                 #ncol = weighted_color(pnode, znode, Mn, w)
                 ncol = nci.interpolate_color(w)
                 name = self.node_name(n)  # "NODE_" + str(n) 
-                ncol = color_overrides.get(name, ncol)
+                node_overrides = styling_overrides.get_overrides(name)
+                #ncol = color_overrides.get(name, ncol)
+                ncol = node_overrides.get("color", ncol)
                 degree = min(outdegree.get(n, 1) - 1, 4)
                 radius = nodesize + degree
                 # use node radius override if defined for this node
-                radius = node_radius.get(n, radius)
+                #radius = node_radius.get(n, radius)
+                radius = node_overrides.get("radius", radius)
+                shape = "circle"
                 if n in outdegree:
+                    shape = "rect"
+                shape = node_overrides.get("shape", shape)
+                if shape=="rect":
                     canvas.rect(name, x-radius, y-radius, 2*radius, 2*radius, ncol)
                 else:
+                    assert shape=="circle"
                     canvas.circle(name, x, y, radius, ncol) 
         if send:
             canvas.send_commands()
