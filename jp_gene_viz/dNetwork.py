@@ -398,6 +398,10 @@ class NetworkDisplay(traitlets.HasTraits, JsonMixin):
             set_visibility(widget, chose_svg)
         self.draw()
 
+    def save_as_SVG_file(self, path="Network.html"):
+        self.force_svg()
+        self.svg.save_as_SVG_file(path)
+
     def force_svg(self, *args):
         "Force SVG format"
         # this will trigger a call to handle_container_change
