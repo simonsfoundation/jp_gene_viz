@@ -2,6 +2,20 @@
 
 A collection of visualizations for genomics related information for use with Jupyter notebooks.
 
+# NOTE: THIS REPOSITORY IS DEPRECATED
+
+This repository is deprecated because the Jupyter project no longer supports Python 2.
+Components of the repository use libraries which only work correctly in Python 2.
+
+As far as I know at this writing you can still install these components into a legacy Python 2 kernel
+and everything will still work in classic Jupyter notebooks, but it may stop working at some future Jupyter release.
+
+Some useful functionality from this repository has been ported to run in Python 3 with Jupyter using the
+<a href="https://github.com/AaronWatters/jp_doodle">jp_doodle Jupyter widget infrastructure</a>.
+Please post an issue if you would like to see other features ported.
+
+# The package
+
 Please see the [index.ipynb](index.ipynb) IPython notebook for
 a guide to the package content.
 
